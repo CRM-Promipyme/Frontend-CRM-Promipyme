@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from "react-route
 import { ToastContainer } from "react-toastify";
 import { AnimatePresence, motion } from "framer-motion";
 import { AuthRoutes } from "./routes/authRoutes";
+import { Error404 } from "./pages/Error404";
 
 const pageVariants = {
     initial: { opacity: 0, x: -50 },
@@ -37,7 +38,7 @@ const AnimatedRoutes = () => {
                     path="*"
                     element={
                         <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
-                            <h1>404 - Not Found</h1>
+                            <Error404 />
                         </motion.div>
                     }
                 />
