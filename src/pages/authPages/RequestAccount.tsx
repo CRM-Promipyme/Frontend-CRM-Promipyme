@@ -36,7 +36,7 @@ export function RequestAccount() {
         }
         else {
             setLoading(true);
-            
+
             // Enviar la solicitud de cuenta al servidor
             axios.post(`${BASE_URL}/auth/request-account/`, formData)
                 .then(() => {
@@ -44,9 +44,18 @@ export function RequestAccount() {
                     toast.success("¡Solicitud de cuenta enviada! Por favor, espera a que un administrador apruebe tu solicitud.");
                 })
                 .catch((error) => {
-                    // Colectar el error de la respuesta
-                    if (error.response?.data?.message) {
-                        toast.error(error.response.data.message);
+                    // Mostrar mensajes de error
+                    const data = error.response?.data;
+
+                    // Verificar si hubieron errores puntuales en la solicitud
+                    if (data?.errors) {
+                        const errorMap = data.errors as Record<string, string[]>;
+                            Object.values(errorMap).forEach((errorArray) => {
+                            errorArray.forEach((errMsg) => toast.error(errMsg));
+                        });
+                    } else if (data?.message) {
+                        // Mostrar un mensaje de error genérico
+                        toast.error(data.message);
                     } else {
                         toast.error("Ha ocurrido un error al enviar la solicitud de cuenta. Por favor, intenta más tarde.");
                     }
