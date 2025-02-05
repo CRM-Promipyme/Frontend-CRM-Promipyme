@@ -1,10 +1,13 @@
-import { AuthLayout } from "../../components/layouts/authLayouts/authLayout";
-import { PasswordField } from "../../components/ui/forms/PasswordField"; 
-import { toast } from "react-toastify";
-import { useState } from "react";
 import axios from "axios";
-import { LoginResponse } from "../../types/authTypes";
+import { useState } from "react";
+import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
+import '../../styles/auth/authStyles.css';
+import { Spinner } from "../../components/ui/Spinner";
 import { useAuthStore } from "../../stores/authStore";
+import { LoginResponse } from "../../types/authTypes";
+import { PasswordField } from "../../components/ui/forms/PasswordField"; 
+import { AuthLayout } from "../../components/layouts/authLayouts/authLayout";
 
 const BASE_URL = import.meta.env.VITE_REACT_APP_DJANGO_API_URL;
 
@@ -15,6 +18,7 @@ export function Login() {
     // Inicializar el estado local
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handlePasswordChange = (newPassword: string) => {
         setPassword(newPassword);
@@ -22,7 +26,8 @@ export function Login() {
 
     const login = authStore.login;
     const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+        e.preventDefault(); // Evitar recargar la página
+        setLoading(true);
 
         axios.post<LoginResponse>(`${BASE_URL}/auth/login/`, { username, password })
             .then((response) => {
@@ -42,6 +47,9 @@ export function Login() {
                 } else {
                     toast.error("No se pudo iniciar sesión. Por favor, intenta más tarde.");
                 }
+            })
+            .finally(() => {
+                setLoading(false);
             });
     };
 
@@ -55,7 +63,7 @@ export function Login() {
                     </p>
                     <form 
                         className="auth-login-form" 
-                        style={{ textAlign: "left" }} 
+                        style={{ textAlign: "left", lineHeight: '2' }}
                         onSubmit={handleSubmit}
                     >
                         <label htmlFor="username">Nombre de Usuario</label>
@@ -70,10 +78,26 @@ export function Login() {
                             required
                         />
                         <PasswordField value={password} onChange={handlePasswordChange} />
-                        <button style={{ width: '100%' }} type="submit" className="btn btn-primary mt-3">
-                            Iniciar Sesión
+                        <button 
+                            style={{ 
+                                width: '100%',
+                                height: '45px',
+                                marginTop: '2rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '10px'
+                            }} 
+                            type="submit" 
+                            className="btn btn-primary"
+                        >
+                            {loading ? <Spinner /> : "Iniciar Sesión"}
                         </button>
                     </form>
+                    <div className="auth-actions" style={{ lineHeight: '0.5' }}>
+                        <p>¿No tienes una cuenta?</p>
+                        <Link to="/auth/request-account" style={{ textDecoration: "none" }}>Solicita una cuenta a tu organización</Link>
+                    </div>
                 </div>
             }
         />
