@@ -1,0 +1,9 @@
+.page-content {
+    margin-top: 2.5em;
+    padding: 1em;
+    transition: 0.3s ease;
+}
+
+.page {
+    height: 100vh;
+}
