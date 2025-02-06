@@ -20,7 +20,7 @@ export const Sidebar: React.FC = () => {
     };
 
     return (
-        <div className="sidebar" style={{ width: collapsed ? "60px" : "250px" }}>
+        <div className="sidebar shadow-lg" style={{ width: collapsed ? "60px" : "250px" }}>
             <SidebarLink to="/home" icon="bi bi-house">Home</SidebarLink>
             <SidebarLink to="/dashboard" icon="bi bi-columns">Dashboard</SidebarLink>
             <SidebarLink to="/analytics" icon="bi bi-bar-chart">Analytics</SidebarLink>
