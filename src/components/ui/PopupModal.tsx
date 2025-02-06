@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import "../../styles/components/popupmodal.css";
+import "../../styles/components/popupModal.css";
 
 interface ModalProps {
     show: boolean;
