@@ -1,0 +1,72 @@
+thead {
+    --bs-table-bg: #3B5EAB;
+    --bs-table-color: white;
+}
+
+table.rounded-corners {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+td {
+    vertical-align: middle !important;
+}
+
+.row-action-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+}
+
+.table {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 1rem;
+    background-color: transparent;
+}
+
+.table-controllers {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: row;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.pagination-container {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+}
+
+.search-container {
+    width: auto;
+}
+
+tbody tr {
+    transition: all 0.35s ease-in-out;
+}
+
+tbody tr:hover {
+    --bs-table-bg: #7695d842 !important;
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+    z-index: 9000;
+}
+
+input.form-control {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}

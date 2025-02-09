@@ -9,3 +9,19 @@ export interface LoginResponse {
     access: string;
     roles: Role[];
 }
+
+export interface PendingAccount {
+    id: number;
+    first_name: string;
+    last_name: string;
+    username: string;
+    email: string;
+    requested_date: string;
+}
+
+export interface PendingAccountResponse {
+    count: number;
+    next: string;
+    previous: string;
+    results: PendingAccount[];
+}
