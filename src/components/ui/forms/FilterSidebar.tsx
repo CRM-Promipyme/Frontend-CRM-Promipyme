@@ -14,7 +14,6 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ show, onClose, chi
             <div className="filter-sidebar-header">
                 <h3>Filtros</h3>
                 <button className="btn-close" onClick={onClose}>
-                    <i className="bi bi-x"></i>
                 </button>
             </div>
 
