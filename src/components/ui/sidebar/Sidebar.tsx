@@ -4,18 +4,23 @@ import { PopupModal } from "../PopupModal";
 import { SidebarLink } from "./SidebarLink";
 import { useNavigate } from "react-router-dom";
 import "../../../styles/components/sidebar.css";
+import { useAuthStore } from "../../../stores/authStore";
 import { useSidebarStore } from "../../../stores/sidebarStore";
 
 export const Sidebar: React.FC = () => {
     // Inicializar estados y funciones del store
     const { collapsed, toggleSidebar } = useSidebarStore();
     const [showModal, setShowModal] = useState(false);
+    const authStore = useAuthStore();
 
     const navigate = useNavigate();
 
     const logout = () => {
-        // TODO: Implementar lógica de logout
         toast.warning("Has cerrado sesión...");
+
+        // Cerrar sesión
+        authStore.logout();
+
         navigate("/auth/login");
     };
 
