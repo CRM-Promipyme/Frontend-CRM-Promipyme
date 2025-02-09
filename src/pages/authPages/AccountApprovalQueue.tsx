@@ -3,6 +3,7 @@ import { es } from "date-fns/locale";
 import { toast } from "react-toastify";
 import '../../styles/tableStyling.css';
 import { Link } from "react-router-dom";
+import { fetchRoles } from '../../utils/authUtils';
 import { useAuthStore } from "../../stores/authStore";
 import { Spinner } from "../../components/ui/Spinner";
 import { Multiselect } from "multiselect-react-dropdown"; // Import the multiselect
@@ -104,16 +105,15 @@ export function AccountApprovalQueue() {
     const handleOpenApproveModal = async (account: PendingAccount) => {
         setModalType("approve");
         setSelectedAccount(account);
+        
+        if (!accessToken) {
+            toast.error("Tu sesión ha caducado. Por favor, inicia sesión nuevamente para continuar.");
+            return;
+        };
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/dropdown-opts/?roles=true`, {
-                headers: { "Authorization": `Bearer ${accessToken}` },
-            });
-
-            if (!response.ok) throw new Error();
-
-            const data = await response.json();
-            setRoles(data.roles);
+            const roles = await fetchRoles(accessToken);
+            setRoles(roles);
             setSelectedRoles([]);
             setShowModal(true);
         } catch {
@@ -255,7 +255,6 @@ export function AccountApprovalQueue() {
                 </button>
             </div>
 
-            {/* TODO: Integrar endpoint de invitar nuevo usuario */}
             <h3 style={{ marginTop: '30px', marginBottom: '10px' }}>¿No encuentras a quien buscas?</h3>
             <Link to="/auth/invite-user" className="btn btn-primary" style={{ textDecoration: "none" }}>Invitar a un nuevo usuario</Link>
 
