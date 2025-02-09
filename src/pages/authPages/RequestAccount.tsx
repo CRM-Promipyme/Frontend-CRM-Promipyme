@@ -138,7 +138,7 @@ export function RequestAccount() {
                         </button>
                     </form>
                     <div className="auth-actions" style={{ lineHeight: '0.5' }}>
-                        <p>Ya tienes una cuenta?</p>
+                        <p>¿Ya tienes una cuenta?</p>
                         <Link to="/auth/login" style={{ textDecoration: "none" }}>Inicia sesión aquí</Link>
                     </div>
                 </div>

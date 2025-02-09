@@ -6,17 +6,19 @@ import '../../styles/auth/authStyles.css';
 import { Spinner } from "../../components/ui/Spinner";
 import { useAuthStore } from "../../stores/authStore";
 import { LoginResponse } from "../../types/authTypes";
-import { PasswordField } from "../../components/ui/forms/PasswordField"; 
+import { PasswordField } from "../../components/ui/forms/PasswordField";
 import { AuthLayout } from "../../components/layouts/authLayouts/authLayout";
 
 const BASE_URL = import.meta.env.VITE_REACT_APP_DJANGO_API_URL;
 
 export function Login() {
-    // Inicializar estado de autenticación
+    // Estados de autenticación
     const authStore = useAuthStore(state => state);
+    const login = authStore.login;
 
-    // Inicializar el estado local
-    const [username, setUsername] = useState("");
+    // Estados locales
+    const [useEmail, setUseEmail] = useState(false); // Toggle entre email/username
+    const [credential, setCredential] = useState(""); // Almacena email o username
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -24,24 +26,22 @@ export function Login() {
         setPassword(newPassword);
     };
 
-    const login = authStore.login;
     const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault(); // Evitar recargar la página
+        e.preventDefault();
         setLoading(true);
 
-        axios.post<LoginResponse>(`${BASE_URL}/auth/login/`, { username, password })
+        // Construir payload dinámicamente
+        const payload = useEmail ? { email: credential, password } : { username: credential, password };
+
+        axios.post<LoginResponse>(`${BASE_URL}/auth/login/`, payload)
             .then((response) => {
                 if (response.status === 200) {
                     login(response.data);
                     toast.success("¡Inicio de sesión exitoso!");
-
-                    // TODO: Redirigir a la página de inicio
                 }
-                
             })
             .catch((error) => {
                 console.error(error);
-                
                 if (error.response?.status === 400) {
                     toast.error("Credenciales inválidas. Por favor, intenta nuevamente.");
                 } else {
@@ -61,23 +61,47 @@ export function Login() {
                     <p style={{ marginBottom: "30px" }}>
                         Inicia sesión utilizando tus credenciales
                     </p>
+
                     <form 
                         className="auth-login-form" 
                         style={{ textAlign: "left", lineHeight: '2' }}
                         onSubmit={handleSubmit}
                     >
-                        <label htmlFor="username">Nombre de Usuario</label>
+                        {/* Toggle para cambiar entre Email/Username */}
+                        <div className="d-flex align-items-center justify-content-between mb-3">
+                            <label className="form-label" style={{ marginBottom: '0rem' }}>{useEmail ? "Correo Electrónico" : "Nombre de Usuario"}</label>
+                            <div className="toggle-switch">
+                                <input
+                                    type="checkbox"
+                                    id="toggleLoginMethod"
+                                    checked={useEmail}
+                                    onChange={() => {
+                                        setUseEmail(!useEmail);
+                                        setCredential(""); // Reset field on toggle
+                                    }}
+                                />
+                                <label htmlFor="toggleLoginMethod" className="slider"></label>
+                            </div>
+                        </div>
+
                         <input
                             style={{ marginBottom: "15px" }}
                             type="text"
                             className="form-control"
-                            id="username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            placeholder="Escribe tu nombre de usuario aquí..."
+                            value={credential}
+                            onChange={(e) => setCredential(e.target.value)}
+                            placeholder={useEmail ? "Ingresa tu correo electrónico..." : "Ingresa tu nombre de usuario..."}
                             required
                         />
+
                         <PasswordField value={password} onChange={handlePasswordChange} />
+
+                        <div className="forgot-password-container text-end">
+                            <Link to="/auth/request-password-reset" style={{ textDecoration: "none" }}>
+                                ¿Olvidaste tu contraseña?
+                            </Link>
+                        </div>
+
                         <button 
                             style={{ 
                                 width: '100%',
@@ -94,9 +118,12 @@ export function Login() {
                             {loading ? <Spinner /> : "Iniciar Sesión"}
                         </button>
                     </form>
+
                     <div className="auth-actions" style={{ lineHeight: '0.5' }}>
                         <p>¿No tienes una cuenta?</p>
-                        <Link to="/auth/request-account" style={{ textDecoration: "none" }}>Solicita una cuenta a tu organización</Link>
+                        <Link to="/auth/request-account" style={{ textDecoration: "none" }}>
+                            Solicita una cuenta a tu organización
+                        </Link>
                     </div>
                 </div>
             }
