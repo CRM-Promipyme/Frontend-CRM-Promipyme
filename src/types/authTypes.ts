@@ -25,3 +25,8 @@ export interface PendingAccountResponse {
     previous: string;
     results: PendingAccount[];
 }
+
+export interface Role {
+    id: number;
+    nombre_rol: string;
+}
