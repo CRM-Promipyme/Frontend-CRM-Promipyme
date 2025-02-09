@@ -69,12 +69,12 @@ export function AccountApprovalQueue() {
     }, [currUrl, fetchPendingAccounts]);
 
     // Construir URL con los filtros de búsqueda
-    const buildQueryUrl = () => {
+    const buildQueryUrl = useCallback(() => {
         let url = `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/accounts/approval-queue/?`;
         if (searchName) url += `name=${searchName}&`;
         if (searchEmail) url += `email=${searchEmail}&`;
         return url;
-    };
+    }, [searchName, searchEmail]);
 
     // Debounce para evitar múltiples llamadas al API
     useEffect(() => {
@@ -88,7 +88,7 @@ export function AccountApprovalQueue() {
         return () => {
             if (debounceTimer.current) clearTimeout(debounceTimer.current);
         };
-    }, [searchName, searchEmail]);
+    }, [searchName, searchEmail, buildQueryUrl]);
 
     return (
         <SidebarLayout sidebarWidthPx={sidebarWidthPx}>
