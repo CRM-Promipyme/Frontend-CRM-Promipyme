@@ -11,6 +11,7 @@ import { useSidebarStore } from "../../stores/sidebarStore";
 import { PopupModal } from "../../components/ui/PopupModal";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
+import { FilterSidebar  } from "../../components/ui/forms/FilterSidebar";
 import { PendingAccount, PendingAccountResponse, Role } from "../../types/authTypes";
 
 export function AccountApprovalQueue() {
@@ -33,6 +34,7 @@ export function AccountApprovalQueue() {
     const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
 
     // Estados para filtrado de data
+    const [showFilters, setShowFilters] = useState<boolean>(false);
     const [searchName, setSearchName] = useState<string>("");
     const [searchEmail, setSearchEmail] = useState<string>("");
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -174,22 +176,29 @@ export function AccountApprovalQueue() {
             <h1 style={{ marginBottom: '25px' }}>Cuentas Pendientes por Aprobar</h1>
 
             {/* Controles de filtrado */}
-            <div className="mb-3 d-flex gap-3">
-                <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Filtrar por nombre..."
-                    value={searchName}
-                    onChange={(e) => setSearchName(e.target.value)}
-                />
-                <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Filtrar por email..."
-                    value={searchEmail}
-                    onChange={(e) => setSearchEmail(e.target.value)}
-                />
-            </div>
+            <button className="btn btn-outline-primary" style={{ marginBottom: '25px' }} onClick={() => setShowFilters(true)}>
+                <i className="bi bi-funnel"></i> Filtros
+            </button>
+            <FilterSidebar show={showFilters} onClose={() => setShowFilters(false)}>
+                <div className="mb-3">
+                    <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Filtrar por nombre..."
+                        value={searchName}
+                        onChange={(e) => setSearchName(e.target.value)}
+                    />
+                </div>
+                <div className="mb-3">
+                    <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Filtrar por email..."
+                        value={searchEmail}
+                        onChange={(e) => setSearchEmail(e.target.value)}
+                    />
+                </div>
+            </FilterSidebar>
 
             {loading ? (
                 <Spinner />

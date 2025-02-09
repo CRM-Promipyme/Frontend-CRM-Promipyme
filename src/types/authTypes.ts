@@ -30,3 +30,21 @@ export interface Role {
     id: number;
     nombre_rol: string;
 }
+
+export interface User {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    username: string;
+    is_active: boolean;
+    roles: Role[];
+    profile_data: Record<string, unknown>; // Dict<string, any>
+}
+
+export interface UserListResponse {
+    count: number;
+    next: string;
+    previous: string;
+    results: User[];
+}

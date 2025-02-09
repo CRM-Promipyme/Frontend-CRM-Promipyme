@@ -21,6 +21,13 @@ export const Sidebar: React.FC = () => {
 
     return (
         <div className="sidebar shadow-lg" style={{ width: collapsed ? "60px" : "250px" }}>
+            {/* Logo */}
+            {!collapsed && (
+                <div className="logo" style={{ marginBottom: "20px" }}>
+                    <img src="/assets/logo_promipyme_white.png" alt="Logo" style={{ width: '235px' }} />
+                </div>
+            )}
+
             <SidebarLink to="/home" icon="bi bi-house">Home</SidebarLink>
             <SidebarLink to="/dashboard" icon="bi bi-columns">Dashboard</SidebarLink>
             <SidebarLink to="/analytics" icon="bi bi-bar-chart">Analytics</SidebarLink>
