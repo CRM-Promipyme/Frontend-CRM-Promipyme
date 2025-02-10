@@ -37,7 +37,7 @@ export const Sidebar: React.FC = () => {
             <SidebarLink to="/dashboard" icon="bi bi-columns">Dashboard</SidebarLink>
             <SidebarLink to="/analytics" icon="bi bi-bar-chart">Analytics</SidebarLink>
             <SidebarLink to="/friends" icon="bi bi-people">Friends</SidebarLink>
-            <SidebarLink to="/image" icon="bi bi-image">Images</SidebarLink>
+            <SidebarLink to="/auth/user/profile" icon="bi bi-person-circle">Mi Perfil</SidebarLink>
 
             {/* Logout */}
             <span className="logout-icon" onClick={() => setShowModal(true)}>
