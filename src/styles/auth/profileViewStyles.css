@@ -45,3 +45,8 @@
 .user-profile-content .user-profile-picture {
     border-radius: 50%;
 }
+
+.user-profile-content .user-profile-action-btns {
+    display: flex;
+    gap: 20px;
+}

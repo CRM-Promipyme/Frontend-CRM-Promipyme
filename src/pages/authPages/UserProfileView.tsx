@@ -1,3 +1,5 @@
+import { toast } from "react-toastify";
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import '../../styles/auth/profileViewStyles.css';
 import { formatKey } from "../../utils/formatUtils";
@@ -18,23 +20,26 @@ interface UserProfile {
 }
 
 export function UserProfileView() {
-    // Estados globales
+    // Estados Globales
     const sidebarWidthPx = useSidebarStore((state) => state.sidebarWidthPx);
     const authStore = useAuthStore();
     const userId = authStore.userId;
     const accessToken = authStore.accessToken;
 
-    // Estados locales
+    // Estados Locales
     const [loading, setLoading] = useState<boolean>(true);
     const [userData, setUserData] = useState<UserProfile | null>(null);
+    const [editMode, setEditMode] = useState<boolean>(false);
+    const [formData, setFormData] = useState<Record<string, unknown>>({});
+    const [profilePicture, setProfilePicture] = useState<string | null>(null);
 
     useEffect(() => {
         if (!userId || !accessToken) return;
-
+    
         const fetchUserData = async () => {
             try {
                 const response = await fetch(
-                    `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/users/detail/${userId}`, 
+                    `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/users/detail/${userId}`,
                     {
                         method: "GET",
                         headers: {
@@ -43,22 +48,105 @@ export function UserProfileView() {
                         },
                     }
                 );
-
+    
                 if (!response.ok) throw new Error("Failed to fetch user data");
-
+    
                 const data: UserProfile = await response.json();
-
-                // Evitar renders innecesarios si los datos no han cambiado
-                setUserData(prevData => prevData?.id === data.id ? prevData : data);
+                setUserData(data);
+    
+                setFormData({
+                    first_name: data.first_name,
+                    last_name: data.last_name,
+                    email: data.email,
+                    username: data.username,
+                    profile_data_update: { ...data.profile_data },
+                    rol_ids: data.roles.map((role) => role.id_rol),
+                });
+    
+                const fotoPerfil = data.profile_data?.foto_perfil;
+                if (typeof fotoPerfil === "string" && fotoPerfil.startsWith("http")) {
+                    setProfilePicture(fotoPerfil);
+                } else {
+                    setProfilePicture(null); // Use default image if missing or invalid
+                }
             } catch (error) {
                 console.error("Error fetching user data:", error);
             } finally {
                 setLoading(false);
             }
         };
-
+    
         fetchUserData();
-    }, [userId, accessToken]); // corre cuando userId/accessToken cambia
+    }, [userId, accessToken]);
+
+    // Handle input changes
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value } = e.target;
+        if (id in (formData.profile_data_update as Record<string, unknown>)) {
+            setFormData((prev) => ({
+                ...prev,
+                profile_data_update: { ...(prev.profile_data_update as Record<string, unknown>), [id]: value },
+            }));
+        } else {
+            setFormData((prev) => ({ ...prev, [id]: value }));
+        }
+    };
+
+    // Handle Profile Picture Upload
+    const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const base64String = event.target?.result as string;
+                setProfilePicture(base64String);
+                setFormData((prev) => ({
+                    ...prev,
+                    profile_data_update: {
+                        ...(prev.profile_data_update as Record<string, unknown>),
+                        foto_perfil: base64String,
+                    },
+                }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const toggleEditMode = () => {
+        setEditMode((prev) => !prev);
+    };
+
+    // Submit para formulario de actualización de perfil
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/users/detail/${userId}/`,
+                {
+                    method: "PUT",
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(formData),
+                }
+            );
+
+            if (!response.ok) throw new Error("Error updating profile");
+
+            const updatedData = await response.json();
+            setUserData(updatedData);
+            toast.success("Perfil actualizado correctamente.");
+            setEditMode(false);
+        } catch (error) {
+            console.error("Error updating user data:", error);
+            toast.error("Hubo un error al actualizar el perfil.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <SidebarLayout sidebarWidthPx={sidebarWidthPx}>
@@ -67,142 +155,143 @@ export function UserProfileView() {
                     <Spinner />
                 ) : (
                     userData && (
-                        <form className="user-profile-form" style={{ textAlign: "left", lineHeight: "2" }}>
+                        <motion.form
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="user-profile-form"
+                            onSubmit={handleSubmit}
+                            style={{ textAlign: "left", lineHeight: "2" }}
+                        >
                             <div className="user-profile-form-col" style={{ width: "70%" }}>
                                 {/* Información de la cuenta */}
-                                    <div className="card-body shadow">
-                                        <h4 style={{ marginBottom: "25px" }}>Información de mi Cuenta</h4>
+                                <motion.div 
+                                    initial={{ opacity: 0 }} 
+                                    animate={{ opacity: 1 }} 
+                                    transition={{ duration: 0.5 }} 
+                                    className="card-body shadow"
+                                >
+                                    <h4 style={{ marginBottom: "25px" }}>Información de mi Cuenta</h4>
 
-                                        <div className="user-profile-info">
-                                            <div className="user-profile-col">
-                                                <label htmlFor="first_name">Nombres</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    id="first_name"
-                                                    value={userData?.first_name || ""}
-                                                    disabled
-                                                />
+                                    <div className="user-profile-info">
+                                        <div className="user-profile-col">
+                                            <label htmlFor="first_name">Nombres</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                id="first_name"
+                                                value={formData.first_name as string}
+                                                onChange={handleChange}
+                                                disabled={!editMode}
+                                            />
 
-                                                <label htmlFor="last_name">Apellidos</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    id="last_name"
-                                                    value={userData?.last_name || ""}
-                                                    disabled
-                                                />
-                                            </div>
-                                            <div className="user-profile-col">
-                                                <label htmlFor="username">Usuario</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    id="username"
-                                                    value={userData?.username || ""}
-                                                    disabled
-                                                />
-
-                                                <label htmlFor="email">Correo Electrónico</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    id="email"
-                                                    value={userData?.email || ""}
-                                                    disabled
-                                                />
-                                            </div>
+                                            <label htmlFor="last_name" style={{ marginTop: '15px' }}>Apellidos</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                id="last_name"
+                                                value={formData.last_name as string}
+                                                onChange={handleChange}
+                                                disabled={!editMode}
+                                            />
                                         </div>
 
-                                        <div className="mt-3">
-                                            <label>Roles:</label>
-                                            <div>
-                                                {userData?.roles?.length > 0 ? (
-                                                    userData.roles.map((role) => (
-                                                        <span key={role.id_rol} style={{ fontSize: '14px' }} className="badge bg-primary me-2">
-                                                            {role.nombre_rol}
-                                                        </span>
-                                                    ))
-                                                ) : (
-                                                    <span className="badge bg-secondary">Sin rol</span>
-                                                )}
-                                            </div>
+                                        <div className="user-profile-col">
+                                            <label htmlFor="email">Correo Electrónico</label>
+                                            <input
+                                                type="email"
+                                                className="form-control"
+                                                id="email"
+                                                value={formData.email as string}
+                                                onChange={handleChange}
+                                                disabled={!editMode}
+                                            />
+
+                                            <label htmlFor="username" style={{ marginTop: '15px' }}>Nombre de Usuario</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                id="username"
+                                                value={formData.username as string}
+                                                onChange={handleChange}
+                                                disabled={!editMode}
+                                            />
                                         </div>
                                     </div>
 
-                                {/* Profile Information Card */}
-                                    <div className="card-body shadow">
-                                        <h4 style={{ marginBottom: "25px" }}>Información de mi Perfil</h4>
-                                        <div className="user-profile-info">
-                                            <div className="user-profile-col" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', width: '100%', justifyContent: 'space-between' }}>
-                                                {userData?.profile_data &&
-                                                    Object.entries(userData.profile_data).map(([key, value]) =>
-                                                        key !== "foto_perfil" ? (
-                                                            <div key={key} style={{ width: '48%', marginTop: '10px' }}>
-                                                                <label htmlFor={key}>{formatKey(key)}</label>
-                                                                <input
-                                                                    type="text"
-                                                                    className="form-control"
-                                                                    id={key}
-                                                                    value={value ? String(value) : ""}
-                                                                    disabled
-                                                                />
-                                                            </div>
-                                                        ) : null
-                                                    )}
-                                            </div>
+                                    {/* TODO: Update role functionality */}
+                                    <div className="mt-3">
+                                        <label>Roles:</label>
+                                        <div>
+                                            {userData?.roles?.length > 0 ? (
+                                                userData.roles.map((role) => (
+                                                    <span key={role.id_rol} style={{ fontSize: '14px' }} className="badge bg-primary me-2">
+                                                        {role.nombre_rol}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="badge bg-secondary">Sin rol</span>
+                                            )}
                                         </div>
                                     </div>
-                                
-                                {/* TODO: Edit functionality */}
-                                    <button
-                                        id="edit-profile-btn"
-                                        style={{
-                                            width: "20%",
-                                            height: "45px",
-                                            marginTop: "2rem",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            gap: "10px",
-                                        }}
-                                        type="submit"
-                                        className="btn btn-outline-primary mt-3"
-                                    >
-                                        Editar
+                                </motion.div>
+
+                                {/* Información del Perfil */}
+                                <motion.div 
+                                    initial={{ scale: 0.95 }} 
+                                    animate={{ scale: 1 }} 
+                                    transition={{ duration: 0.4 }} 
+                                    className="card-body shadow"
+                                >
+                                    <h4 style={{ marginBottom: "25px" }}>Información de mi Perfil</h4>
+                                    <div className="user-profile-info">
+                                        {Object.entries(formData.profile_data_update as Record<string, unknown> || {}).map(([key, value]) =>
+                                            key !== "foto_perfil" ? (
+                                                <div key={key}>
+                                                    <label htmlFor={key}>{formatKey(key)}</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        id={key}
+                                                        value={value ? String(value) : ""}
+                                                        onChange={handleChange}
+                                                        disabled={!editMode}
+                                                    />
+                                                </div>
+                                            ) : null
+                                        )}
+                                    </div>
+                                </motion.div>
+
+                                <div className="user-profile-action-btns">
+                                    <button type="button" className="btn btn-outline-primary mt-3" style={{ width: '25%' }} onClick={toggleEditMode}>
+                                        {editMode ? "Cancelar" : "Editar"}
                                     </button>
+
+                                    {editMode && (
+                                        <button type="submit" className="btn btn-primary mt-3" style={{ width: '25%' }}>
+                                            Guardar
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
-                            {/* Profile Picture */}
-                                <div className="user-profile-form-col" style={{ width: "30%", height: "fit-content" }}>
-                                    <div className="card-body shadow" style={{ alignItems: "center", justifyContent: "center" }}>
-                                        <img
-                                            src={
-                                                userData?.profile_data?.foto_perfil
-                                                    ? `data:image/png;base64,${userData.profile_data.foto_perfil}`
-                                                    : "/assets/default_profile_picture.jpg"
-                                            }
-                                            alt="User Profile"
-                                            style={{ width: "225px" }}
-                                            className="user-profile-picture"
-                                        />
-                                        <h4 style={{ marginTop: '15px' }}>{userData?.first_name || ""} {userData?.last_name || ""}</h4>
-                                    </div>
-
-                                    {/* TODO: Profile Picture Upload */}
-                                    <div className="card-body shadow">
-                                        <label htmlFor="profile_picture" style={{ marginBottom: "15px" }}>Cambiar Foto de Perfil</label>
-                                        <input
-                                            type="file"
-                                            name="profile_picture"
-                                            className="form-control"
-                                            id="profile_picture"
-                                            style={{ marginBottom: "15px" }}
-                                            accept="image/*"
-                                        />
-                                    </div>
+                            {/* Foto de Perfil */}
+                            <div className="user-profile-form-col" style={{ width: "30%", height: "fit-content" }}>
+                                <div className="card-body shadow" style={{ alignItems: "center", justifyContent: "center", textAlign: 'center' }}>
+                                    <img 
+                                        src={profilePicture || "/assets/default_profile_picture.jpg"}
+                                        style={{ width: '200px'}} 
+                                        alt="Foto de perfil" 
+                                        className="user-profile-picture" 
+                                    />
+                                    <h4 style={{ marginTop: '15px' }}>{userData?.first_name || ""} {userData?.last_name || ""}</h4>
+                                    {editMode && (
+                                        <input type="file" className="form-control mt-3" accept="image/*" onChange={handleProfilePictureChange} />
+                                    )}
                                 </div>
-                        </form>
+                            </div>
+                        </motion.form>
                     )
                 )}
             </div>
