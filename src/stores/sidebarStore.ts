@@ -7,11 +7,11 @@ interface SidebarState {
 }
 
 export const useSidebarStore = create<SidebarState>((set) => ({
-    sidebarWidthPx: "260px",
+    sidebarWidthPx: "250px",
     collapsed: false,
     
     toggleSidebar: () => set((state: SidebarState) => ({
         collapsed: !state.collapsed,
-        sidebarWidthPx: state.collapsed ? "260px" : "60px",
+        sidebarWidthPx: state.collapsed ? "250px" : "60px",
     })),
 }));

@@ -1,6 +1,7 @@
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import '../../styles/auth/profileViewStyles.css';
 import { formatKey } from "../../utils/formatUtils";
 import { useAuthStore } from "../../stores/authStore";
@@ -23,8 +24,10 @@ export function UserProfileView() {
     // Estados Globales
     const sidebarWidthPx = useSidebarStore((state) => state.sidebarWidthPx);
     const authStore = useAuthStore();
-    const userId = authStore.userId;
     const accessToken = authStore.accessToken;
+
+    // Get the user ID from the route params
+    const { userId } = useParams<{ userId: string; }>();
 
     // Estados Locales
     const [loading, setLoading] = useState<boolean>(true);
@@ -32,6 +35,9 @@ export function UserProfileView() {
     const [editMode, setEditMode] = useState<boolean>(false);
     const [formData, setFormData] = useState<Record<string, unknown>>({});
     const [profilePicture, setProfilePicture] = useState<string | null>(null);
+
+    // Show edit functionality only if the user is the same as the logged in user, or if the user is an admin
+    const canEdit = userId && (authStore.userId === parseInt(userId) || authStore.isAdmin());
 
     useEffect(() => {
         if (!userId || !accessToken) return;
@@ -150,7 +156,7 @@ export function UserProfileView() {
 
     return (
         <SidebarLayout sidebarWidthPx={sidebarWidthPx}>
-            <div className="user-profile-content">
+            <div className="user-profile-content" style={{ padding: "50px"}}>
                 {loading ? (
                     <Spinner />
                 ) : (
@@ -263,17 +269,19 @@ export function UserProfileView() {
                                     </div>
                                 </motion.div>
 
-                                <div className="user-profile-action-btns">
-                                    <button type="button" className="btn btn-outline-primary mt-3" style={{ width: '25%' }} onClick={toggleEditMode}>
-                                        {editMode ? "Cancelar" : "Editar"}
-                                    </button>
-
-                                    {editMode && (
-                                        <button type="submit" className="btn btn-primary mt-3" style={{ width: '25%' }}>
-                                            Guardar
+                                {canEdit && (
+                                    <div className="user-profile-action-btns">
+                                        <button type="button" className="btn btn-outline-primary mt-3" style={{ width: '25%' }} onClick={toggleEditMode}>
+                                            {editMode ? "Cancelar" : "Editar"}
                                         </button>
-                                    )}
-                                </div>
+
+                                        {editMode && (
+                                            <button type="submit" className="btn btn-primary mt-3" style={{ width: '25%' }}>
+                                                Guardar
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Foto de Perfil */}

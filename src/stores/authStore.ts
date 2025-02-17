@@ -9,6 +9,7 @@ interface AuthState {
     login: (response: LoginResponse) => Promise<boolean>;
     logout: () => void;
     isAuthenticated: () => Promise<boolean>;
+    isAdmin: () => boolean;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -57,4 +58,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (!token) return false
         else return true;
     },
+
+    isAdmin: () => {
+        return get().roles.some(role => role.nombre_rol === "Administrador");
+    }
 }));

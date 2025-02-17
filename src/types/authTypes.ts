@@ -26,11 +26,6 @@ export interface PendingAccountResponse {
     results: PendingAccount[];
 }
 
-export interface Role {
-    id: number;
-    nombre_rol: string;
-}
-
 export interface User {
     id: number;
     first_name: string;

@@ -12,7 +12,7 @@ export const Sidebar: React.FC = () => {
     const { collapsed, toggleSidebar } = useSidebarStore();
     const [showModal, setShowModal] = useState(false);
     const authStore = useAuthStore();
-
+    const userId = authStore.userId;
     const navigate = useNavigate();
 
     const logout = () => {
@@ -24,6 +24,11 @@ export const Sidebar: React.FC = () => {
         navigate("/auth/login");
     };
 
+    const sidebarItems = [
+        { to: "/auth/auth-menu", icon: "bi bi-people", text: "Usuarios" },
+        { to: `/auth/user/profile/${userId}`, icon: "bi bi-person-circle", text: "Mi Perfil" }
+    ];
+
     return (
         <div className="sidebar shadow-lg" style={{ width: collapsed ? "60px" : "250px" }}>
             {/* Logo */}
@@ -33,12 +38,13 @@ export const Sidebar: React.FC = () => {
                 </div>
             )}
 
-            <SidebarLink to="/home" icon="bi bi-house">Home</SidebarLink>
-            <SidebarLink to="/dashboard" icon="bi bi-columns">Dashboard</SidebarLink>
-            <SidebarLink to="/analytics" icon="bi bi-bar-chart">Analytics</SidebarLink>
-            <SidebarLink to="/friends" icon="bi bi-people">Friends</SidebarLink>
-            <SidebarLink to="/auth/user/profile" icon="bi bi-person-circle">Mi Perfil</SidebarLink>
-
+            {/* Links */}
+            {sidebarItems.map((item, index) => (
+                <SidebarLink key={index} to={item.to} icon={item.icon}>
+                    {item.text}
+                </SidebarLink>
+            ))}
+            
             {/* Logout */}
             <span className="logout-icon" onClick={() => setShowModal(true)}>
                 <i className="bi bi-box-arrow-right"></i>

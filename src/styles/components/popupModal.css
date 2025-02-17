@@ -1,6 +1,6 @@
 .modal-mask {
     position: fixed;
-    z-index: 9998;
+    z-index: 10500 !important;
     top: 0;
     left: 0;
     width: 100%;
@@ -30,6 +30,8 @@
 }
 
 .modal-container {
+    position: relative !important;
+    z-index: 10001 !important;
     width: auto;
     padding: 20px 30px;
     background-color: #fff;

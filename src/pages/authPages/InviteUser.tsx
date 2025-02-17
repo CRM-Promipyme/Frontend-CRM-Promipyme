@@ -57,7 +57,7 @@ export function InviteUser() {
         setLoading(true);
 
         // Map an array of role IDs from the selected roles
-        const rol_ids = selectedRoles.map((role) => role.id);
+        const rol_ids = selectedRoles.map((role) => role.id_rol);
 
         axios.post(
             `${BASE_URL}/auth/accounts/invite/`,
