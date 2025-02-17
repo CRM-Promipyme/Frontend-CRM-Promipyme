@@ -361,6 +361,8 @@ export function UserProfileView() {
                                     )}
                                 </div>
                             </div>
+
+                            {/* TODO: Display user activity logs */}
                         </motion.form>
                     )
                 )}
