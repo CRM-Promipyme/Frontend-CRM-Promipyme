@@ -1,0 +1,35 @@
+.menu-cards {
+    padding: 50px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 65px;
+}
+
+.menu-item-card.card-body {
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+    margin-left: unset;
+    margin-right: unset;
+    max-width: 400px;
+    border: 0.1px solid rgb(228, 228, 228);
+}
+
+/* Hover effect for menu-item-cards */
+
+.menu-item-card.card-body {
+    transition: all 0.35s ease-in-out;
+}
+
+.menu-item-card.card-body:hover {
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+    transform: scale(1.05);
+    z-index: 200;
+}
+
+.menu-item-card-icon i {
+    font-size: 5.5rem;
+}
+
+.menu-item-card-link {
+    text-decoration: none;
+}

@@ -1,16 +1,26 @@
+html, body {
+  height: 100%;
+  min-height: 100vh;
+  background-color: #ffffff !important;
+}
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
+  color: rgba(0, 0, 0, 0.87);
   background-color: #242424;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
 }
 
 a {
@@ -66,3 +76,17 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.warning-text {
+  font-size: 1rem;
+  color: #ff0019;
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity 0.3s ease-in-out, transform 0.25s ease-in-out;
+}
+
+.warning-text.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+

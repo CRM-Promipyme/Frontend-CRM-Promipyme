@@ -1,0 +1,52 @@
+.user-profile-content .user-profile-form-col {
+    display: flex;
+    width: 50%;
+    gap: 60px;
+    flex-direction: column;
+}
+
+.user-profile-content .user-profile-form {
+    display: flex;
+    gap: 50px;
+    flex-direction: row;
+}
+
+.user-profile-content .user-profile-info {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    width: 100%;
+}
+
+.user-profile-content .card-body {
+    padding: 20px !important;
+    justify-content: unset;
+    margin: unset;
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 100%;
+    max-width: unset;
+    border: 0.1px solid rgb(228, 228, 228);
+}
+
+.user-profile-content .user-profile-info {
+    width: 100%;
+}
+
+.user-profile-content .user-profile-col {
+    width: 50%;
+}
+
+.user-profile-content #edit-profile-btn {
+    margin-top: -10px !important;
+}
+
+.user-profile-content .user-profile-picture {
+    border-radius: 50%;
+}
+
+.user-profile-content .user-profile-action-btns {
+    display: flex;
+    gap: 20px;
+}

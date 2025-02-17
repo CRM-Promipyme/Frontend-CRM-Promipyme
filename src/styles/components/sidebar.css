@@ -1,0 +1,99 @@
+:root {
+    --sidebar-bg-color: #08237E;
+    --sidebar-item-hover: #7695d8;
+    --sidebar-item-active: #006eff8a;
+}
+
+.sidebar {
+    color: white;
+    background-color: var(--sidebar-bg-color);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    padding: 0.5em;
+    transition: 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 20px;
+    gap: 25px;
+    padding: 0.4em;
+    border-radius: 0.25em;
+    color: white;
+    height: 50px;
+    text-decoration: none;
+    transition: 0.3s ease;
+}
+
+.sidebar-link:hover {
+    background-color: var(--sidebar-item-hover);
+    transform: scale(1.05);
+    color: #ffffff;
+}
+
+.sidebar-link.active {
+    background-color: var(--sidebar-item-active);
+}
+
+.logout-icon {
+    padding: 0.75em;
+    color: white;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 20px;
+    gap: 25px;
+    margin: 0.1em 0;
+    padding: 0.4em;
+    border-radius: 0.25em;
+    transition: 0.3s ease;
+}
+
+.logout-icon:hover {
+    background-color: var(--sidebar-item-hover);
+    color: crimson;
+    transform: scale(1.05);
+}
+
+.collapse-icon {
+    position: absolute;
+    bottom: 0;
+    padding: 0.75em;
+    color: rgba(255, 255, 255, 0.7);
+    transition: 0.2s ease;
+}
+
+.collapse-icon:hover {
+    transform: scale(1.65);
+}
+
+.rotate-180 {
+    transform: rotate(180deg);
+    transition: 0.2s linear;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+}
