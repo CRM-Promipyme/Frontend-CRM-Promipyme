@@ -2,8 +2,11 @@ import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Role } from "../../types/authTypes";
 import '../../styles/auth/profileViewStyles.css';
+import { fetchRoles } from '../../utils/authUtils';
 import { formatKey } from "../../utils/formatUtils";
+import Multiselect from "multiselect-react-dropdown";
 import { useAuthStore } from "../../stores/authStore";
 import { Spinner } from "../../components/ui/Spinner";
 import { useSidebarStore } from "../../stores/sidebarStore";
@@ -35,6 +38,31 @@ export function UserProfileView() {
     const [editMode, setEditMode] = useState<boolean>(false);
     const [formData, setFormData] = useState<Record<string, unknown>>({});
     const [profilePicture, setProfilePicture] = useState<string | null>(null);
+    const [roles, setRoles] = useState<Role[]>([]);
+    const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
+
+    // Fetch roles al cargar el componente
+    useEffect(() => {
+        if (!accessToken) {
+            toast.error("Tu sesión ha caducado. Por favor, inicia sesión nuevamente para continuar.");
+            return;
+        }
+    
+        // No hacer nada si ya se cargaron los roles
+        if (roles.length > 0) return;
+    
+        const loadRoles = async () => {
+            try {
+                const rolesData = await fetchRoles(accessToken);
+                setRoles(rolesData);
+                setSelectedRoles([]);
+            } catch {
+                toast.error("No se pudieron obtener los roles.");
+            }
+        };
+    
+        loadRoles();
+    }, [accessToken, roles.length]);
 
     // Show edit functionality only if the user is the same as the logged in user, or if the user is an admin
     const canEdit = userId && (authStore.userId === parseInt(userId) || authStore.isAdmin());
@@ -66,8 +94,11 @@ export function UserProfileView() {
                     email: data.email,
                     username: data.username,
                     profile_data_update: { ...data.profile_data },
-                    rol_ids: data.roles.map((role) => role.id_rol),
+                    role_ids: data.roles.map((role) => role.id_rol),
                 });
+
+                // Track selected roles with current user roles
+                setSelectedRoles(data.roles);
     
                 const fotoPerfil = data.profile_data?.foto_perfil;
                 if (typeof fotoPerfil === "string" && fotoPerfil.startsWith("http")) {
@@ -128,6 +159,15 @@ export function UserProfileView() {
         setLoading(true);
 
         try {
+            const newRoleIds = selectedRoles.map((role) => role.id_rol);
+            // Create a separate object to send in the request
+            const updatedFormData = {
+                ...formData,
+                role_ids: newRoleIds,
+            };
+
+            console.log(updatedFormData);
+
             const response = await fetch(
                 `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/users/detail/${userId}/`,
                 {
@@ -136,7 +176,7 @@ export function UserProfileView() {
                         Authorization: `Bearer ${accessToken}`,
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify(formData),
+                    body: JSON.stringify(updatedFormData),
                 }
             );
 
@@ -240,6 +280,23 @@ export function UserProfileView() {
                                             )}
                                         </div>
                                     </div>
+                                    {editMode && (
+                                        // TODO: Only edit roles if user is admin
+                                        <div className="mt-3">
+                                            <label htmlFor="roles">Roles del Usuario</label>
+                                            <Multiselect
+                                                options={roles}
+                                                selectedValues={selectedRoles}
+                                                onSelect={setSelectedRoles}
+                                                onRemove={setSelectedRoles}
+                                                displayValue="nombre_rol"
+                                                placeholder="Selecciona los roles"
+                                                showArrow
+                                                closeOnSelect={false}
+                                                className="multi-select-dropdown"
+                                            />
+                                        </div>
+                                    )}
                                 </motion.div>
 
                                 {/* Información del Perfil */}
