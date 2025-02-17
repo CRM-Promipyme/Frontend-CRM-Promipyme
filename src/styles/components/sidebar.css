@@ -34,7 +34,7 @@
 .sidebar-link:hover {
     background-color: var(--sidebar-item-hover);
     transform: scale(1.05);
-    color: #003ab6;
+    color: #ffffff;
 }
 
 .sidebar-link.active {
