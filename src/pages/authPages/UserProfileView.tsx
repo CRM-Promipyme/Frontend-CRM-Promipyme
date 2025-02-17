@@ -186,6 +186,11 @@ export function UserProfileView() {
             setUserData(updatedData);
             toast.success("Perfil actualizado correctamente.");
             setEditMode(false);
+
+            // Update authStore roles if the user is updating their own profile
+            if (authStore.userId === parseInt(userId)) {
+                authStore.updateRoles(updatedData.roles);
+            }
         } catch (error) {
             console.error("Error updating user data:", error);
             toast.error("Hubo un error al actualizar el perfil.");

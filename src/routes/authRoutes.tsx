@@ -7,20 +7,38 @@ import { RequestAccount } from '../pages/authPages/RequestAccount';
 import { UserProfileView } from '../pages/authPages/UserProfileView';
 import { AccountApprovalQueue } from '../pages/authPages/AccountApprovalQueue';
 import { RequestPasswordReset } from '../pages/authPages/RequestPasswordReset';
+import { AdminRoutePermissions } from '../components/permissions/AdminRoutePermissions';
 import { PasswordResetConfirmation } from '../pages/authPages/PasswordResetConfirmation';
 
 export function AuthRoutes() {
+    const publicAuthRoutes = [
+        {path: "/login", comp: Login},
+        {path: "/request-account", comp: RequestAccount},
+        {path: "/user/profile/:userId", comp: UserProfileView},
+        {path: "/auth-menu", comp: AdminMenu},
+        {path: "/request-password-reset", comp: RequestPasswordReset},
+        {path: "/confirm-password-reset/:uid/:token", comp: PasswordResetConfirmation}
+    ]
+
+    const fallbackUrl = "/auth/auth-menu";
+    const privateAuthRoutes = [
+        {path: "/invite-user", comp: InviteUser},
+        {path: "/user-list", comp: UserList},
+        {path: "/account-approval-queue", comp: AccountApprovalQueue}
+    ]
+
     return (
         <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/user-list" element={<UserList />} />
-            <Route path="/request-account" element={<RequestAccount />} />
-            <Route path="/invite-user" element={<InviteUser />} />
-            <Route path="/user/profile/:userId" element={<UserProfileView />} />
-            <Route path="/auth-menu" element={<AdminMenu />} />
-            <Route path="/account-approval-queue" element={<AccountApprovalQueue />} />
-            <Route path="/request-password-reset" element={<RequestPasswordReset />} />
-            <Route path="/confirm-password-reset/:uid/:token" element={<PasswordResetConfirmation />} />
+            {publicAuthRoutes.map((route, index) => (
+                <Route key={index} path={route.path} element={<route.comp />} />
+            ))}
+            {privateAuthRoutes.map((route, index) => (
+                <Route key={index} path={route.path} element={
+                    <AdminRoutePermissions fallbackUrl={fallbackUrl}>
+                        <route.comp />
+                    </AdminRoutePermissions>
+                } />
+            ))}
         </Routes>
     )
 }

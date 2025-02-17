@@ -10,6 +10,7 @@ interface AuthState {
     logout: () => void;
     isAuthenticated: () => Promise<boolean>;
     isAdmin: () => boolean;
+    updateRoles: (roles: Role[]) => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -50,6 +51,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         localStorage.removeItem("access");
         localStorage.removeItem("refresh");
         localStorage.removeItem("roles");
+    },
+
+    updateRoles: (roles: Role[]) => {
+        set({ roles });
+
+        // Actualizar en localStorage
+        localStorage.setItem("roles", JSON.stringify(roles));
     },
 
     isAuthenticated: async (): Promise<boolean> => {
