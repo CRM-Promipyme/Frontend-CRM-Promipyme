@@ -100,9 +100,9 @@ export function InviteUser() {
     return (
         // TODO: Re-visit styling for this form
         <SidebarLayout sidebarWidthPx={sidebarWidthPx}>
-            <h1>Invitar un Nuevo Usuario al Sistema</h1>
-            <p>Por favor, ingresa los datos del usuario que deseas invitar al sistema:</p>
-            <div style={{ width: 'auto', maxWidth: '650px' }}>
+            <h1 className="page-title" style={{ marginBottom: '0px' }}>Invitar un Nuevo Usuario al Sistema</h1>
+            <div style={{ width: 'auto', maxWidth: '650px', padding: '40px', marginTop: '0px' }}>
+                <p>Por favor, ingresa los datos del usuario que deseas invitar al sistema:</p>
 
                 <form
                     className="auth-login-form"
