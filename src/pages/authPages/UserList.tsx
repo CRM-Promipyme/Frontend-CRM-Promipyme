@@ -222,14 +222,20 @@ export function UserList() {
                                     <tr key={user.id}>
                                         <td>
                                             {user.profile_data?.foto_perfil ? (
-                                                <img src={user.profile_data?.foto_perfil || ''} alt="Avatar" style={{ width: '40px', height: '40px', borderRadius: '50%' }} />
+                                                <img src={typeof user.profile_data?.foto_perfil === 'string' ? user.profile_data.foto_perfil : ''} alt="Avatar" style={{ width: '40px', height: '40px', borderRadius: '50%' }} />
                                             ) : <i className="bi bi-person-circle" style={{ fontSize: '35px', color: 'gray' }}></i>}
                                         </td>
                                         <td>{user.first_name} {user.last_name}</td>
                                         <td>{user.username}</td>
                                         <td>{user.email || "—"}</td>
                                         <td><span className={`badge ${user.is_active ? "bg-success" : "bg-warning"}`}>{user.is_active ? "Activo" : "Inactivo"}</span></td>
-                                        <td>{user.roles.length > 0 ? user.roles.map((role) => <span key={role.id_rol} className="badge bg-primary">{role.nombre_rol}</span>) : <span className="badge bg-secondary">Sin rol</span>}</td>
+                                        <td style={{ display: "flex", flexWrap: "wrap", gap: "10px", height: '70px', alignItems: 'center' }}>
+                                            {
+                                                user.roles.length > 0 
+                                                ? user.roles.map((role) => <span style={{ height: '42%' }} key={role.id_rol} className="badge bg-primary">{role.nombre_rol}</span>) 
+                                                : <span className="badge bg-secondary">Sin rol</span>
+                                            }
+                                        </td>
                                         <td><Link to={`/auth/user/profile/${user.id}`} className="btn btn-primary"><i className="bi bi-eye"></i></Link></td>
                                         {/* TODO: Delete user btn */}
                                     </tr>
