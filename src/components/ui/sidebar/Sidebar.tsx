@@ -33,7 +33,7 @@ export const Sidebar: React.FC = () => {
         <div className="sidebar shadow-lg" style={{ width: collapsed ? "60px" : "250px" }}>
             {/* Logo */}
             {!collapsed && (
-                <div className="logo" style={{ marginBottom: "20px" }}>
+                <div className="logo" style={{ marginBottom: "35px" }}>
                     <img src="/assets/logo_promipyme_white.png" alt="Logo" style={{ width: '235px' }} />
                 </div>
             )}
@@ -46,7 +46,7 @@ export const Sidebar: React.FC = () => {
             ))}
             
             {/* Logout */}
-            <span className="logout-icon" onClick={() => setShowModal(true)}>
+            <span className="logout-icon" onClick={() => setShowModal(true)} style={{ justifyContent: collapsed ? "center" : "flex-start" }}>
                 <i className="bi bi-box-arrow-right"></i>
                 {!collapsed && <span style={{ fontWeight: '500' }}>Cerrar Sesión</span>}
             </span>

@@ -15,7 +15,15 @@ export const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon, children }) 
     const isActive = location.pathname === to;
 
     return (
-        <Link to={to} className={`sidebar-link ${isActive ? "active" : ""}`} style={{ marginTop: "6px", marginBottom: "6px" }}>
+        <Link 
+            to={to} 
+            className={`sidebar-link ${isActive ? "active" : ""}`} 
+            style={{ 
+                marginTop: "6px",
+                marginBottom: "6px",
+                justifyContent: collapsed ? "center" : "flex-start"
+            }}
+        >
             <i className={icon}></i>
 
             {/* Mostrar texto condicionalmente */}
