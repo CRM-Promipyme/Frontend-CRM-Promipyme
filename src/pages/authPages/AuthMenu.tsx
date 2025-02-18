@@ -25,6 +25,12 @@ export function AdminMenu() {
             icon: "bi bi-person-plus",
             url: "/auth/invite-user"
         },
+        {
+            title: "Administrar Roles",
+            description: "Crear, editar y eliminar roles de usuario.",
+            icon: "bi bi-clipboard-minus",
+            url: "/auth/manage/system-roles/list"
+        }
     ]
 
     return (

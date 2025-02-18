@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 import { Login } from "../pages/authPages/Login";
 import { UserList } from '../pages/authPages/UserList';
+import { RoleList } from '../pages/authPages/RoleList';
 import { AdminMenu } from '../pages/authPages/AuthMenu';
 import { InviteUser } from '../pages/authPages/InviteUser';
 import { RequestAccount } from '../pages/authPages/RequestAccount';
@@ -24,7 +25,8 @@ export function AuthRoutes() {
     const privateAuthRoutes = [
         {path: "/invite-user", comp: InviteUser},
         {path: "/user-list", comp: UserList},
-        {path: "/account-approval-queue", comp: AccountApprovalQueue}
+        {path: "/account-approval-queue", comp: AccountApprovalQueue},
+        {path: "/manage/system-roles/list", comp: RoleList}
     ]
 
     return (
