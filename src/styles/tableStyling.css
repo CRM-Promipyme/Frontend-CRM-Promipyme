@@ -71,6 +71,26 @@ tbody tr:hover {
     z-index: 200;
 }
 
+.table-actions-container {
+    margin-left: 35px;
+    margin-top: 35px;
+    display: flex;
+    flex-direction: row;
+    gap: 25px;
+}
+
+.row-action-container {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    height: 70px;
+    align-items: center;
+}
+
+.row-action-container button {
+    height: 60%;
+}
+
 /* Table Scrollbar */
 
 .table-responsive::-webkit-scrollbar {

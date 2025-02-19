@@ -1,6 +1,6 @@
 .modal-mask {
     position: fixed;
-    z-index: 10500 !important;
+    z-index: 1000 !important;
     top: 0;
     left: 0;
     width: 100%;
