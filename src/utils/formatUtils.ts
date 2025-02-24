@@ -5,3 +5,9 @@ export const formatKey = (key: string) => {
         .replace(/_/g, " ")
         .replace(/\b\w/g, (char) => char.toUpperCase());
 };
+
+export const formatCedula = (cedula: string) => {
+    // Formatear la cedula en el formato 000-0000000-0
+
+    return cedula.replace(/(\d{3})(\d{7})(\d)/, "$1-$2-$3");
+}

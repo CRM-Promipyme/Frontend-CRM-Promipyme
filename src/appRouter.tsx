@@ -4,6 +4,8 @@ import { ToastContainer } from "react-toastify";
 import { AnimatePresence, motion } from "framer-motion";
 import { AuthRoutes } from "./routes/authRoutes";
 import { Error404 } from "./pages/Error404";
+import { ContactRoutes } from "./routes/contactRoutes";
+
 
 const pageVariants = {
     initial: { opacity: 0, x: -50 },
@@ -30,6 +32,14 @@ const AnimatedRoutes = () => {
                     element={
                         <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
                             <AuthRoutes />
+                        </motion.div>
+                    }
+                />
+                <Route
+                    path="/contacts/*"
+                    element={
+                        <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
+                            <ContactRoutes />
                         </motion.div>
                     }
                 />
