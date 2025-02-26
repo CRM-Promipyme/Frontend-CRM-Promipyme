@@ -124,3 +124,9 @@ tbody tr:hover {
 .form-control.text-search {
     width: 500px;
 }
+
+.pagination-controls {
+    display: flex;
+    justify-content: space-between;
+    padding: 25px;
+}

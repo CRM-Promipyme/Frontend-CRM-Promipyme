@@ -25,7 +25,8 @@ export const Sidebar: React.FC = () => {
     };
 
     const sidebarItems = [
-        { to: "/auth/auth-menu", icon: "bi bi-people", text: "Usuarios" },
+        { to: "/contacts/menu", icon: "bi bi-people", text: "Contactos" },
+        { to: "/auth/auth-menu", icon: "bi bi-person-gear", text: "Usuarios" },
         { to: `/auth/user/profile/${userId}`, icon: "bi bi-person-circle", text: "Mi Perfil" }
     ];
 
