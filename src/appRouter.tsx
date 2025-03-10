@@ -1,11 +1,11 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import { AnimatePresence, motion } from "framer-motion";
-import { AuthRoutes } from "./routes/authRoutes";
 import { Error404 } from "./pages/Error404";
+import { ToastContainer } from "react-toastify";
+import { AuthRoutes } from "./routes/authRoutes";
+import { AnimatePresence, motion } from "framer-motion";
 import { ContactRoutes } from "./routes/contactRoutes";
-
+import { WorkflowRoutes } from "./routes/workflowRoutes";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 
 const pageVariants = {
     initial: { opacity: 0, x: -50 },
@@ -40,6 +40,14 @@ const AnimatedRoutes = () => {
                     element={
                         <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
                             <ContactRoutes />
+                        </motion.div>
+                    }
+                />
+                <Route
+                    path="/workflows/*"
+                    element={
+                        <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
+                            <WorkflowRoutes />
                         </motion.div>
                     }
                 />
