@@ -11,6 +11,7 @@ import { User, UserListResponse, Role } from "../../types/authTypes";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
 import { FilterSidebar } from "../../components/ui/forms/FilterSidebar";
 import { AnimatedNumberCounter } from "../../components/ui/AnimatedNumberCounter";
+import { PopupModal } from "../../components/ui/PopupModal";
 
 export function UserList() {
     // Global States
@@ -34,6 +35,10 @@ export function UserList() {
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
     const tableRef = useRef<HTMLDivElement | null>(null); // Reference to the table container
 
+    // Modal States
+    const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+    const [userToDelete, setUserToDelete] = useState<User | null>(null);
+    
     const buildQueryUrl = useCallback(() => {
         let url = `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/users/list/?`;
 
@@ -134,6 +139,31 @@ export function UserList() {
             }
         };
     }, [fetchAccounts, nextPage, loadingMore]);
+
+    const handleDeleteUser = async () => {
+        if(!userToDelete || !accessToken) return;
+
+        try{
+            const response = await fetch(`${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/users/${userToDelete.id}/`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+
+            setUsers(users.filter(user => user.id !== userToDelete.id));
+            toast.success("Usuario eliminado correctamente.");
+        } catch {
+            toast.error("Hubo un problema al eliminar el usuario.");
+        }
+        finally {
+            setShowDeleteModal(false);
+            setUserToDelete(null);
+        }
+    }
 
     return (
         <SidebarLayout sidebarWidthPx={sidebarWidthPx}>
@@ -237,7 +267,13 @@ export function UserList() {
                                             }
                                         </td>
                                         <td><Link to={`/auth/user/profile/${user.id}`} className="btn btn-primary"><i className="bi bi-eye"></i></Link></td>
-                                        {/* TODO: Delete user btn */}
+                                        {/* Delete user btn */}
+                                        <button className="btn btn-danger ms-2" onClick={() => {
+                                            setUserToDelete(user);
+                                            setShowDeleteModal(true);
+                                        }}>
+                                            <i className="bi bi-trash"></i>
+                                        </button>
                                     </tr>
                                 ))
                             ) : (
@@ -250,6 +286,24 @@ export function UserList() {
             )}
             <h3 style={{ marginLeft: '30px', marginTop: '40px', marginBottom: '10px' }}>¿No encuentras a quien buscas?</h3>
             <Link to="/auth/invite-user" className="btn btn-primary" style={{ textDecoration: "none", marginLeft: '30px', marginTop: '8px', marginBottom: '25px' }}>Invitar a un nuevo usuario</Link>
+            {/* Delete User Modal */}
+            {showDeleteModal && userToDelete && (
+                <PopupModal
+                    show={showDeleteModal}
+                    onClose={() => setShowDeleteModal(false)}
+                >
+                    <div className="modal-header">
+                        <h5>Confirmar Eliminación</h5>
+                    </div>
+                    <div className="modal-body">
+                        <p>¿Estás seguro de que deseas eliminar al usuario {userToDelete.first_name} {userToDelete.last_name}?</p>
+                    </div>
+                    <div className="modal-footer">
+                        <button onClick={() => setShowDeleteModal(false)} className="btn btn-secondary">Cancelar</button>
+                        <button onClick={handleDeleteUser} className="btn btn-primary">Confirmar</button>
+                    </div>
+                </PopupModal>
+            )}
         </SidebarLayout>
     );
 }
