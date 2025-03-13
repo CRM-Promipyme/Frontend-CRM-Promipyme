@@ -20,7 +20,7 @@ export function WorkflowBoardView() {
     if (loading) {
         return (
             <SidebarLayout sidebarWidthPx={sidebarWidthPx}>
-                <Spinner />
+                <Spinner className='spinner-border-lg'/>
             </SidebarLayout>
         );
     }

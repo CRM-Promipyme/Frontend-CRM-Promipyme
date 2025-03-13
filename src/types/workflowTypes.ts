@@ -13,3 +13,9 @@ export interface EtapaProceso {
     nombre_etapa: string;
     orden_etapa: number;
 }
+
+export interface createWorkflowData {
+    nombre_proceso: string;
+    etapas: EtapaProceso[];
+    color: string;
+}

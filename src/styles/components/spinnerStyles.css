@@ -1,6 +1,12 @@
 .spinner-border {
-    color: #08237e !important;
-    position: absolute;
-    left: 50%;
-    top: 50%;
+    color: rgb(255, 255, 255) !important;
+}
+
+.spinner-border-lg {
+    color: #08237E !important;
+    width: 7.2rem !important;
+    height: 7.2rem !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
 }

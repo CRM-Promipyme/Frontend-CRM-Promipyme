@@ -1,7 +1,7 @@
 .processes-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 25px;
+    gap: 35px;
     justify-content: flex-start;
     margin-top: 20px;
 }

@@ -1,3 +1,5 @@
+import { toast } from 'react-toastify';
+
 export const formatKey = (key: string) => {
     // Format a string into a human-readable format
 
@@ -46,4 +48,29 @@ export const lowerColorOpacity = (color: string, opacity: number): string => {
     }
 
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
+export const showResponseErrors = (data: unknown, defaultMessage: string = "Ha ocurrido un error. Por favor, intenta más tarde.") => {
+    if (!data || typeof data !== 'object') {
+        toast.error(defaultMessage);
+        return;
+    }
+    
+    const typedData = data as Record<string, unknown>;
+    
+    // Check for specific errors array
+    if (typedData.errors && typeof typedData.errors === 'object') {
+        const errorMap = typedData.errors as Record<string, string[]>;
+        Object.values(errorMap).forEach((errorArray) => {
+            errorArray.forEach((errMsg) => toast.error(errMsg));
+        });
+    } 
+    // Check for message string
+    else if (typedData.message && typeof typedData.message === 'string') {
+        toast.error(typedData.message);
+    } 
+    // Fallback error
+    else {
+        toast.error(defaultMessage);
+    }
 }

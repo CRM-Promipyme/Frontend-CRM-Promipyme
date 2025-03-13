@@ -245,7 +245,7 @@ export function AccountApprovalQueue() {
             </FilterSidebar>
 
             {loading ? (
-                <Spinner />
+                <Spinner className='spinner-border-lg' />
             ) : (
                 <div className="table-responsive" ref={tableRef}>
                     <table className="table table-bordered rounded-borders">

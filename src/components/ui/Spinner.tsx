@@ -1,8 +1,12 @@
 import './../../styles/components/spinnerStyles.css';
 
-export function Spinner() {
+interface SpinnerProps {
+    className?: string;
+}
+
+export function Spinner({ className = '' }: SpinnerProps) {
     return (
-        <div className="spinner-border" role="status" style={{ width: '7.2rem', height: '7.2rem' }}>
+        <div className={`spinner-border ${className}`} role="status">
             <span className="visually-hidden">Loading...</span>
         </div>
     );
