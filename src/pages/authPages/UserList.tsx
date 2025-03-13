@@ -266,14 +266,16 @@ export function UserList() {
                                                 : <span className="badge bg-secondary">Sin rol</span>
                                             }
                                         </td>
-                                        <td><Link to={`/auth/user/profile/${user.id}`} className="btn btn-primary"><i className="bi bi-eye"></i></Link></td>
-                                        {/* Delete user btn */}
-                                        <button className="btn btn-danger ms-2" onClick={() => {
-                                            setUserToDelete(user);
-                                            setShowDeleteModal(true);
-                                        }}>
-                                            <i className="bi bi-trash"></i>
-                                        </button>
+                                        <td>
+                                            <Link to={`/auth/user/profile/${user.id}`} className="btn btn-primary"><i className="bi bi-eye"></i></Link>
+                                            {/* Delete user btn */}
+                                            <button className="btn btn-danger ms-2" onClick={() => {
+                                                setUserToDelete(user);
+                                                setShowDeleteModal(true);
+                                            }}>
+                                                <i className="bi bi-trash"></i>
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))
                             ) : (
