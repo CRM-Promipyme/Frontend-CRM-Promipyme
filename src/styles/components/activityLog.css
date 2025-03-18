@@ -1,0 +1,28 @@
+
+.activity-log {
+    overflow-y: scroll;
+    max-height: 275px;
+}
+
+.activity-log-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 10px 0;
+    transition: background 0.2s ease-in-out;
+}
+
+.activity-log-item:hover {
+    background: rgba(0, 123, 255, 0.123);
+}
+
+.activity-log-item i {
+    flex-shrink: 0;
+}
+
+.activity-log-item p {
+    margin: 0;
+}
+
+.text-muted {
+    font-size: 0.9rem;
+}

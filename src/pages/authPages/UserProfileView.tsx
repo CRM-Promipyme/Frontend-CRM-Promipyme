@@ -2,26 +2,18 @@ import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Role } from "../../types/authTypes";
 import '../../styles/auth/profileViewStyles.css';
 import { fetchRoles } from '../../utils/authUtils';
 import { formatKey } from "../../utils/formatUtils";
 import Multiselect from "multiselect-react-dropdown";
 import { useAuthStore } from "../../stores/authStore";
 import { Spinner } from "../../components/ui/Spinner";
+import { UserActivity } from "../../types/activityTypes";
+import { Role, UserProfile } from "../../types/authTypes";
 import { useSidebarStore } from "../../stores/sidebarStore";
+import { ActivityLog } from "../../components/ui/ActivityLog";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
-
-interface UserProfile {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email: string;
-    username: string;
-    is_active: boolean;
-    roles: { nombre_rol: string; id_rol: number }[];
-    profile_data: Record<string, unknown>;
-}
+import { fetchUserActivities } from "../../controllers/activityControllers";
 
 export function UserProfileView() {
     // Estados Globales
@@ -40,6 +32,7 @@ export function UserProfileView() {
     const [profilePicture, setProfilePicture] = useState<string | null>(null);
     const [roles, setRoles] = useState<Role[]>([]);
     const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
+    const [userActivities, setUserActivities] = useState<UserActivity[]>([]);
 
     // Fetch roles al cargar el componente
     useEffect(() => {
@@ -60,9 +53,19 @@ export function UserProfileView() {
                 toast.error("No se pudieron obtener los roles.");
             }
         };
+
+        const loadUserActivities = async () => {
+            try {
+                const activities = await fetchUserActivities(userId as string);
+                setUserActivities(activities);
+            } catch (error) {
+                console.error("Error fetching user activities:", error);
+            }
+        }
     
         loadRoles();
-    }, [accessToken, roles.length]);
+        loadUserActivities();
+    }, [accessToken, roles.length, userId]);
 
     // Show edit functionality only if the user is the same as the logged in user, or if the user is an admin
     const canEdit = userId && (authStore.userId === parseInt(userId) || authStore.isAdmin());
@@ -188,7 +191,7 @@ export function UserProfileView() {
             setEditMode(false);
 
             // Update authStore roles if the user is updating their own profile
-            if (authStore.userId === parseInt(userId)) {
+            if (userId && authStore.userId === parseInt(userId)) {
                 authStore.updateRoles(updatedData.roles);
             }
         } catch (error) {
@@ -346,8 +349,8 @@ export function UserProfileView() {
                                 )}
                             </div>
 
-                            {/* Foto de Perfil */}
                             <div className="user-profile-form-col" style={{ width: "30%", height: "fit-content" }}>
+                                {/* Foto de Perfil */}
                                 <div className="card-body shadow" style={{ alignItems: "center", justifyContent: "center", textAlign: 'center' }}>
                                     <img 
                                         src={profilePicture || "/assets/default_profile_picture.jpg"}
@@ -359,6 +362,11 @@ export function UserProfileView() {
                                     {editMode && (
                                         <input type="file" className="form-control mt-3" accept="image/*" onChange={handleProfilePictureChange} />
                                     )}
+                                </div>
+
+                                {/* Historial de actividades */}
+                                <div className="card-body shadow">
+                                    <ActivityLog activities={userActivities} />
                                 </div>
                             </div>
 
