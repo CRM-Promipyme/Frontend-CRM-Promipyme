@@ -118,7 +118,7 @@ export function InviteUser() {
                         id="first_name"
                         value={formData.first_name}
                         onChange={handleChange}
-                        placeholder="Escribe tus nombres aquí..."
+                        placeholder="Escribe sus nombres aquí..."
                         required
                     />
 
@@ -131,7 +131,7 @@ export function InviteUser() {
                         id="last_name"
                         value={formData.last_name}
                         onChange={handleChange}
-                        placeholder="Escribe tus apellidos aquí..."
+                        placeholder="Escribe sus apellidos aquí..."
                         required
                     />
 
@@ -144,7 +144,7 @@ export function InviteUser() {
                         id="email"
                         value={formData.email}
                         onChange={handleChange}
-                        placeholder="Escribe tu correo electrónico aquí..."
+                        placeholder="Escribe su correo electrónico aquí..."
                         required
                     />
 
@@ -155,7 +155,7 @@ export function InviteUser() {
                         onSelect={setSelectedRoles}
                         onRemove={setSelectedRoles}
                         displayValue="nombre_rol"
-                        placeholder="Selecciona los roles"
+                        placeholder="Selecciona sus roles"
                         showArrow
                         closeOnSelect={false}
                         className="multi-select-dropdown"
