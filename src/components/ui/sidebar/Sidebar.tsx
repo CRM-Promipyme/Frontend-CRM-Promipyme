@@ -34,12 +34,13 @@ export const Sidebar: React.FC = () => {
     return (
         <div className="sidebar shadow-lg" style={{ width: collapsed ? "60px" : "250px" }}>
             {/* Logo */}
-            {!collapsed && (
-                <div className="logo" style={{ marginBottom: "35px" }}>
-                    <img src="/assets/logo_promipyme_white.png" alt="Logo" style={{ width: '235px' }} />
-                </div>
-            )}
-
+            <div className="logo" style={{ marginBottom: collapsed ? "0px" : "35px", justifyContent: collapsed ? "center" : "flex-start", border: collapsed ? "0.5px solid white" : "none" }}>
+                <img 
+                    src= {collapsed ? "/assets/promipyme_logo_sidebar.jpg" : "/assets/logo_promipyme_white.png"}
+                    alt="Logo" 
+                    style={{ width: collapsed ? '42px' : '235px' }} 
+                />
+            </div>
             {/* Links */}
             {sidebarItems.map((item, index) => (
                 <SidebarLink key={index} to={item.to} icon={item.icon}>
