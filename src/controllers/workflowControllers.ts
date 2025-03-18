@@ -21,6 +21,22 @@ export const fetchProcesses = async (processName?: string): Promise<Proceso[]> =
 };
 
 /**
+ * Fetches a single process from the backend.
+ * @param processId The ID of the process to fetch.
+ * @returns The fetched process data.
+ */
+export const fetchSingleProcess = async (processId: string): Promise<Proceso> => {
+    try {
+        const response = await api.get(`/workflows/procesos/list/?process_id=${processId}`);
+        return response.data.process;
+    }
+    catch (error) {
+        console.error("Error fetching single process:", error);
+        throw error;
+    }
+}
+
+/**
  * Creates a new workflow in the backend.
  * @param workflowData The data for the new workflow (JSON).
  * @returns The created workflow data.

@@ -65,3 +65,118 @@
     transform: scale(1.05);
     z-index: 200;
 }
+
+/* Tab layout */
+
+.tab-nav {
+    display: flex;
+    border-bottom: 2px solid #ddd;
+    gap: 10px;
+}
+
+.tab-item {
+    background: none;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.3s ease;
+}
+
+.tab-item i {
+    font-size: 18px;
+}
+
+.tab-item:hover {
+    color: #0056b3;
+}
+
+.tab-item.active {
+    font-weight: bold;
+    color: #0056b3;
+    border-bottom: 3px solid #0056b3;
+}
+
+.tab-content {
+    padding: 20px;
+    min-height: 150px;
+}
+
+/* Kanban */
+
+.kanban-board {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    overflow-x: scroll;
+    overflow-y: scroll;
+}
+
+.kanban-columns {
+    display: flex;
+    gap: 15px;
+}
+
+.kanban-column {
+    background: #f4f4f4;
+    padding: 15px;
+    border-radius: 5px;
+    min-width: 250px;
+    max-width: 300px;
+    flex: 1;
+    transition: background 0.2s ease-in-out, border 0.2s ease-in-out;
+}
+
+.empty-column {
+    min-height: 60px;
+    padding: 10px;
+    text-align: center;
+    color: #999;
+    background: rgba(0, 0, 0, 0.05);
+    border: 2px dashed rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    transition: background 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Highlight all columns when dragging */
+.highlight-drop {
+    background: rgba(0, 123, 255, 0.1) !important;
+    border: 2px dashed rgba(0, 123, 255, 0.5) !important;
+}
+
+.kanban-tasks {
+    display: flex;
+    flex-direction: column;
+    margin-top: 15px;
+    gap: 10px;
+}
+
+.kanban-task {
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: grab;
+    border: 1px solid #ccc;
+    transition: transform 0.2s ease-in-out;
+}
+
+.kanban-task:active {
+    cursor: grabbing;
+    transform: scale(1.05);
+}
+
+.column-title {
+    width: fit-content;
+    font-weight: 600;
+    padding: 5px;
+    border: 0.1px solid rgb(204, 204, 204);
+    border-radius: 5px;
+    color: white;
+}

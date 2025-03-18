@@ -1,7 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 import { WorkflowMenu } from '../pages/workflowPages/WorkflowMenu'
 import { CreateWorkflow } from '../pages/workflowPages/processes/CreateWorkflow'
-import { WorkflowBoardView } from '../pages/workflowPages/processes/WorkflowBoardView'
+import { WorkflowBoardView } from '../pages/workflowPages/processes/boardView/WorkflowBoardView'
 import { AdminRoutePermissions } from '../components/permissions/AdminRoutePermissions'
 import { WorkflowSelectionMenu } from '../pages/workflowPages/processes/WorkflowSelectionMenu'
 
