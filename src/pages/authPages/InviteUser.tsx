@@ -101,12 +101,12 @@ export function InviteUser() {
         // TODO: Re-visit styling for this form
         <SidebarLayout sidebarWidthPx={sidebarWidthPx}>
             <h1 className="page-title" style={{ marginBottom: '0px' }}>Invitar un Nuevo Usuario al Sistema</h1>
-            <div style={{ width: 'auto', maxWidth: '650px', padding: '40px', marginTop: '0px' }}>
+            <div className="invite-user-form-card card-body">
                 <p>Por favor, ingresa los datos del usuario que deseas invitar al sistema:</p>
 
                 <form
                     className="auth-login-form"
-                    style={{ textAlign: "left", lineHeight: '2' }}
+                    style={{ textAlign: "left", lineHeight: '2', width: '100%' }}
                     onSubmit={handleSubmit}
                 >
                     <label htmlFor="first_name">Nombres</label>

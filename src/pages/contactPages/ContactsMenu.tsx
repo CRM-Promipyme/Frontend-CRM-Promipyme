@@ -12,6 +12,12 @@ export function ContactsMenu() {
             description: "Ver y administrar los clientes registrados en la plataforma.",
             icon: "bi bi-people",
             url: "/contacts/list"
+        },
+        {
+            title: "Crear Contacto",
+            description: "Añadir un nuevo contacto al sistema.",
+            icon: "bi bi-person-plus",
+            url: "/contacts/create"
         }
     ]
 
