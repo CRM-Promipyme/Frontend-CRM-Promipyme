@@ -51,26 +51,49 @@ export const lowerColorOpacity = (color: string, opacity: number): string => {
 }
 
 export const showResponseErrors = (data: unknown, defaultMessage: string = "Ha ocurrido un error. Por favor, intenta más tarde.") => {
-    if (!data || typeof data !== 'object') {
+    // If the data is not an object, show the default message
+    if (!data || typeof data !== "object") {
         toast.error(defaultMessage);
         return;
     }
-    
+
     const typedData = data as Record<string, unknown>;
-    
-    // Check for specific errors array
-    if (typedData.errors && typeof typedData.errors === 'object') {
-        const errorMap = typedData.errors as Record<string, string[]>;
-        Object.values(errorMap).forEach((errorArray) => {
-            errorArray.forEach((errMsg) => toast.error(errMsg));
+    let errorsDisplayed = false;
+    const errorsList: string[] = []; // Collect errors before triggering toasts
+
+    // Recursive function to extract all nested errors
+    const extractErrors = (errors: Record<string, unknown>) => {
+        Object.values(errors).forEach((error) => {
+            if (Array.isArray(error)) {
+                error.forEach((errMsg) => {
+                    errorsList.push(errMsg);
+                });
+            } else if (typeof error === "object" && error !== null) {
+                extractErrors(error as Record<string, unknown>);
+            } else if (typeof error === "string") {
+                errorsList.push(error);
+            }
         });
-    } 
-    // Check for message string
-    else if (typedData.message && typeof typedData.message === 'string') {
+    };
+
+    // Extract errors from 'errors' field
+    if (typedData.errors && typeof typedData.errors === "object") {
+        extractErrors(typedData.errors as Record<string, unknown>);
+    }
+
+    // Show collected errors
+    if (errorsList.length > 0) {
+        errorsDisplayed = true;
+        errorsList.forEach((errorMsg) => toast.error(errorMsg));
+    }
+
+    // Show the general message if no specific errors were found
+    if (!errorsDisplayed && typedData.message && typeof typedData.message === "string") {
         toast.error(typedData.message);
-    } 
-    // Fallback error
-    else {
+    }
+
+    // Fallback message if absolutely nothing was displayed
+    if (!errorsDisplayed && !typedData.message) {
         toast.error(defaultMessage);
     }
-}
+};

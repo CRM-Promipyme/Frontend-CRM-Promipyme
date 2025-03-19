@@ -11,6 +11,7 @@ import { Spinner } from "../../components/ui/Spinner";
 import { UserActivity } from "../../types/activityTypes";
 import { Role, UserProfile } from "../../types/authTypes";
 import { useSidebarStore } from "../../stores/sidebarStore";
+import { showResponseErrors } from "../../utils/formatUtils";
 import { ActivityLog } from "../../components/ui/ActivityLog";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
 import { fetchUserActivities } from "../../controllers/activityControllers";
@@ -183,7 +184,11 @@ export function UserProfileView() {
                 }
             );
 
-            if (!response.ok) throw new Error("Error updating profile");
+            if (!response.ok) {
+                // Try extracting error response
+                const errorData = await response.json().catch(() => null);
+                throw { status: response.status, data: errorData };
+            }
 
             const updatedData = await response.json();
             setUserData(updatedData);
@@ -195,8 +200,11 @@ export function UserProfileView() {
                 authStore.updateRoles(updatedData.roles);
             }
         } catch (error) {
-            console.error("Error updating user data:", error);
-            toast.error("Hubo un error al actualizar el perfil.");
+            if (error.data) {
+                showResponseErrors(error.data); // Now correctly passing the API response
+            } else {
+                showResponseErrors("Hubo un error al actualizar el perfil.");
+            };
         } finally {
             setLoading(false);
         }
