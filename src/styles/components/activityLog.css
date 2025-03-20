@@ -2,6 +2,7 @@
 .activity-log {
     overflow-y: scroll;
     max-height: 275px;
+    width: 100% !important;
 }
 
 .activity-log-item {
@@ -9,6 +10,7 @@
     align-items: flex-start;
     padding: 10px 0;
     transition: background 0.2s ease-in-out;
+    width: 100% !important;
 }
 
 .activity-log-item:hover {
