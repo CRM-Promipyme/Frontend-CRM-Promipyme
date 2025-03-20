@@ -8,7 +8,7 @@ import { formatKey } from "../../utils/formatUtils";
 import Multiselect from "multiselect-react-dropdown";
 import { useAuthStore } from "../../stores/authStore";
 import { Spinner } from "../../components/ui/Spinner";
-import { UserActivity } from "../../types/activityTypes";
+import { Activity } from "../../types/activityTypes";
 import { Role, UserProfile } from "../../types/authTypes";
 import { useSidebarStore } from "../../stores/sidebarStore";
 import { showResponseErrors } from "../../utils/formatUtils";
@@ -33,7 +33,7 @@ export function UserProfileView() {
     const [profilePicture, setProfilePicture] = useState<string | null>(null);
     const [roles, setRoles] = useState<Role[]>([]);
     const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
-    const [userActivities, setUserActivities] = useState<UserActivity[]>([]);
+    const [userActivities, setUserActivities] = useState<Activity[]>([]);
 
     // Fetch roles al cargar el componente
     useEffect(() => {

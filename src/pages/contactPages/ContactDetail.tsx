@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import "../../styles/auth/profileViewStyles.css";
 import "../../styles/auth/contactDetailStyles.css";
@@ -16,7 +16,10 @@ import {
     DireccionesContacto,
 } from "../../types/contactTypes";
 import Multiselect from "multiselect-react-dropdown";
+import { Activity } from "../../types/activityTypes";
 import { formatCedula } from "../../utils/formatUtils";
+import { ActivityLog } from "../../components/ui/ActivityLog";
+import { fetchContactActivities } from "../../controllers/activityControllers";
 import { useContactData, useDropdownOptions } from "../../hooks/userControllerHooks";
 
 export function ContactDetail() {
@@ -36,6 +39,20 @@ export function ContactDetail() {
     const dropdownOptions = useDropdownOptions(accessToken);
     const [editMode, setEditMode] = useState<boolean>(false);
     const canEdit = authStore.isAdmin(); // Only admin users can edit
+    const [activities, setActivities] = useState<Activity[]>([]);
+
+    // Fetch contact activities on component mount
+    useEffect(() => {
+        const fetchActivities = async () => {
+            try {
+                const fetchedActivities = await fetchContactActivities(contact_id as string);
+                setActivities(fetchedActivities);
+            } catch (error) {
+                console.error("Error fetching contact activities:", error);
+            }
+        };
+        fetchActivities();
+    }, [contact_id]);
 
     // Handle input changes for basic info
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -225,6 +242,10 @@ export function ContactDetail() {
                 return;
             }
 
+            // Refetch activities to show the updated activity
+            const updatedActivities = await fetchContactActivities(contact_id as string);
+            setActivities(updatedActivities);
+
             toast.success("Contacto actualizado correctamente.");
             setEditMode(false);
         } catch (error) {
@@ -311,113 +332,6 @@ export function ContactDetail() {
                                                 disabled={!editMode}
                                             />
                                         </div>
-                                    </div>
-                                </motion.div>
-
-                                {/* Edit & Save Buttons */}
-                                {canEdit && (
-                                    <div className="user-profile-action-btns">
-                                        <button
-                                            type="button"
-                                            className="btn btn-outline-primary mt-3"
-                                            style={{ width: "25%" }}
-                                            onClick={toggleEditMode}
-                                        >
-                                            {editMode ? "Cancelar" : "Editar"}
-                                        </button>
-
-                                        {editMode && (
-                                            <button
-                                                type="submit"
-                                                className="btn btn-primary mt-3"
-                                                style={{ width: "25%" }}
-                                            >
-                                                Guardar
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="user-profile-form-col">
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ duration: 0.5 }}
-                                    className="card-body shadow"
-                                >
-                                    <h4 style={{ marginBottom: "25px" }}>
-                                        Información de Contacto
-                                    </h4>
-                                    {/* Phones */}
-                                    <div
-                                        className="user-profile-info"
-                                        style={{ flexDirection: "column" }}
-                                    >
-                                        {formData.telefonos.map((telefono, index) => (
-                                            <div key={index}>
-                                                <h5>Teléfono {index + 1}</h5>
-                                                <span className="separator-line"></span>
-                                                <div className="direccion-container">
-                                                    <div className="user-profile-info-item">
-                                                        <label>Número Teléfonico</label>
-                                                        <input
-                                                            type="text"
-                                                            className="form-control"
-                                                            value={telefono.numero_telefonico}
-                                                            onChange={(e) =>
-                                                                handlePhoneChange(
-                                                                    index,
-                                                                    "numero_telefonico",
-                                                                    e.target.value
-                                                                )
-                                                            }
-                                                            disabled={!editMode}
-                                                            style={{ marginBottom: "10px" }}
-                                                        />
-                                                    </div>
-                                                    <div className="user-profile-info-item">
-                                                        <label>Tipo de Teléfono</label>
-                                                        <Multiselect
-                                                            options={dropdownOptions.tipos_telefono}
-                                                            selectedValues={dropdownOptions.tipos_telefono.filter(
-                                                                (t) =>
-                                                                    t.id_tipo_telefono === telefono.id_tipo_telefono
-                                                            )}
-                                                            onSelect={(_selectedList, selectedItem: TipoTelefono) =>
-                                                                handlePhoneTypeSelect(index, selectedItem)
-                                                            }
-                                                            onRemove={() => { }}
-                                                            displayValue="tipo_telefono"
-                                                            placeholder="Selecciona tipo"
-                                                            showArrow
-                                                            singleSelect
-                                                            disable={!editMode}
-                                                            className="multi-select-dropdown"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                {formData.telefonos.length > 1 && editMode && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removePhone(index)}
-                                                        className="btn btn-danger btn-sm"
-                                                        style={{ marginBottom: "10px" }}
-                                                    >
-                                                        Eliminar Teléfono
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ))}
-                                        {editMode && (
-                                            <button
-                                                type="button"
-                                                onClick={addPhone}
-                                                className="btn btn-primary btn-sm"
-                                                style={{ marginTop: "10px" }}
-                                            >
-                                                Agregar Teléfono
-                                            </button>
-                                        )}
                                     </div>
                                 </motion.div>
                                 <motion.div
@@ -544,6 +458,118 @@ export function ContactDetail() {
                                         )}
                                     </div>
                                 </motion.div>
+
+                                {/* Edit & Save Buttons */}
+                                {canEdit && (
+                                    <div className="user-profile-action-btns">
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline-primary mt-3"
+                                            style={{ width: "25%" }}
+                                            onClick={toggleEditMode}
+                                        >
+                                            {editMode ? "Cancelar" : "Editar"}
+                                        </button>
+
+                                        {editMode && (
+                                            <button
+                                                type="submit"
+                                                className="btn btn-primary mt-3"
+                                                style={{ width: "25%" }}
+                                            >
+                                                Guardar
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="user-profile-form-col" style={{ height: "fit-content" }}>
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="card-body shadow"
+                                    style={{ height: "fit-content" }}
+                                >
+                                    <h4 style={{ marginBottom: "25px" }}>
+                                        Información de Contacto
+                                    </h4>
+                                    {/* Phones */}
+                                    <div
+                                        className="user-profile-info"
+                                        style={{ flexDirection: "column" }}
+                                    >
+                                        {formData.telefonos.map((telefono, index) => (
+                                            <div key={index}>
+                                                <h5>Teléfono {index + 1}</h5>
+                                                <span className="separator-line"></span>
+                                                <div className="direccion-container">
+                                                    <div className="user-profile-info-item">
+                                                        <label>Número Teléfonico</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            value={telefono.numero_telefonico}
+                                                            onChange={(e) =>
+                                                                handlePhoneChange(
+                                                                    index,
+                                                                    "numero_telefonico",
+                                                                    e.target.value
+                                                                )
+                                                            }
+                                                            disabled={!editMode}
+                                                            style={{ marginBottom: "10px" }}
+                                                        />
+                                                    </div>
+                                                    <div className="user-profile-info-item">
+                                                        <label>Tipo de Teléfono</label>
+                                                        <Multiselect
+                                                            options={dropdownOptions.tipos_telefono}
+                                                            selectedValues={dropdownOptions.tipos_telefono.filter(
+                                                                (t) =>
+                                                                    t.id_tipo_telefono === telefono.id_tipo_telefono
+                                                            )}
+                                                            onSelect={(_selectedList, selectedItem: TipoTelefono) =>
+                                                                handlePhoneTypeSelect(index, selectedItem)
+                                                            }
+                                                            onRemove={() => { }}
+                                                            displayValue="tipo_telefono"
+                                                            placeholder="Selecciona tipo"
+                                                            showArrow
+                                                            singleSelect
+                                                            disable={!editMode}
+                                                            className="multi-select-dropdown"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                {formData.telefonos.length > 1 && editMode && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removePhone(index)}
+                                                        className="btn btn-danger btn-sm"
+                                                        style={{ marginBottom: "10px" }}
+                                                    >
+                                                        Eliminar Teléfono
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {editMode && (
+                                            <button
+                                                type="button"
+                                                onClick={addPhone}
+                                                className="btn btn-primary btn-sm"
+                                                style={{ marginTop: "10px" }}
+                                            >
+                                                Agregar Teléfono
+                                            </button>
+                                        )}
+                                    </div>
+                                </motion.div>
+                                {/* Historial de actividades */}
+                                <div className="card-body shadow">
+                                    <ActivityLog activities={activities} />
+                                </div>
                             </div>
                         </motion.form>
                     )

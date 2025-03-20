@@ -1,9 +1,9 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import '../../styles/components/activityLog.css';
-import { UserActivity } from "../../types/activityTypes";
+import { Activity } from "../../types/activityTypes";
 
-export function ActivityLog({ activities }: { activities: UserActivity[] }) {
+export function ActivityLog({ activities }: { activities: Activity[] }) {
     return (
         <>
             <h4 className="mb-3">
