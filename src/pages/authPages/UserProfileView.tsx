@@ -192,9 +192,14 @@ export function UserProfileView() {
 
             const updatedData = await response.json();
             setUserData(updatedData);
-            toast.success("Perfil actualizado correctamente.");
+            
+            // Re-fetch user activities to update the log
+            const activities = await fetchUserActivities(userId as string);
+            setUserActivities(activities);
+            
             setEditMode(false);
-
+            toast.success("Perfil actualizado correctamente.");
+            
             // Update authStore roles if the user is updating their own profile
             if (userId && authStore.userId === parseInt(userId)) {
                 authStore.updateRoles(updatedData.roles);
