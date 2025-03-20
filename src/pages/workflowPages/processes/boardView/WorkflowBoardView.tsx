@@ -7,6 +7,7 @@ import { Proceso } from "../../../../types/workflowTypes";
 import { Spinner } from "../../../../components/ui/Spinner";
 import { useSidebarStore } from "../../../../stores/sidebarStore";
 import { WorkflowKanban } from "./tabs/kanbanBoard/WorkflowKanban";
+import { RecentWorkflowActivity } from "./tabs/RecentWorkflowActivity";
 import { SidebarLayout } from "../../../../components/layouts/SidebarLayout";
 import { fetchSingleProcess } from "../../../../controllers/workflowControllers";
 
@@ -65,7 +66,7 @@ export function WorkflowBoardView() {
     const tabs = [
         { id: "workflow-kanban-tab", label: "Flujo de Trabajo", icon: "bi bi-kanban", component: <WorkflowKanban process={process} /> },
         { id: "case-list-tab", label: "Lista de Casos", icon: "bi bi-list-ul", component: <div><h2>Test tab</h2><p>This is just to view how the tab change would look</p></div> },
-        { id: "activity-log-tab", label: "Actividad Reciente", icon: "bi bi-list-ul", component: <div><h2>Test tab</h2><p>This is just to view how the tab change would look</p></div> },
+        { id: "activity-log-tab", label: "Actividad Reciente", icon: "bi bi-list-ul", component: <RecentWorkflowActivity process={process} /> },
         { id: "settings-tab", label: "Configuración", icon: "bi bi-gear", component: <div><h2>Test tab</h2><p>This is just to view how the tab change would look</p></div> }
     ];
     // TODO: FInish the rest of the tabs

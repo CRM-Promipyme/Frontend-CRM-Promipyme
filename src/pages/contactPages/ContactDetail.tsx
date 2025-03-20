@@ -19,7 +19,7 @@ import Multiselect from "multiselect-react-dropdown";
 import { Activity } from "../../types/activityTypes";
 import { formatCedula } from "../../utils/formatUtils";
 import { ActivityLog } from "../../components/ui/ActivityLog";
-import { fetchContactActivities } from "../../controllers/activityControllers";
+import { fetchEntityActivities } from "../../controllers/activityControllers";
 import { useContactData, useDropdownOptions } from "../../hooks/userControllerHooks";
 
 export function ContactDetail() {
@@ -45,7 +45,7 @@ export function ContactDetail() {
     useEffect(() => {
         const fetchActivities = async () => {
             try {
-                const fetchedActivities = await fetchContactActivities(contact_id as string);
+                const fetchedActivities = await fetchEntityActivities('contact', contact_id as string);
                 setActivities(fetchedActivities);
             } catch (error) {
                 console.error("Error fetching contact activities:", error);
@@ -243,7 +243,7 @@ export function ContactDetail() {
             }
 
             // Refetch activities to show the updated activity
-            const updatedActivities = await fetchContactActivities(contact_id as string);
+            const updatedActivities = await fetchEntityActivities('contact', contact_id as string);
             setActivities(updatedActivities);
 
             toast.success("Contacto actualizado correctamente.");

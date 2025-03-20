@@ -14,7 +14,7 @@ import { useSidebarStore } from "../../stores/sidebarStore";
 import { showResponseErrors } from "../../utils/formatUtils";
 import { ActivityLog } from "../../components/ui/ActivityLog";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
-import { fetchUserActivities } from "../../controllers/activityControllers";
+import { fetchEntityActivities } from "../../controllers/activityControllers";
 
 export function UserProfileView() {
     // Estados Globales
@@ -57,7 +57,7 @@ export function UserProfileView() {
 
         const loadUserActivities = async () => {
             try {
-                const activities = await fetchUserActivities(userId as string);
+                const activities = await fetchEntityActivities('user', userId as string);
                 setUserActivities(activities);
             } catch (error) {
                 console.error("Error fetching user activities:", error);
@@ -194,7 +194,7 @@ export function UserProfileView() {
             setUserData(updatedData);
             
             // Re-fetch user activities to update the log
-            const activities = await fetchUserActivities(userId as string);
+            const activities = await fetchEntityActivities('user', userId as string);
             setUserActivities(activities);
             
             setEditMode(false);
