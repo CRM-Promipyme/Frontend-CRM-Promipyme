@@ -103,26 +103,31 @@ export function WorkflowSelectionMenu() {
                     </Link>
                 </div>
             </div>
-            
-            <div className="processes-container" style={{ marginLeft: '30px', marginRight: '30px', marginTop: '60px' }}>
-                {processes.map((process) => (
-                    <div key={process.id_proceso} className="workflow-card card-body" style={{ backgroundColor: lowerColorOpacity(process.color, 0.16), marginTop: '0px' }}>
-                        <Link to={`/workflows/board-view/${process.id_proceso}`} style={{ textDecoration: 'none' }}>
-                            <span style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                                <span className="badge workflow-badge-bg" style={{ backgroundColor: `${process.color}` }}>{process.nombre_proceso}</span>
-                                <p style={{ color: process.color }}>{process.etapas.length}</p>
-                            </span>
-                            <div className={"workflow-steps-container"}>
-                                {process.etapas.map((step) => (
-                                    <span key={step.id_etapa} className="badge step-badge-bg" style={{ backgroundColor: lowerColorOpacity(process.color, 0.75) }}>
-                                        {step.orden_etapa} - {step.nombre_etapa}
-                                    </span>
-                                ))}
-                            </div>
-                        </Link>
-                    </div>
-                ))}
-            </div>
+            {processes.length === 0 ? (
+                <div className="alert alert-warning" role="alert">
+                    No se encontraron procesos registrados en el sistema.
+                </div>
+            ): (
+                <div className="processes-container" style={{ marginLeft: '30px', marginRight: '30px', marginTop: '60px' }}>
+                    {processes.map((process) => (
+                        <div key={process.id_proceso} className="workflow-card card-body" style={{ backgroundColor: lowerColorOpacity(process.color, 0.16), marginTop: '0px' }}>
+                            <Link to={`/workflows/board-view/${process.id_proceso}`} style={{ textDecoration: 'none' }}>
+                                <span style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                                    <span className="badge workflow-badge-bg" style={{ backgroundColor: `${process.color}` }}>{process.nombre_proceso}</span>
+                                    <p style={{ color: process.color }}>{process.etapas.length}</p>
+                                </span>
+                                <div className={"workflow-steps-container"}>
+                                    {process.etapas.map((step) => (
+                                        <span key={step.id_etapa} className="badge step-badge-bg" style={{ backgroundColor: lowerColorOpacity(process.color, 0.75) }}>
+                                            {step.orden_etapa} - {step.nombre_etapa}
+                                        </span>
+                                    ))}
+                                </div>
+                            </Link>
+                        </div>
+                    ))}
+                </div>
+            )}
         </SidebarLayout>
     );
 }
