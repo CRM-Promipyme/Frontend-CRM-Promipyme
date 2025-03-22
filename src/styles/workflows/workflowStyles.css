@@ -102,8 +102,9 @@
 }
 
 .tab-content {
-    padding: 20px;
+    /* padding: 20px; */
     min-height: 150px;
+    height: fit-content;
 }
 
 /* Kanban */
@@ -112,23 +113,24 @@
     display: flex;
     gap: 20px;
     width: 100%;
+    height: 80vh;
     overflow-x: scroll;
     overflow-y: scroll;
 }
 
 .kanban-columns {
     display: flex;
-    gap: 15px;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 1rem;
 }
 
 .kanban-column {
     background: #f4f4f4;
-    padding: 15px;
-    border-radius: 5px;
-    min-width: 250px;
-    max-width: 300px;
+    min-width: 300px;
+    max-width: 450px;
     flex: 1;
-    transition: background 0.2s ease-in-out, border 0.2s ease-in-out;
+    transition: all 0.2s ease-in-out, all 0.2s ease-in-out;
 }
 
 .empty-column {
@@ -145,6 +147,24 @@
     justify-content: center;
 }
 
+.column-title {
+    width: 100%;
+    font-weight: 550;
+    padding: 10px;
+    color: white;
+    border-radius: 8px 8px 0px 0px;
+    font-size: 1.35rem;
+}
+
+.kanban-board-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 25px;
+    border-bottom: 1px solid #ddd;
+    padding: 20px;
+}
+
 /* Highlight all columns when dragging */
 .highlight-drop {
     background: rgba(0, 123, 255, 0.1) !important;
@@ -154,8 +174,8 @@
 .kanban-tasks {
     display: flex;
     flex-direction: column;
-    margin-top: 15px;
     gap: 10px;
+    padding: 10px;
 }
 
 .kanban-task {
@@ -170,13 +190,4 @@
 .kanban-task:active {
     cursor: grabbing;
     transform: scale(1.05);
-}
-
-.column-title {
-    width: fit-content;
-    font-weight: 600;
-    padding: 5px;
-    border: 0.1px solid rgb(204, 204, 204);
-    border-radius: 5px;
-    color: white;
 }

@@ -115,25 +115,34 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     }, [process]);
 
     return (
-        <div className="kanban-board">
-            <DndContext
-                sensors={sensors}
-                collisionDetection={closestCorners}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-            >
-                <div className="kanban-columns">
-                    <SortableContext items={columnIds}>
-                        {columns.map((column) => (
-                            <KanbanColumn key={column.id} column={column} isDragging={isDragging} color={color}/>
-                        ))}
-                    </SortableContext>
-                </div>
+        <>
+            <div className="kanban-board-controls">
+                <input type="text" className="form-control" placeholder="Buscar Caso" style={{ maxWidth: '400px' }}/>
+                <button className="btn btn-primary">
+                    <i className="bi bi-plus-lg" style={{ marginRight: '5px' }}></i>
+                    Crear un Caso
+                </button>
+            </div>
+            <div className="kanban-board">
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCorners}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                >
+                    <div className="kanban-columns">
+                        <SortableContext items={columnIds}>
+                            {columns.map((column) => (
+                                <KanbanColumn key={column.id} column={column} isDragging={isDragging} color={color}/>
+                            ))}
+                        </SortableContext>
+                    </div>
 
-                <DragOverlay>
-                    {activeTask ? <KanbanTask task={activeTask} columnId="" isOverlay /> : null}
-                </DragOverlay>
-            </DndContext>
-        </div>
+                    <DragOverlay>
+                        {activeTask ? <KanbanTask task={activeTask} columnId="" isOverlay /> : null}
+                    </DragOverlay>
+                </DndContext>
+            </div>
+        </>
     );
 }

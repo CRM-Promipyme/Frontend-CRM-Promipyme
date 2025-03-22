@@ -5,7 +5,6 @@ html, body {
 }
 
 :root {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -22,6 +21,10 @@ html, body {
 #root {
   width: 100%;
 }
+
+/* html, body, button, input, textarea, select, #root {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+} */
 
 a {
   font-weight: 500;
