@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useState, useMemo, useEffect } from "react";
 import {
     DndContext,
@@ -118,10 +119,14 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         <>
             <div className="kanban-board-controls">
                 <input type="text" className="form-control" placeholder="Buscar Caso" style={{ maxWidth: '400px' }}/>
-                <button className="btn btn-primary">
-                    <i className="bi bi-plus-lg" style={{ marginRight: '5px' }}></i>
-                    Crear un Caso
-                </button>
+                {process && (
+                    <Link to={`/workflows/cases/create/${process.id_proceso}`}>
+                        <button className="btn btn-primary">
+                            <i className="bi bi-plus-lg" style={{ marginRight: '5px' }}></i>
+                            Crear un Caso
+                        </button>
+                    </Link>
+                )}
             </div>
             <div className="kanban-board">
                 <DndContext

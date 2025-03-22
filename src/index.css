@@ -26,6 +26,22 @@ html, body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
 } */
 
+/* Removes increment on number fields */
+
+/* Chrome, Safari, Edge, Opera */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none; /* Standardized */
+    margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+    -moz-appearance: textfield; /* Still needed for older Firefox */
+    appearance: textfield;      /* Modern, standard */
+}
+
 a {
   font-weight: 500;
   color: #646cff;

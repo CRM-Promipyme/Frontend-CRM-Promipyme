@@ -22,15 +22,18 @@
     "date-fns": "^4.1.0",
     "font-awesome": "^4.7.0",
     "framer-motion": "^12.1.0",
+    "lodash.debounce": "^4.0.8",
     "multiselect-react-dropdown": "^2.0.25",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.1.4",
+    "react-select": "^5.10.1",
     "react-toastify": "^11.0.3",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^22.13.1",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",

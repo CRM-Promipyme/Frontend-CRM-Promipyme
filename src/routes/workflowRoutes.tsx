@@ -1,9 +1,10 @@
 import { Route, Routes } from 'react-router-dom'
 import { WorkflowMenu } from '../pages/workflowPages/WorkflowMenu'
+import { CreateCase } from '../pages/workflowPages/cases/CreateCase'
 import { CreateWorkflow } from '../pages/workflowPages/processes/CreateWorkflow'
-import { WorkflowBoardView } from '../pages/workflowPages/processes/boardView/WorkflowBoardView'
 import { AdminRoutePermissions } from '../components/permissions/AdminRoutePermissions'
 import { WorkflowSelectionMenu } from '../pages/workflowPages/processes/WorkflowSelectionMenu'
+import { WorkflowBoardView } from '../pages/workflowPages/processes/boardView/WorkflowBoardView'
 
 export function WorkflowRoutes() {
     const publicWorkflowRoutes = [
@@ -16,6 +17,7 @@ export function WorkflowRoutes() {
     const fallbackUrl = "/workflows/processes/menu";
     const privateWorkflowRoutes = [
         {path: "/processes/create", comp: CreateWorkflow},
+        {path: "/cases/create/:workflowId", comp: CreateCase},
     ]
 
     return (

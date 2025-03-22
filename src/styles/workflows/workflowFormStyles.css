@@ -1,5 +1,5 @@
 .workflow-form-card {
-    max-width: fit-content !important;
+    max-width: fit-content;
     box-shadow: #0000001a 0px 4px 12px;
     border: 0.1px solid rgb(204, 204, 204);
     margin-top: 5%;
@@ -7,4 +7,16 @@
 
 .workflow-form-card.form-group {
     margin-bottom: 120px;
+}
+
+.case-creation-content {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    gap: 25px;
+    justify-content: center;
+}
+
+.case-creation-content .workflow-form-card {
+    max-width: 60%;
 }
