@@ -142,6 +142,8 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         }
     };
 
+    // TODO: Perform action when dragging to other column, allow accessing the case details
+    // TODO: Filter cases by name and select columns to show
     return (
         <>
             <div className="kanban-board-controls">
