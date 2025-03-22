@@ -6,8 +6,8 @@ import { Activity } from "../../types/activityTypes";
 export function ActivityLog({ activities }: { activities: Activity[] }) {
     return (
         <>
-            <h4 className="mb-3">
-                <i className="bi bi-clock-history" style={{ marginRight: '10px' }}></i>
+            <h4 className="h4-header">
+                <i className="bi bi-clock-history"   style={{ marginRight: '10px', fontSize: '1.5rem', filter: 'drop-shadow(0 0 0.5px black)' }}></i>
                 Actividad Reciente
             </h4>
             <div className="activity-log">
