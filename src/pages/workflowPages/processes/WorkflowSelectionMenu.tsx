@@ -108,7 +108,7 @@ export function WorkflowSelectionMenu() {
                     No se encontraron procesos registrados en el sistema.
                 </div>
             ): (
-                <div className="processes-container" style={{ marginLeft: '30px', marginRight: '30px', marginTop: '60px' }}>
+                <div className="processes-container" style={{ marginLeft: '30px', marginRight: '30px', marginTop: '30px' }}>
                     {processes.map((process) => (
                         <div key={process.id_proceso} className="workflow-card card-body" style={{ marginTop: '0px', padding: '0px' }}>
                             <Link to={`/workflows/board-view/${process.id_proceso}`} style={{ textDecoration: 'none', width: '400px' }}>
