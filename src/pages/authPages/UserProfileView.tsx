@@ -300,6 +300,7 @@ export function UserProfileView() {
                                             initial={{ opacity: 0, y: -10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ duration: 0.3 }}
+                                            style={{ width: "100%" }}
                                         >
                                             <div className="user-profile-info" style={{ marginBottom: '25px'}}>
                                                 <div className="user-profile-col">
@@ -401,6 +402,7 @@ export function UserProfileView() {
                                             initial={{ opacity: 0, y: -10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ duration: 0.3 }}
+                                            style={{ width: "100%" }}
                                         >
                                             {/* Información del Perfil */}
                                             <div className="user-profile-info">
