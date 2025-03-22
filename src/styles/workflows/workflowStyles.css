@@ -127,8 +127,8 @@
 
 .kanban-column {
     background: #f4f4f4;
-    min-width: 300px;
-    max-width: 450px;
+    min-width: 400px;
+    max-width: 550px;
     flex: 1;
     transition: all 0.2s ease-in-out, all 0.2s ease-in-out;
     display: flex;
@@ -180,19 +180,91 @@
     gap: 10px;
     padding: 10px;
     flex-grow: 1;
-    min-height: 100px; 
+    min-height: 100px;
+    overflow-y: scroll;
 }
 
 .kanban-task {
     background: white;
-    padding: 10px;
+    padding: 15px;
     border-radius: 5px;
     cursor: grab;
     border: 1px solid #ccc;
     transition: transform 0.2s ease-in-out;
+    user-select: none;
 }
 
 .kanban-task:active {
     cursor: grabbing;
     transform: scale(1.05);
+}
+
+.case-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.case-status-badge {
+    padding: 5px;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.case-status-badge.case-open {
+    background-color: #EBFCF4;
+    color: #0F7E5E;
+}
+
+.case-status-badge.case-closed {
+    background-color: #FCEBEB;
+    color: #E00B0B;
+}
+
+.case-contact-information {
+    display: flex;
+    flex-direction: row;
+    margin-top: 10px;
+    gap: 5px;
+    margin-bottom: 10px;
+    color: #71717A;
+}
+
+.case-dates { 
+    display: flex;
+    flex-direction: row;
+    gap: 25px;
+    margin-bottom: 10px;
+}
+
+.case-date .date-item {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+    color: #71717A;
+    font-size: 15px;
+}
+
+.date-item p {
+    margin-bottom: 0px;
+}
+
+.case-date .date-label {
+    margin-bottom: 0px;
+    color: #71717A;
+    font-weight: 500;
+}
+
+.case-value {
+    margin-bottom: 10px;
+}
+
+.case-value p {
+    margin-bottom: 0px;
+    color: #71717A;
+}
+
+.item-value {
+    font-weight: 550 !important;
+    color: black
 }

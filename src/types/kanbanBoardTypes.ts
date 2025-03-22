@@ -1,14 +1,10 @@
-import { Proceso } from "./workflowTypes";
-
-export interface Task {
-    id: string;
-    title: string;
-}
+import { Proceso, Caso } from "./workflowTypes";
 
 export interface Column {
     id: string;
     title: string;
-    tasks: Task[];
+    cases: Caso[];
+    nextPageUrl?: string | null;
 }
 
 export interface WorkflowKanbanProps {
@@ -19,14 +15,16 @@ export interface KanbanColumnProps {
     column: {
         id: string;
         title: string;
-        tasks: { id: string; title: string }[];
+        cases: Caso[];
+        nextPageUrl?: string | null;
     };
     isDragging: boolean;
     color: string;
+    onLoadMore?: (columnId: string) => void;
 }
 
 export interface KanbanTaskProps {
-    task: { id: string; title: string };
+    case: Caso;
     columnId: string;
     isOverlay?: boolean; // This is to detect if the task is being dragged
 }

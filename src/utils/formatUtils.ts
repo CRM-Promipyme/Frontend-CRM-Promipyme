@@ -97,3 +97,15 @@ export const showResponseErrors = (data: unknown, defaultMessage: string = "Ha o
         toast.error(defaultMessage);
     }
 };
+
+export const daysLeft = (date: Date) => {
+    // Calculate the number of days left until a given date
+    const now = new Date();
+    const diff = date.getTime() - now.getTime();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+export const formatNumber = (num: number) => {
+    // Format a number with commas
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}

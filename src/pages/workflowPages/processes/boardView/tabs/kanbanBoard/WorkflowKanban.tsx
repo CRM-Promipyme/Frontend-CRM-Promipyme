@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import api from "../../../../../../controllers/api";
 import { useState, useMemo, useEffect } from "react";
 import {
     DndContext,
@@ -13,12 +14,15 @@ import {
 } from "@dnd-kit/core";
 import { KanbanTask } from "./KanbanTask";
 import { KanbanColumn } from "./KanbanColumn";
-import { Column, Task, WorkflowKanbanProps } from "../../../../../../types/kanbanBoardTypes";
+import { Caso } from "../../../../../../types/workflowTypes";
+import { Spinner } from "../../../../../../components/ui/Spinner";
+import { fetchStageCases } from "../../../../../../controllers/caseControllers";
 import { SortableContext, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { Column, WorkflowKanbanProps } from "../../../../../../types/kanbanBoardTypes";
 
 export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     // Local States
-    const [activeTask, setActiveTask] = useState<Task | null>(null);
+    const [activeTask, setActiveTask] = useState<Caso | null>(null);
     const [isDragging, setIsDragging] = useState(false); // Track drag state
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -26,6 +30,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     );
     const [columns, setColumns] = useState<Column[]>([]);
     const [color, setColor] = useState<string>("#000000");
+    const [loading, setLoading] = useState(true);
 
     const columnIds = useMemo(() => columns.map(col => col.id), [columns]);
 
@@ -33,10 +38,10 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         const { active } = event;
         setIsDragging(true);
 
-        const sourceColumn = columns.find(col => col.tasks.some(task => task.id === active.id));
+        const sourceColumn = columns.find(col => col.cases.some(caso => caso.id_caso === active.id));
         if (sourceColumn) {
-            const task = sourceColumn.tasks.find(task => task.id === active.id);
-            setActiveTask(task || null);
+            const found = sourceColumn.cases.find(caso => caso.id_caso === active.id);
+            setActiveTask(found || null);
         }
     };
 
@@ -65,13 +70,12 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
             if (!sourceColumn || !targetColumn) return prevColumns;
 
             // Find the task index in the source column
-            const taskIndex = sourceColumn.tasks.findIndex(task => task.id === active.id);
+            const taskIndex = sourceColumn.cases.findIndex(caso => caso.id_caso === active.id);
             if (taskIndex === -1) return prevColumns;
 
-            // Move the task to the target column
-            const movedTask = sourceColumn.tasks[taskIndex];
-            sourceColumn.tasks.splice(taskIndex, 1);
-            targetColumn.tasks = [...targetColumn.tasks, movedTask];
+            const moved = sourceColumn.cases[taskIndex];
+            sourceColumn.cases.splice(taskIndex, 1);
+            targetColumn.cases = [...targetColumn.cases, moved];
 
             return [...prevColumns];
         });
@@ -79,41 +83,64 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
 
     // Component mount
     useEffect(() => {
-        // Set process color
         setColor(process.color);
-
-        // Set columns with the process' stages
+    
         if (process.etapas) {
-            const newColumns = process.etapas.map((etapa) => ({
+            const initialColumns = process.etapas.map((etapa) => ({
                 id: etapa.id_etapa.toString(),
                 title: etapa.nombre_etapa,
-                tasks: [],
+                cases: [],
+                nextPageUrl: null,
             }));
-            setColumns(newColumns);
-        }
-
-        // Set test tasks to test the drag and drop functionality
-        setColumns((prevColumns) => {
-            // add to first column
-            const newColumns = prevColumns.map((col, index) => {
-                if (index === 0) {
-                    return {
-                        ...col,
-                        tasks: [
-                            ...col.tasks,
-                            { id: "1", title: "Task 1" },
-                            { id: "2", title: "Task 2" },
-                        ],
-                    };
-                }
-                return col;
+    
+            setColumns(initialColumns);
+    
+            // Fetch all stages in parallel
+            Promise.all(
+                process.etapas.map((etapa) =>
+                    fetchStageCases(process.id_proceso, etapa.id_etapa).then((result) => ({
+                        etapaId: etapa.id_etapa.toString(),
+                        data: result,
+                    }))
+                )
+            ).then((results) => {
+                setColumns((prev) =>
+                    prev.map((col) => {
+                        const res = results.find((r) => r.etapaId === col.id);
+                        return res && res.data
+                            ? { ...col, cases: res.data.results, nextPageUrl: res.data.next }
+                            : col;
+                    })
+                );
+            }).finally(() => {
+                setLoading(false);
             });
-
-            return newColumns;
-        });
-
-        // TODO: Set real cases as tasks
+        }
     }, [process]);
+
+    const onLoadMore = async (columnId: string) => {
+        const col = columns.find(c => c.id === columnId);
+        if (!col?.nextPageUrl) return;
+    
+        try {
+            const res = await api.get(col.nextPageUrl);
+            const data = await res.data;
+    
+            setColumns(prev =>
+                prev.map(c =>
+                    c.id === columnId
+                        ? {
+                            ...c,
+                            cases: [...c.cases, ...data.results],
+                            nextPageUrl: data.next,
+                        }
+                        : c
+                )
+            );
+        } catch (err) {
+            console.error("Error loading more cases:", err);
+        }
+    };
 
     return (
         <>
@@ -129,6 +156,11 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
                 )}
             </div>
             <div className="kanban-board">
+            {loading ? (
+                <div className="d-flex justify-content-center align-items-center" style={{ height: "70vh" }}>
+                    <Spinner />
+                </div>
+            ) : (
                 <DndContext
                     sensors={sensors}
                     collisionDetection={rectIntersection}
@@ -138,15 +170,22 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
                     <div className="kanban-columns">
                         <SortableContext items={columnIds}>
                             {columns.map((column) => (
-                                <KanbanColumn key={column.id} column={column} isDragging={isDragging} color={color}/>
+                                <KanbanColumn
+                                    key={column.id}
+                                    column={column}
+                                    isDragging={isDragging}
+                                    color={color}
+                                    onLoadMore={onLoadMore}
+                                />
                             ))}
                         </SortableContext>
                     </div>
 
                     <DragOverlay>
-                        {activeTask ? <KanbanTask task={activeTask} columnId="" isOverlay /> : null}
+                        {activeTask ? <KanbanTask case={activeTask} columnId="" isOverlay /> : null}
                     </DragOverlay>
                 </DndContext>
+            )}
             </div>
         </>
     );
