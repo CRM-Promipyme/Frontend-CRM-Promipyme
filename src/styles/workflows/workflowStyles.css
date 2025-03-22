@@ -131,6 +131,9 @@
     max-width: 450px;
     flex: 1;
     transition: all 0.2s ease-in-out, all 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .empty-column {
@@ -176,6 +179,8 @@
     flex-direction: column;
     gap: 10px;
     padding: 10px;
+    flex-grow: 1;
+    min-height: 100px; 
 }
 
 .kanban-task {

@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { useState, useMemo, useEffect } from "react";
 import {
     DndContext,
-    closestCorners,
     KeyboardSensor,
     PointerSensor,
     useSensor,
@@ -10,6 +9,7 @@ import {
     DragEndEvent,
     DragStartEvent,
     DragOverlay,
+    rectIntersection
 } from "@dnd-kit/core";
 import { KanbanTask } from "./KanbanTask";
 import { KanbanColumn } from "./KanbanColumn";
@@ -131,7 +131,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
             <div className="kanban-board">
                 <DndContext
                     sensors={sensors}
-                    collisionDetection={closestCorners}
+                    collisionDetection={rectIntersection}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                 >

@@ -8,10 +8,10 @@ export function KanbanColumn({ column, isDragging, color }: KanbanColumnProps) {
     const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
     return (
-        <div ref={setNodeRef} className={`kanban-column ${isOver || isDragging ? "highlight-drop" : ""}`}>
+        <div className={`kanban-column ${isOver || isDragging ? "highlight-drop" : ""}`}>
             <h3 className="column-title" style={{ backgroundColor: color }}>{column.title}</h3>
             <SortableContext items={column.tasks.map(task => task.id)} strategy={verticalListSortingStrategy}>
-                <div className="kanban-tasks">
+                <div ref={setNodeRef} className="kanban-tasks">
                     {column.tasks.length > 0 ? (
                         column.tasks.map((task) => (
                             <KanbanTask key={task.id} task={task} columnId={column.id} />
