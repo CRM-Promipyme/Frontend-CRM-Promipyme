@@ -116,7 +116,8 @@ export function WorkflowSelectionMenu() {
                                     <p style={{ color: process.color }}>{process.nombre_proceso}</p>
                                     <p style={{ color: process.color }}>{process.etapas.length}</p>
                                 </span>
-                                <span className="status-badge" style={{ marginLeft: '10px' }}>Activo</span>
+                                {/* TODO: Status shouldn't be hardcoded */}
+                                <span className="status-badge" style={{ marginLeft: '10px' }}>Activo</span> 
                                 <div className={"workflow-steps-container"}>
                                     {process.etapas.map((step) => (
                                         <span key={step.id_etapa} className="badge step-badge-bg">
