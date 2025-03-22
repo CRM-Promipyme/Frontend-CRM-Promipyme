@@ -1,5 +1,4 @@
 import { Route, Routes } from 'react-router-dom'
-import { WorkflowMenu } from '../pages/workflowPages/WorkflowMenu'
 import { CreateCase } from '../pages/workflowPages/cases/CreateCase'
 import { CreateWorkflow } from '../pages/workflowPages/processes/CreateWorkflow'
 import { AdminRoutePermissions } from '../components/permissions/AdminRoutePermissions'
@@ -8,7 +7,6 @@ import { WorkflowBoardView } from '../pages/workflowPages/processes/boardView/Wo
 
 export function WorkflowRoutes() {
     const publicWorkflowRoutes = [
-        {path: "/menu", comp: WorkflowMenu},
         {path: "/processes/menu", comp: WorkflowSelectionMenu},
         {path: "/processes/create", comp: CreateWorkflow},
         {path: "/board-view/:workflowId", comp: WorkflowBoardView},

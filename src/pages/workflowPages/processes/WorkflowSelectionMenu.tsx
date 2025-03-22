@@ -110,15 +110,16 @@ export function WorkflowSelectionMenu() {
             ): (
                 <div className="processes-container" style={{ marginLeft: '30px', marginRight: '30px', marginTop: '60px' }}>
                     {processes.map((process) => (
-                        <div key={process.id_proceso} className="workflow-card card-body" style={{ backgroundColor: lowerColorOpacity(process.color, 0.16), marginTop: '0px' }}>
-                            <Link to={`/workflows/board-view/${process.id_proceso}`} style={{ textDecoration: 'none' }}>
-                                <span style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                                    <span className="badge workflow-badge-bg" style={{ backgroundColor: `${process.color}` }}>{process.nombre_proceso}</span>
+                        <div key={process.id_proceso} className="workflow-card card-body" style={{ marginTop: '0px', padding: '0px' }}>
+                            <Link to={`/workflows/board-view/${process.id_proceso}`} style={{ textDecoration: 'none', width: '400px' }}>
+                                <span className="badge workflow-badge-bg" style={{ backgroundColor: lowerColorOpacity(process.color, 0.2), width: '100%' }}>
+                                    <p style={{ color: process.color }}>{process.nombre_proceso}</p>
                                     <p style={{ color: process.color }}>{process.etapas.length}</p>
                                 </span>
+                                <span className="status-badge" style={{ marginLeft: '10px' }}>Activo</span>
                                 <div className={"workflow-steps-container"}>
                                     {process.etapas.map((step) => (
-                                        <span key={step.id_etapa} className="badge step-badge-bg" style={{ backgroundColor: lowerColorOpacity(process.color, 0.75) }}>
+                                        <span key={step.id_etapa} className="badge step-badge-bg">
                                             {step.orden_etapa} - {step.nombre_etapa}
                                         </span>
                                     ))}

@@ -19,7 +19,8 @@
     box-shadow: #0000001a 0px 4px 12px;
     margin-left: unset;
     margin-right: unset;
-    max-width: 400px;
+    max-width: 500px;
+    width: 400px;
     border: 0.1px solid rgb(204, 204, 204);
 }
 
@@ -32,11 +33,29 @@
 }
 
 .workflow-badge-bg {
+    display: flex !important;
+    flex-direction: row;
     font-size: 20px !important;
     background-color: #EBEBFB;
-    font-weight: 450 !important;
-    color: white !important;
-    margin-bottom: 10px;
+    color: white;
+    margin-bottom: 15px !important;
+    justify-content: space-between;
+    padding: 15px !important;
+    border-radius: 8px 8px 0px 0px !important;
+}
+
+.workflow-badge-bg p {
+    margin-bottom: 0px;
+    font-weight: 650 !important;
+}
+
+.workflow-card .status-badge {
+    background-color: #d1fae5; /* soft green */
+    color: #065f46;           /* dark green text */
+    font-weight: 600;         /* semibold */
+    font-size: 1.125rem;      /* ~18px (text-lg) */
+    padding: 0.25rem 1rem;    /* vertical, horizontal */
+    border-radius: 9999px;    /* fully rounded */
 }
 
 .workflow-steps-container {
@@ -44,14 +63,17 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
-    margin-top: 10px;
+    margin-top: 0px;
+    padding: 15px;
 }
 
-.step-badge-bg {
-    font-size: 14px !important;
-    background-color: #EBEBFB;
-    font-weight: 400 !important;
-    color: white !important;
+.workflow-steps-container .step-badge-bg {
+    font-size: 16.5px;
+    background-color: #f3f3f3ef;
+    font-weight: 400;
+    color: black;
+    width: 100%;
+    text-align: left;
 }
 
 /* Hover effect for workflow-cards */
