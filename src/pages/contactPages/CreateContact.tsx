@@ -1,10 +1,10 @@
+import Select from "react-select";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import "../../styles/auth/contactDetailStyles.css";
 import { Contact } from "../../types/contactTypes";
-import Multiselect from "multiselect-react-dropdown";
 import { Spinner } from "../../components/ui/Spinner";
 import { useAuthStore } from "../../stores/authStore";
 import { useSidebarStore } from "../../stores/sidebarStore";
@@ -270,20 +270,21 @@ export function CreateContact() {
                                         </div>
                                         <div className="user-profile-info-item mb-2">
                                             <label>Tipo de Teléfono</label>
-                                            <Multiselect
+                                            <Select
                                                 options={dropdownOptions.tipos_telefono}
-                                                selectedValues={dropdownOptions.tipos_telefono.filter(
-                                                    (t) => t.id_tipo_telefono === telefono.id_tipo_telefono
-                                                )}
-                                                onSelect={(_selectedList, selectedItem: TipoTelefono) =>
-                                                    handlePhoneTypeSelect(index, selectedItem)
+                                                value={
+                                                    dropdownOptions.tipos_telefono.find(
+                                                        (t) => t.id_tipo_telefono === telefono.id_tipo_telefono
+                                                    ) || null
                                                 }
-                                                onRemove={() => { }}
-                                                displayValue="tipo_telefono"
+                                                getOptionLabel={(option: TipoTelefono) => option.tipo_telefono}
+                                                getOptionValue={(option: TipoTelefono) => String(option.id_tipo_telefono)}
+                                                onChange={(selected) => {
+                                                    if (selected) handlePhoneTypeSelect(index, selected as TipoTelefono);
+                                                }}
                                                 placeholder="Selecciona tipo"
-                                                showArrow
-                                                singleSelect
-                                                className="multi-select-dropdown"
+                                                className="react-select-container"
+                                                classNamePrefix="react-select"
                                             />
                                         </div>
                                     </div>
@@ -342,44 +343,42 @@ export function CreateContact() {
                                         </div>
                                         <div className="user-profile-info-item mb-2">
                                             <label>Provincia</label>
-                                            <Multiselect
+                                            <Select
                                                 options={dropdownOptions.provincias}
-                                                selectedValues={dropdownOptions.provincias.filter(
-                                                    (p) => p.id === direccion.id_provincia
-                                                )}
-                                                onSelect={(_selectedList, selectedItem: Provincia) =>
-                                                    handleProvinceSelect(index, selectedItem)
+                                                value={
+                                                    dropdownOptions.provincias.find(
+                                                        (p) => p.id === direccion.id_provincia
+                                                    ) || null
                                                 }
-                                                onRemove={() => { }}
-                                                displayValue="descripcion"
+                                                getOptionLabel={(option: Provincia) => option.descripcion}
+                                                getOptionValue={(option: Provincia) => String(option.id)}
+                                                onChange={(selected) => {
+                                                    if (selected) handleProvinceSelect(index, selected as Provincia);
+                                                }}
                                                 placeholder="Selecciona provincia"
-                                                showArrow
-                                                singleSelect
-                                                className="multi-select-dropdown"
+                                                className="react-select-container"
+                                                classNamePrefix="react-select"
                                             />
                                         </div>
                                         <div className="user-profile-info-item mb-2">
                                             <label>Ciudad</label>
-                                            <Multiselect
+                                            <Select
                                                 options={
-                                                    dropdownOptions.provincias.find(
-                                                        (p) => p.id === direccion.id_provincia
-                                                    )?.ciudades || []
+                                                    dropdownOptions.provincias.find((p) => p.id === direccion.id_provincia)?.ciudades || []
                                                 }
-                                                selectedValues={(
-                                                    dropdownOptions.provincias.find(
-                                                        (p) => p.id === direccion.id_provincia
-                                                    )?.ciudades || []
-                                                ).filter((c: Ciudad) => c.id === direccion.id_ciudad)}
-                                                onSelect={(_selectedList, selectedItem: Ciudad) =>
-                                                    handleCitySelect(index, selectedItem)
+                                                value={
+                                                    (
+                                                        dropdownOptions.provincias.find((p) => p.id === direccion.id_provincia)?.ciudades || []
+                                                    ).find((c): c is Ciudad => c.id === direccion.id_ciudad) || null
                                                 }
-                                                onRemove={() => { }}
-                                                displayValue="descripcion"
+                                                getOptionLabel={(option: Ciudad) => option.descripcion}
+                                                getOptionValue={(option: Ciudad) => String(option.id)}
+                                                onChange={(selected) => {
+                                                    if (selected) handleCitySelect(index, selected as Ciudad);
+                                                }}
                                                 placeholder="Selecciona ciudad"
-                                                showArrow
-                                                singleSelect
-                                                className="multi-select-dropdown"
+                                                className="react-select-container"
+                                                classNamePrefix="react-select"
                                             />
                                         </div>
                                     </div>

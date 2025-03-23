@@ -1,10 +1,10 @@
+import Select from "react-select";
 import { toast } from "react-toastify";
 import '../../styles/tableStyling.css';
 import { Link } from "react-router-dom";
 import { fetchRoles } from '../../utils/authUtils';
 import { useAuthStore } from "../../stores/authStore";
 import { Spinner } from "../../components/ui/Spinner";
-import { Multiselect } from "multiselect-react-dropdown";
 import { useSidebarStore } from "../../stores/sidebarStore";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { User, UserListResponse, Role } from "../../types/authTypes";
@@ -177,13 +177,16 @@ export function UserList() {
                     />
                 </div>
                 <div className="mb-3">
-                    <Multiselect
+                    <Select
+                        isMulti
                         options={roles}
-                        selectedValues={selectedRoles}
-                        onSelect={(selectedList) => setSelectedRoles(selectedList)}
-                        onRemove={(selectedList) => setSelectedRoles(selectedList)}
-                        displayValue="nombre_rol"
-                        placeholder="Filtrar por rol..."
+                        value={selectedRoles}
+                        onChange={(selected) => setSelectedRoles(selected as Role[])}
+                        getOptionLabel={(option: Role) => option.nombre_rol}
+                        getOptionValue={(option: Role) => String(option.id_rol)}
+                        placeholder="Selecciona los roles"
+                        className="react-select-container"
+                        classNamePrefix="react-select"
                     />
                 </div>
                 <div className="mb-3">

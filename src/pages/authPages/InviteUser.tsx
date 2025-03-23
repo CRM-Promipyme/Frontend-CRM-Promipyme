@@ -1,3 +1,4 @@
+import Select from 'react-select';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
@@ -5,7 +6,6 @@ import { Role } from '../../types/authTypes';
 import { fetchRoles } from '../../utils/authUtils';
 import { useAuthStore } from '../../stores/authStore';
 import { Spinner } from '../../components/ui/Spinner';
-import { Multiselect } from "multiselect-react-dropdown"; // Import the multiselect
 import { useSidebarStore } from '../../stores/sidebarStore';
 import { SidebarLayout } from '../../components/layouts/SidebarLayout';
 
@@ -149,18 +149,19 @@ export function InviteUser() {
                     />
 
                     <label htmlFor="roles">Roles del Usuario</label>
-                    <Multiselect
+                    <Select
+                        isMulti
                         options={roles}
-                        selectedValues={selectedRoles}
-                        onSelect={setSelectedRoles}
-                        onRemove={setSelectedRoles}
-                        displayValue="nombre_rol"
+                        value={selectedRoles}
+                        onChange={(selectedOptions) => {
+                            setSelectedRoles([...selectedOptions]);
+                        }}
+                        getOptionLabel={(option: Role) => option.nombre_rol}
+                        getOptionValue={(option: Role) => String(option.id_rol)}
                         placeholder="Selecciona sus roles"
-                        showArrow
-                        closeOnSelect={false}
-                        className="multi-select-dropdown"
+                        className="react-select-container"
+                        classNamePrefix="react-select"
                     />
-                    
                     <button
                         style={{
                             width: '100%',

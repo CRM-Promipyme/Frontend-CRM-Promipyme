@@ -1,3 +1,4 @@
+import Select from "react-select";
 import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -5,7 +6,6 @@ import '../../styles/auth/profileViewStyles.css';
 import { fetchRoles } from '../../utils/authUtils';
 import { formatKey } from "../../utils/formatUtils";
 import { Activity } from "../../types/activityTypes";
-import Multiselect from "multiselect-react-dropdown";
 import { useAuthStore } from "../../stores/authStore";
 import { Spinner } from "../../components/ui/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -205,7 +205,7 @@ export function UserProfileView() {
             if (userId && authStore.userId === parseInt(userId)) {
                 authStore.updateRoles(updatedData.roles);
             }
-        } catch (error) {
+        } catch (error: any) {
             if (error.data) {
                 showResponseErrors(error.data); // Now correctly passing the API response
             } else {
@@ -380,16 +380,16 @@ export function UserProfileView() {
                                                         }}
                                                     >
                                                         <label htmlFor="roles">Roles del Usuario</label>
-                                                        <Multiselect
+                                                        <Select
+                                                            isMulti
                                                             options={roles}
-                                                            selectedValues={selectedRoles}
-                                                            onSelect={setSelectedRoles}
-                                                            onRemove={setSelectedRoles}
-                                                            displayValue="nombre_rol"
+                                                            value={selectedRoles}
+                                                            onChange={(selected) => setSelectedRoles(selected as Role[])}
+                                                            getOptionLabel={(option: Role) => option.nombre_rol}
+                                                            getOptionValue={(option: Role) => String(option.id_rol)}
                                                             placeholder="Selecciona los roles"
-                                                            showArrow
-                                                            closeOnSelect={false}
-                                                            className="multi-select-dropdown"
+                                                            className="react-select-container"
+                                                            classNamePrefix="react-select"
                                                         />
                                                     </motion.div>
                                                 </AnimatePresence>

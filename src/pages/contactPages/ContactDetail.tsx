@@ -1,3 +1,4 @@
+import Select from "react-select";
 import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
@@ -15,7 +16,6 @@ import {
     TelefonosContacto,
     DireccionesContacto,
 } from "../../types/contactTypes";
-import Multiselect from "multiselect-react-dropdown";
 import { Activity } from "../../types/activityTypes";
 import { formatCedula } from "../../utils/formatUtils";
 import { ActivityLog } from "../../components/ui/ActivityLog";
@@ -450,48 +450,44 @@ export function ContactDetail() {
                                                             </div>
                                                             <div className="user-profile-info-item">
                                                                 <label>Ciudad</label>
-                                                                <Multiselect
+                                                                <Select
                                                                     options={
-                                                                        dropdownOptions.provincias.find(
-                                                                            (p) => p.id === direccion.id_provincia
-                                                                        )?.ciudades || []
+                                                                        dropdownOptions.provincias.find(p => p.id === direccion.id_provincia)?.ciudades || []
                                                                     }
-                                                                    selectedValues={(
-                                                                        dropdownOptions.provincias.find(
-                                                                            (p) => p.id === direccion.id_provincia
-                                                                        )?.ciudades || []
-                                                                    ).filter((c: Ciudad) => c.id === direccion.id_ciudad)}
-                                                                    onSelect={(
-                                                                        _selectedList,
-                                                                        selectedItem: Ciudad
-                                                                    ) => handleCitySelect(index, selectedItem)}
-                                                                    onRemove={() => { }}
-                                                                    displayValue="descripcion"
+                                                                    getOptionLabel={(option: Ciudad) => option.descripcion}
+                                                                    getOptionValue={(option: Ciudad) => String(option.id)}
+                                                                    value={
+                                                                        dropdownOptions.provincias
+                                                                            .find(p => p.id === direccion.id_provincia)
+                                                                            ?.ciudades.find(c => c.id === direccion.id_ciudad) || null
+                                                                    }
+                                                                    onChange={(selectedOption) => {
+                                                                        if (selectedOption) {
+                                                                            handleCitySelect(index, selectedOption as Ciudad);
+                                                                        }
+                                                                    }}
+                                                                    isDisabled={!editMode || !direccion.id_provincia}
                                                                     placeholder="Selecciona ciudad"
-                                                                    showArrow
-                                                                    singleSelect
-                                                                    disable={!editMode || !direccion.id_provincia}
-                                                                    className="multi-select-dropdown"
+                                                                    className="react-select-container"
+                                                                    classNamePrefix="react-select"
                                                                 />
                                                             </div>
                                                             <div className="user-profile-info-item">
                                                                 <label>Provincia</label>
-                                                                <Multiselect
+                                                                <Select
                                                                     options={dropdownOptions.provincias}
-                                                                    selectedValues={dropdownOptions.provincias.filter(
-                                                                        (p) => p.id === direccion.id_provincia
-                                                                    )}
-                                                                    onSelect={(
-                                                                        _selectedList,
-                                                                        selectedItem: Provincia
-                                                                    ) => handleProvinceSelect(index, selectedItem)}
-                                                                    onRemove={() => { }}
-                                                                    displayValue="descripcion"
+                                                                    getOptionLabel={(option: Provincia) => option.descripcion}
+                                                                    getOptionValue={(option: Provincia) => String(option.id)}
+                                                                    value={dropdownOptions.provincias.find(p => p.id === direccion.id_provincia) || null}
+                                                                    onChange={(selectedOption) => {
+                                                                        if (selectedOption) {
+                                                                            handleProvinceSelect(index, selectedOption as Provincia);
+                                                                        }
+                                                                    }}
+                                                                    isDisabled={!editMode}
                                                                     placeholder="Selecciona provincia"
-                                                                    showArrow
-                                                                    singleSelect
-                                                                    disable={!editMode}
-                                                                    className="multi-select-dropdown"
+                                                                    className="react-select-container"
+                                                                    classNamePrefix="react-select"
                                                                 />
                                                             </div>
                                                         </div>
@@ -563,22 +559,24 @@ export function ContactDetail() {
                                                             </div>
                                                             <div className="user-profile-info-item">
                                                                 <label>Tipo de Teléfono</label>
-                                                                <Multiselect
+                                                                <Select
                                                                     options={dropdownOptions.tipos_telefono}
-                                                                    selectedValues={dropdownOptions.tipos_telefono.filter(
-                                                                        (t) =>
-                                                                            t.id_tipo_telefono === telefono.id_tipo_telefono
-                                                                    )}
-                                                                    onSelect={(_selectedList, selectedItem: TipoTelefono) =>
-                                                                        handlePhoneTypeSelect(index, selectedItem)
+                                                                    getOptionLabel={(option: TipoTelefono) => option.tipo_telefono}
+                                                                    getOptionValue={(option: TipoTelefono) => String(option.id_tipo_telefono)}
+                                                                    value={
+                                                                        dropdownOptions.tipos_telefono.find(
+                                                                            (t) => t.id_tipo_telefono === telefono.id_tipo_telefono
+                                                                        ) || null
                                                                     }
-                                                                    onRemove={() => { }}
-                                                                    displayValue="tipo_telefono"
+                                                                    onChange={(selectedOption) => {
+                                                                        if (selectedOption) {
+                                                                            handlePhoneTypeSelect(index, selectedOption as TipoTelefono);
+                                                                        }
+                                                                    }}
+                                                                    isDisabled={!editMode}
                                                                     placeholder="Selecciona tipo"
-                                                                    showArrow
-                                                                    singleSelect
-                                                                    disable={!editMode}
-                                                                    className="multi-select-dropdown"
+                                                                    className="react-select-container"
+                                                                    classNamePrefix="react-select"
                                                                 />
                                                             </div>
                                                         </div>
