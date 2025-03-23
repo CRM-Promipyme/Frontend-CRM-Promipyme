@@ -16,9 +16,11 @@ import { KanbanTask } from "./KanbanTask";
 import { KanbanColumn } from "./KanbanColumn";
 import { Caso } from "../../../../../../types/workflowTypes";
 import { Spinner } from "../../../../../../components/ui/Spinner";
-import { fetchStageCases } from "../../../../../../controllers/caseControllers";
+import { PopupModal } from "../../../../../../components/ui/PopupModal";
 import { SortableContext, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Column, WorkflowKanbanProps } from "../../../../../../types/kanbanBoardTypes";
+import { fetchStageCases, updateCaseStage } from "../../../../../../controllers/caseControllers";
+import { toast } from "react-toastify";
 
 export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     // Local States
@@ -31,6 +33,14 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     const [columns, setColumns] = useState<Column[]>([]);
     const [color, setColor] = useState<string>("#000000");
     const [loading, setLoading] = useState(true);
+    const [pendingMove, setPendingMove] = useState<{
+        caseId: number;
+        fromColumnId: string;
+        toColumnId: string;
+    } | null>(null);
+    
+    const [changeMotive, setChangeMotive] = useState("");
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const columnIds = useMemo(() => columns.map(col => col.id), [columns]);
 
@@ -47,38 +57,58 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
-        setActiveTask(null);
         setIsDragging(false);
-
-        // If there is no target column or the task is dropped in the same column, do nothing
+    
         if (!over || active.id === over.id) return;
-
-        // Get source and target column IDs
+    
         const sourceColumnId = active.data.current?.columnId;
         const targetColumnId = over.data.current?.columnId || over.id;
-
-        // If there is no source or target column, or the source and target columns are the same, do nothing
+    
         if (!sourceColumnId || !targetColumnId || sourceColumnId === targetColumnId) return;
-
-        // Move the task to the target column
-        setColumns((prevColumns) => {
-            // Find the source and target columns
-            const sourceColumn = prevColumns.find(col => col.id === sourceColumnId);
-            const targetColumn = prevColumns.find(col => col.id === targetColumnId);
-
-            // If there is no source or target column, do nothing
-            if (!sourceColumn || !targetColumn) return prevColumns;
-
-            // Find the task index in the source column
-            const taskIndex = sourceColumn.cases.findIndex(caso => caso.id_caso === active.id);
-            if (taskIndex === -1) return prevColumns;
-
-            const moved = sourceColumn.cases[taskIndex];
-            sourceColumn.cases.splice(taskIndex, 1);
-            targetColumn.cases = [...targetColumn.cases, moved];
-
-            return [...prevColumns];
+    
+        const task = columns
+            .flatMap(col => col.cases)
+            .find(c => c.id_caso === active.id);
+    
+        if (!task) return;
+    
+        setPendingMove({
+            caseId: task.id_caso,
+            fromColumnId: sourceColumnId,
+            toColumnId: targetColumnId,
         });
+        setIsModalOpen(true);
+    };
+
+    const confirmStageChange = async () => {
+        if (!pendingMove) return;
+    
+        try {
+            await updateCaseStage(pendingMove.caseId, parseInt(pendingMove.toColumnId), changeMotive);
+    
+            setColumns(prevColumns => {
+                const source = prevColumns.find(c => c.id === pendingMove.fromColumnId);
+                const target = prevColumns.find(c => c.id === pendingMove.toColumnId);
+    
+                if (!source || !target) return prevColumns;
+    
+                const caseIndex = source.cases.findIndex(c => c.id_caso === pendingMove.caseId);
+                if (caseIndex === -1) return prevColumns;
+    
+                const moved = source.cases[caseIndex];
+                source.cases.splice(caseIndex, 1);
+                target.cases.push(moved);
+    
+                return [...prevColumns];
+            });
+    
+            setIsModalOpen(false);
+            setChangeMotive("");
+            setPendingMove(null);
+            toast.success("Caso movido de etapa exitosamente.");
+        } catch {
+            alert("No se pudo actualizar el caso. Intente de nuevo.");
+        }
     };
 
     // Component mount
@@ -141,8 +171,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
             console.error("Error loading more cases:", err);
         }
     };
-
-    // TODO: Perform action when dragging to other column, allow accessing the case details
+    
     // TODO: Filter cases by name and select columns to show
     return (
         <>
@@ -189,6 +218,27 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
                 </DndContext>
             )}
             </div>
+            <PopupModal show={isModalOpen} onClose={() => setIsModalOpen(false)}>
+                <div>
+                    <h5>Motivo del cambio de etapa</h5>
+                    <textarea
+                        className="form-control"
+                        placeholder="Escriba el motivo del cambio"
+                        value={changeMotive}
+                        onChange={(e) => setChangeMotive(e.target.value)}
+                    />
+                    <div className="d-flex justify-content-end mt-3">
+                        <button className="btn btn-secondary me-2" onClick={() => setIsModalOpen(false)}>Cancelar</button>
+                        <button
+                            className="btn btn-primary"
+                            disabled={!changeMotive.trim()}
+                            onClick={confirmStageChange}
+                        >
+                            Confirmar
+                        </button>
+                    </div>
+                </div>
+            </PopupModal>
         </>
     );
 }

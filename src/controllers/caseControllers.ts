@@ -50,3 +50,23 @@ export const fetchProcessCases = async (processId: number) => {
         return null;
     }
 };
+
+
+/**
+ * Updates the stage of a case
+ * @param caseId The ID of the case
+ * @param stageId The ID of the new stage
+ * @param changeMotive The reason for the change
+ */
+export const updateCaseStage = async (caseId: number, stageId: number, changeMotive: string) => {
+    try {
+        const response = await api.put(`/workflows/casos/manage/update/stage/${caseId}/`, {
+            stage_id: stageId,
+            change_motive: changeMotive,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error updating case stage:", error);
+        throw error;
+    }
+};
