@@ -1,6 +1,7 @@
 import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { CaseList } from "./tabs/CaseList";
+import { useParams, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import "../../../../styles/workflows/workflowStyles.css";
 import { Proceso } from "../../../../types/workflowTypes";
@@ -20,9 +21,18 @@ export function WorkflowBoardView() {
     const [loading, setLoading] = useState<boolean>(false);
     const [activeTab, setActiveTab] = useState<string>("workflow-kanban-tab"); // Store active tab
     const [process, setProcess] = useState<Proceso>({} as Proceso);
+    const [searchParams, setSearchParams] = useSearchParams();
 
     // Get workflow ID from route params
     const { workflowId } = useParams<{ workflowId: string }>();
+
+    // collect active tab from URL search params
+    useEffect(() => {
+        const tabFromURL = searchParams.get("active_tab");
+        if (tabFromURL) {
+            setActiveTab(tabFromURL);
+        }
+    }, [searchParams]);
     
     // Fetch process from the backend on component mount
     useEffect(() => {
@@ -65,7 +75,7 @@ export function WorkflowBoardView() {
     // Tab Navigation Data
     const tabs = [
         { id: "workflow-kanban-tab", label: "Flujo de Trabajo", icon: "bi bi-kanban", component: <WorkflowKanban process={process} /> },
-        { id: "case-list-tab", label: "Lista de Casos", icon: "bi bi-list-ul", component: <div><h2>Test tab</h2><p>This is just to view how the tab change would look</p></div> },
+        { id: "case-list-tab", label: "Lista de Casos", icon: "bi bi-list-ul", component: <CaseList process={process} /> },
         { id: "activity-log-tab", label: "Actividad Reciente", icon: "bi bi-list-ul", component: <RecentWorkflowActivity process={process} /> },
         { id: "settings-tab", label: "Configuración", icon: "bi bi-gear", component: <div><h2>Test tab</h2><p>This is just to view how the tab change would look</p></div> }
     ];
@@ -84,7 +94,17 @@ export function WorkflowBoardView() {
                     <button
                         key={tab.id}
                         className={`tab-item ${activeTab === tab.id ? "active" : ""}`}
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => {
+                            const newParams = new URLSearchParams(searchParams);
+                        
+                            newParams.set("active_tab", tab.id);
+                        
+                            if (tab.id !== "case-list-tab") {
+                                newParams.delete("selected_case");
+                            }
+                        
+                            setSearchParams(newParams);
+                        }}
                     >
                         <i className={tab.icon}></i> {tab.label}
                     </button>
