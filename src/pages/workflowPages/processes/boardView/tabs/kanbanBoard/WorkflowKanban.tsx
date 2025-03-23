@@ -107,7 +107,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
             setPendingMove(null);
             toast.success("Caso movido de etapa exitosamente.");
         } catch {
-            alert("No se pudo actualizar el caso. Intente de nuevo.");
+            toast.warning("No se pudo actualizar el caso. Intente de nuevo.");
         }
     };
 
@@ -171,7 +171,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
             console.error("Error loading more cases:", err);
         }
     };
-    
+
     // TODO: Filter cases by name and select columns to show
     return (
         <>
