@@ -34,3 +34,19 @@ export const fetchStageCases = async (processId: number, stageId: number) => {
         return null;
     }
 };
+
+
+/**
+ * Fetch all of a process' cases
+ * @param processId The process' ID
+ * @returns a list of cases (paginasted, sames as format as before)
+ */
+export const fetchProcessCases = async (processId: number) => {
+    try {
+        const response = await api.get(`/workflows/casos/list/?process_id=${processId}`)
+        return response.data
+    } catch (error) {
+        console.error("Error fetching ccases: ", error)
+        return null;
+    }
+};
