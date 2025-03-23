@@ -469,3 +469,13 @@
 .case-notes-container .case-item-header {
     margin-bottom: 5px;
 }
+
+.case-list-container-cases .kanban-task {
+    transition: all 0.3s ease;
+}
+
+.case-list-container-cases .kanban-task:hover {
+    transform: scale(1.01);
+    background-color: #F4F8FE;
+
+}
