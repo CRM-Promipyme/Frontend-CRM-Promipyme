@@ -53,6 +53,23 @@ export const fetchProcessCases = async (processId: number) => {
 
 
 /**
+ * Fetch a contact's related cases
+ * @param contactId The contact's ID
+ * @returns a list of cases (paginated, same format as before)
+ */
+export const fetchContactCases = async (contactId: number) => {
+    try {
+        const response = await api.get(`/workflows/casos/list/?contact_id=${contactId}`);
+        return response.data;
+    }
+    catch (error) {
+        console.error("Error fetching cases: ", error);
+        return null;
+    }
+}
+
+
+/**
  * Updates the stage of a case
  * @param caseId The ID of the case
  * @param stageId The ID of the new stage

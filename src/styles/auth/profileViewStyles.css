@@ -87,3 +87,12 @@
     display: flex;
     gap: 20px;
 }
+
+.user-profile-cases {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: scroll;
+    max-height: 500px;
+    margin-top: 20px;
+}

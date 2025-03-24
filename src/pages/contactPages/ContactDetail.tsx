@@ -1,13 +1,16 @@
+import { format } from "date-fns";
 import Select from "react-select";
+import { es } from "date-fns/locale";
 import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import "../../styles/auth/profileViewStyles.css";
 import "../../styles/auth/contactDetailStyles.css";
 import { useAuthStore } from "../../stores/authStore";
 import { Spinner } from "../../components/ui/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSidebarStore } from "../../stores/sidebarStore";
+import { formatNumber, daysLeft } from "../../utils/formatUtils";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
 import {
     Ciudad,
@@ -16,9 +19,11 @@ import {
     TelefonosContacto,
     DireccionesContacto,
 } from "../../types/contactTypes";
+import { Caso } from "../../types/workflowTypes";
 import { Activity } from "../../types/activityTypes";
 import { formatCedula } from "../../utils/formatUtils";
 import { ActivityLog } from "../../components/ui/ActivityLog";
+import { fetchContactCases } from "../../controllers/caseControllers";
 import { fetchEntityActivities } from "../../controllers/activityControllers";
 import { useContactData, useDropdownOptions } from "../../hooks/userControllerHooks";
 
@@ -41,8 +46,9 @@ export function ContactDetail() {
     const canEdit = authStore.isAdmin(); // Only admin users can edit
     const [activities, setActivities] = useState<Activity[]>([]);
     const [activeTab, setActiveTab] = useState<string>("basic-info");
+    const [relatedCases, setRelatedCases] = useState<Caso[]>([]);
 
-    // Fetch contact activities on component mount
+    // Fetch contact activities and cases on component mount
     useEffect(() => {
         const fetchActivities = async () => {
             try {
@@ -52,7 +58,19 @@ export function ContactDetail() {
                 console.error("Error fetching contact activities:", error);
             }
         };
+
+        const fetchCases = async () => {
+            try {
+                const fetchedCases = await fetchContactCases(parseInt(contact_id as string));
+                const cases = fetchedCases.results as Caso[];
+                setRelatedCases(cases);
+            } catch (error) {
+                console.error("Error fetching contact cases:", error);
+            }
+        }
+
         fetchActivities();
+        fetchCases();
     }, [contact_id]);
 
     // Handle input changes for basic info
@@ -615,8 +633,80 @@ export function ContactDetail() {
                             </div>
                             <div className="user-profile-form-col" style={{ height: "fit-content", width: '30%' }}>
                                 {/* Historial de actividades */}
-                                <div className="card-body shadow">
+                                <div className="card-body shadow-sm">
                                     <ActivityLog activities={activities} />
+                                </div>
+
+                                <div className="card-body shadow-sm" style={{ marginTop: '-30px' }}>
+                                    <h4 className="h4-header">Casos Relacionados</h4>
+                                    <div className="user-profile-cases">
+                                        {relatedCases.length > 0 ? (
+                                                relatedCases.map((caseObj) => (
+                                                    <Link to={`/workflows/board-view/4?active_tab=case-list-tab&selected_case=${caseObj.id_caso}`} style={{ textDecoration: 'none' }}>
+                                                        <div key={caseObj.id_caso} className="kanban-task">
+                                                            <h4 className="case-title">{caseObj.nombre_caso}</h4>
+
+                                                            <div className="case-contact-information">
+                                                                <i className="bi bi-person"></i>
+                                                                <p>{caseObj.contact_first_name}</p>
+                                                                <p>{caseObj.contact_last_name}</p>
+                                                            </div>
+
+                                                            <div className="case-dates">
+                                                                <div className="case-date">
+                                                                    <div className="date-item">
+                                                                        <i className="bi bi-calendar"></i>
+                                                                        <p className="date-label">Creado:</p>
+                                                                    </div>
+                                                                    <p className="item-value">{format(new Date(caseObj.fecha_creacion), "PPP", { locale: es })}</p>
+                                                                </div>
+                                                                <div className="case-date">
+                                                                    <div className="date-item">
+                                                                        <i className="bi bi-clock"></i>
+                                                                        <p className="date-label">Fecha de cierre:</p>
+                                                                    </div>
+                                                                    <p className="item-value">{format(new Date(caseObj.fecha_cierre), "PPP", { locale: es })}</p>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="case-dates" style={{ justifyContent: "space-between", gap: "unset", textAlign: "right" }}>
+                                                                <div className="case-date">
+                                                                    <div className="date-item">
+                                                                        <i className="bi bi-currency-dollar"></i>
+                                                                        <p>Valor:</p>
+                                                                    </div>
+                                                                    <p className="item-value">RD$ {formatNumber(parseFloat(caseObj.valor_caso))}</p>
+                                                                </div>
+                                                                <div className="case-date">
+                                                                    <div className="date-item">
+                                                                        <i className="bi bi-clock"></i>
+                                                                        <p>Tiempo Restante:</p>
+                                                                    </div>
+                                                                    <p
+                                                                        className="item-value"
+                                                                        style={{
+                                                                            color: daysLeft(new Date(caseObj.fecha_cierre_estimada)) >= 0
+                                                                                ? "#0F7E5E"  // Green for positive (or zero) days
+                                                                                : "#FF8A05"  // Orange for negative days
+                                                                        }}
+                                                                    >
+                                                                        {daysLeft(new Date(caseObj.fecha_cierre_estimada))}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            {caseObj.abierto ? (
+                                                                <span className="case-status-badge case-open">Abierto</span>
+                                                            ) : (
+                                                                <span className="case-status-badge case-closed">Cerrado</span>
+                                                            )}
+                                                        </div>
+                                                    </Link>
+                                            ))
+                                        ) : (
+                                            <p style={{ marginTop: '15px', marginBottom: '0px' }}>No hay casos relacionados actualmente...</p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </motion.form>
