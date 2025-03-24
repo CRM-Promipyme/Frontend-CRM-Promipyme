@@ -221,6 +221,12 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
             <PopupModal show={isModalOpen} onClose={() => setIsModalOpen(false)}>
                 <div>
                     <h5>Motivo del cambio de etapa</h5>
+                    <p>
+                        Si realmente desea mover el caso a la etapa{" "}
+                        <strong>
+                            {pendingMove && columns.find(col => col.id === pendingMove.toColumnId)?.title}
+                        </strong>, por favor indique el motivo:
+                    </p>
                     <textarea
                         className="form-control"
                         placeholder="Escriba el motivo del cambio"
