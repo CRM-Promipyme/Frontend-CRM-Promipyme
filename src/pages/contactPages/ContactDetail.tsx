@@ -642,7 +642,7 @@ export function ContactDetail() {
                                     <div className="user-profile-cases">
                                         {relatedCases.length > 0 ? (
                                                 relatedCases.map((caseObj) => (
-                                                    <Link to={`/workflows/board-view/4?active_tab=case-list-tab&selected_case=${caseObj.id_caso}`} style={{ textDecoration: 'none' }}>
+                                                    <Link to={`/workflows/board-view/${caseObj.proceso}?active_tab=case-list-tab&selected_case=${caseObj.id_caso}`} style={{ textDecoration: 'none' }}>
                                                         <div key={caseObj.id_caso} className="kanban-task">
                                                             <h4 className="case-title">{caseObj.nombre_caso}</h4>
 
