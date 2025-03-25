@@ -690,7 +690,7 @@ export function ContactDetail() {
                                                                                 : "#FF8A05"  // Orange for negative days
                                                                         }}
                                                                     >
-                                                                        {daysLeft(new Date(caseObj.fecha_cierre_estimada))}
+                                                                        {daysLeft(new Date(caseObj.fecha_cierre_estimada))} días
                                                                     </p>
                                                                 </div>
                                                             </div>
