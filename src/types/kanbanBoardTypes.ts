@@ -28,3 +28,8 @@ export interface KanbanTaskProps {
     columnId: string;
     isOverlay?: boolean; // This is to detect if the task is being dragged
 }
+
+export interface WorkflowSettingsProps {
+    process: Proceso;
+    setProcess: React.Dispatch<React.SetStateAction<Proceso>>;
+}

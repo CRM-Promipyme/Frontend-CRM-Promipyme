@@ -479,3 +479,12 @@
     background-color: #F4F8FE;
 
 }
+
+.workflow-settings-container {
+    padding: 25px;
+}
+
+.workflow-settings-container .workflow-form-card {
+    margin: unset;
+    transition: all 0.3s ease;
+}
