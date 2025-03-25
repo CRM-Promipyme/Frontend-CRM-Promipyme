@@ -191,6 +191,9 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                                     <div className="case-status">
                                         <span className="case-status-badge case-open">Abierto</span>
                                         <span className="case-status-badge case-in-progress">En proceso</span>
+                                        {selectedCase.exitoso && (
+                                            <span className="case-status-badge case-open">Exitoso</span>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="case-status">
@@ -342,22 +345,26 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                                             </div>
                                         </div>
                                     </div>
-                                    {daysLeft(new Date(selectedCase.fecha_cierre_estimada)) >= 0 ? (
-                                        <div className="case-status-box">
-                                            <i className="bi bi-check-circle"></i>
-                                            <div>
-                                                <strong className="status-title">Caso en tiempo</strong>
-                                                <p className="status-description">Este caso está progresando según lo programado.</p>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="case-status-box closed">
-                                            <i className="bi bi-check-circle"></i>
-                                            <div>
-                                                <strong className="status-title">Caso atrasado</strong>
-                                                <p className="status-description">Este caso está atrasado en base a la fecha de cierre estimada.</p>
-                                            </div>
-                                        </div>
+                                    {selectedCase.abierto && (
+                                        <>
+                                            {daysLeft(new Date(selectedCase.fecha_cierre_estimada)) >= 0 ? (
+                                                <div className="case-status-box">
+                                                    <i className="bi bi-check-circle"></i>
+                                                    <div>
+                                                        <strong className="status-title">Caso en tiempo</strong>
+                                                        <p className="status-description">Este caso está progresando según lo programado.</p>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="case-status-box closed">
+                                                    <i className="bi bi-check-circle"></i>
+                                                    <div>
+                                                        <strong className="status-title">Caso atrasado</strong>
+                                                        <p className="status-description">Este caso está atrasado en base a la fecha de cierre estimada.</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                     <div className="case-activities">
                                         <ActivityLog activities={caseActivities} />
