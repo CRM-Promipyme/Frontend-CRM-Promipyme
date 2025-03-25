@@ -67,7 +67,7 @@ export function KanbanTask({ case: kanbanCase, columnId, isOverlay = false }: Ka
                             : "#FF8A05"  // Orange for negative days
                         }}
                     >
-                        {daysLeft(new Date(kanbanCase.fecha_cierre_estimada))}
+                        {daysLeft(new Date(kanbanCase.fecha_cierre_estimada))} días
                     </p>
                 </div>
             </div>
