@@ -20,6 +20,24 @@ export const createCase = async (caseData: unknown) => {
 
 
 /**
+ * Updates a case
+ * @param caseId The ID of the case
+ * @param caseData The updated case data
+ * @returns the updated case
+ */
+export const updateCase = async (caseId: number, caseData: unknown) => {
+    try {
+        const response = await api.put(`/workflows/casos/manage/update/${caseId}/`, caseData);
+        return response.data;
+    } catch (error) {
+        console.error("Error updating case:", error);
+        showResponseErrors(error.response?.data);
+        throw error;
+    }
+};
+
+
+/**
  * Fetch cases from a specific process and stage
  * @param processId The process ID
  * @param stageId The stage ID
@@ -85,5 +103,21 @@ export const updateCaseStage = async (caseId: number, stageId: number, changeMot
     } catch (error) {
         console.error("Error updating case stage:", error);
         throw error;
+    }
+};
+
+
+/**
+ * Fetches a case by its ID
+ * @param caseId The ID of the case
+ * @returns the case
+ */
+export const fetchCase = async (caseId: number) => {
+    try {
+        const response = await api.get(`/workflows/casos/list/?case_id=${caseId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching case:", error);
+        return null;
     }
 };

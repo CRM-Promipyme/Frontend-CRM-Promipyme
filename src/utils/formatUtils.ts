@@ -109,3 +109,8 @@ export const formatNumber = (num: number) => {
     // Format a number with commas
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
+
+export function formatDatetimeForInput(datetime: string): string {
+    if (!datetime) return "";
+    return datetime.slice(0, 16); // Keeps only "YYYY-MM-DDTHH:MM"
+}

@@ -201,6 +201,14 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                             
                             <div className="column-container">
                                 <div className="column">
+                                    <Link to={`/workflows/cases/update/${selectedCase.id_caso}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                        <button
+                                            className="btn btn-primary"
+                                            style={{ marginBottom: '20px', marginTop: '0px' }}
+                                        >
+                                            Editar
+                                        </button>
+                                    </Link>
                                     <div className="case-item-container">
                                         <div className="case-item-header">
                                             <i className="bi bi-file-earmark-text"></i>

@@ -4,6 +4,7 @@ import { CreateWorkflow } from '../pages/workflowPages/processes/CreateWorkflow'
 import { AdminRoutePermissions } from '../components/permissions/AdminRoutePermissions'
 import { WorkflowSelectionMenu } from '../pages/workflowPages/processes/WorkflowSelectionMenu'
 import { WorkflowBoardView } from '../pages/workflowPages/processes/boardView/WorkflowBoardView'
+import { UpdateCase } from '../pages/workflowPages/cases/UpdateCase'
 
 export function WorkflowRoutes() {
     const publicWorkflowRoutes = [
@@ -16,6 +17,7 @@ export function WorkflowRoutes() {
     const privateWorkflowRoutes = [
         {path: "/processes/create", comp: CreateWorkflow},
         {path: "/cases/create/:workflowId", comp: CreateCase},
+        {path: "/cases/update/:caseId", comp: UpdateCase},
     ]
 
     return (
