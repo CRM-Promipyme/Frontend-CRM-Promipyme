@@ -639,7 +639,7 @@ export function ContactDetail() {
 
                                 <div className="card-body shadow-sm" style={{ marginTop: '-30px' }}>
                                     <h4 className="h4-header">Casos Relacionados</h4>
-                                    <div className="user-profile-cases">
+                                    <div className="user-profile-cases" style={{ width: '100%' }}>
                                         {relatedCases.length > 0 ? (
                                                 relatedCases.map((caseObj) => (
                                                     <Link to={`/workflows/board-view/${caseObj.proceso}?active_tab=case-list-tab&selected_case=${caseObj.id_caso}`} style={{ textDecoration: 'none' }}>
