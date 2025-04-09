@@ -28,6 +28,7 @@ export const Sidebar: React.FC = () => {
         { to: "/workflows/processes/menu", icon: "bi bi-diagram-3", text: "Procesos" },
         { to: "/contacts/menu", icon: "bi bi-people", text: "Contactos" },
         { to: "/auth/auth-menu", icon: "bi bi-person-gear", text: "Usuarios" },
+        { to: "/reports/dashboard", icon: "bi bi-file-earmark-spreadsheet", text: "Reportes" },
         { to: `/auth/user/profile/${userId}`, icon: "bi bi-person-circle", text: "Mi Perfil" },
     ];
 

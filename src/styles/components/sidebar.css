@@ -15,6 +15,7 @@
     transition: 0.3s ease;
     display: flex;
     flex-direction: column;
+    z-index: 9999;
 }
 
 .sidebar-link {
