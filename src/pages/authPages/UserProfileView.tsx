@@ -1,27 +1,20 @@
+import Select from "react-select";
 import { toast } from "react-toastify";
-import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Role } from "../../types/authTypes";
 import '../../styles/auth/profileViewStyles.css';
 import { fetchRoles } from '../../utils/authUtils';
 import { formatKey } from "../../utils/formatUtils";
-import Multiselect from "multiselect-react-dropdown";
+import { Activity } from "../../types/activityTypes";
 import { useAuthStore } from "../../stores/authStore";
 import { Spinner } from "../../components/ui/Spinner";
+import { motion, AnimatePresence } from "framer-motion";
+import { Role, UserProfile } from "../../types/authTypes";
 import { useSidebarStore } from "../../stores/sidebarStore";
+import { showResponseErrors } from "../../utils/formatUtils";
+import { ActivityLog } from "../../components/ui/ActivityLog";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
-
-interface UserProfile {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email: string;
-    username: string;
-    is_active: boolean;
-    roles: { nombre_rol: string; id_rol: number }[];
-    profile_data: Record<string, unknown>;
-}
+import { fetchEntityActivities } from "../../controllers/activityControllers";
 
 export function UserProfileView() {
     // Estados Globales
@@ -40,6 +33,8 @@ export function UserProfileView() {
     const [profilePicture, setProfilePicture] = useState<string | null>(null);
     const [roles, setRoles] = useState<Role[]>([]);
     const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
+    const [userActivities, setUserActivities] = useState<Activity[]>([]);
+    const [activeTab, setActiveTab] = useState<string>("cuenta");
 
     // Fetch roles al cargar el componente
     useEffect(() => {
@@ -60,9 +55,9 @@ export function UserProfileView() {
                 toast.error("No se pudieron obtener los roles.");
             }
         };
-    
+
         loadRoles();
-    }, [accessToken, roles.length]);
+    }, [accessToken, roles.length, userId]);
 
     // Show edit functionality only if the user is the same as the logged in user, or if the user is an admin
     const canEdit = userId && (authStore.userId === parseInt(userId) || authStore.isAdmin());
@@ -180,20 +175,34 @@ export function UserProfileView() {
                 }
             );
 
-            if (!response.ok) throw new Error("Error updating profile");
+            if (!response.ok) {
+                // Try extracting error response
+                const errorData = await response.json().catch(() => null);
+                throw { status: response.status, data: errorData };
+            }
 
             const updatedData = await response.json();
             setUserData(updatedData);
-            toast.success("Perfil actualizado correctamente.");
+            
+            // Re-fetch user activities to update the log
+            const activitiesResponse = await fetchEntityActivities("user", userId || "");
+            if (activitiesResponse && activitiesResponse.results) {
+                setUserActivities(activitiesResponse.results);
+            }
+            
             setEditMode(false);
-
+            toast.success("Perfil actualizado correctamente.");
+            
             // Update authStore roles if the user is updating their own profile
-            if (authStore.userId === parseInt(userId)) {
+            if (userId && authStore.userId === parseInt(userId)) {
                 authStore.updateRoles(updatedData.roles);
             }
-        } catch (error) {
-            console.error("Error updating user data:", error);
-            toast.error("Hubo un error al actualizar el perfil.");
+        } catch (error: any) {
+            if (error.data) {
+                showResponseErrors(error.data); // Now correctly passing the API response
+            } else {
+                showResponseErrors("Hubo un error al actualizar el perfil.");
+            };
         } finally {
             setLoading(false);
         }
@@ -214,141 +223,205 @@ export function UserProfileView() {
                             onSubmit={handleSubmit}
                             style={{ textAlign: "left", lineHeight: "2" }}
                         >
-                            <div className="user-profile-form-col" style={{ width: "70%" }}>
+                            <div className="user-profile-form-col">
                                 {/* Información de la cuenta */}
                                 <motion.div 
                                     initial={{ opacity: 0 }} 
                                     animate={{ opacity: 1 }} 
                                     transition={{ duration: 0.5 }} 
-                                    className="card-body shadow"
+                                    className="card-body shadow-sm"
                                 >
-                                    <h4 style={{ marginBottom: "25px" }}>Información de mi Cuenta</h4>
-
-                                    <div className="user-profile-info">
-                                        <div className="user-profile-col">
-                                            <label htmlFor="first_name">Nombres</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                id="first_name"
-                                                value={formData.first_name as string}
-                                                onChange={handleChange}
-                                                disabled={!editMode}
-                                            />
-
-                                            <label htmlFor="last_name" style={{ marginTop: '15px' }}>Apellidos</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                id="last_name"
-                                                value={formData.last_name as string}
-                                                onChange={handleChange}
-                                                disabled={!editMode}
-                                            />
-                                        </div>
-
-                                        <div className="user-profile-col">
-                                            <label htmlFor="email">Correo Electrónico</label>
-                                            <input
-                                                type="email"
-                                                className="form-control"
-                                                id="email"
-                                                value={formData.email as string}
-                                                onChange={handleChange}
-                                                disabled={!editMode}
-                                            />
-
-                                            <label htmlFor="username" style={{ marginTop: '15px' }}>Nombre de Usuario</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                id="username"
-                                                value={formData.username as string}
-                                                onChange={handleChange}
-                                                disabled={!editMode}
-                                            />
-                                        </div>
+                                    <div className="user-profile-header">
+                                        <h4 className="h4-header">Información de Usuario</h4>
+                                        {canEdit && (
+                                            <div className="user-profile-action-btns">
+                                                <AnimatePresence>
+                                                    {editMode && (
+                                                        <motion.button 
+                                                            type="submit" 
+                                                            className="btn btn-outline-primary"
+                                                            initial={{ opacity: 0, x: -20 }}
+                                                            animate={{ opacity: 1, x: 0 }}
+                                                            exit={{ opacity: 0, x: -20 }}
+                                                            transition={{ duration: 0.2 }}
+                                                            whileHover={{ scale: 1.05 }}
+                                                            whileTap={{ scale: 0.95 }}
+                                                        >
+                                                            <i className="bi bi-check2" style={{ marginRight: '4px' }}></i>
+                                                            Guardar
+                                                        </motion.button>
+                                                    )}
+                                                </AnimatePresence>
+                                                <motion.button 
+                                                    type="button" 
+                                                    className={editMode ? "btn btn-outline-danger" : "btn btn-outline-primary"} 
+                                                    onClick={toggleEditMode}
+                                                    whileHover={{ scale: 1.05 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                >
+                                                    {editMode ? <i className="bi bi-x" style={{ marginRight: '5px'}}></i> : <i className="bi bi-pencil" style={{ marginRight: '5px'}}></i>}
+                                                    {editMode ? "Cancelar" : "Editar"}
+                                                </motion.button>
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {/* TODO: Update role functionality */}
-                                    <div className="mt-3">
-                                        <label>Roles:</label>
-                                        <div>
-                                            {userData?.roles?.length > 0 ? (
-                                                userData.roles.map((role) => (
-                                                    <span key={role.id_rol} style={{ fontSize: '14px' }} className="badge bg-primary me-2">
-                                                        {role.nombre_rol}
-                                                    </span>
-                                                ))
-                                            ) : (
-                                                <span className="badge bg-secondary">Sin rol</span>
-                                            )}
-                                        </div>
+                                    <div className="user-profile-tabs d-flex bg-light">
+                                        <button
+                                            className={`flex-grow-1 btn py-2 ${activeTab === "cuenta" ? "bg-white" : "secondary-bg"}`}
+                                            onClick={(e) => {
+                                                e.preventDefault(); // Prevent form submission
+                                                setActiveTab("cuenta");
+                                            }}
+                                        >
+                                            <i className="bi bi-person me-2"></i> Información de la Cuenta
+                                        </button>
+                                        <button
+                                            className={`flex-grow-1 btn py-2 ${activeTab === "perfil" ? "bg-white" : "secondary-bg"}`}
+                                            onClick={(e) => {
+                                                e.preventDefault(); // Prevent form submission
+                                                setActiveTab("perfil");
+                                            }}
+                                        >
+                                            <i className="bi bi-person me-2"></i> Información del Perfil
+                                        </button>
                                     </div>
-                                    {editMode && (
-                                        // TODO: Only edit roles if user is admin
-                                        <div className="mt-3">
-                                            <label htmlFor="roles">Roles del Usuario</label>
-                                            <Multiselect
-                                                options={roles}
-                                                selectedValues={selectedRoles}
-                                                onSelect={setSelectedRoles}
-                                                onRemove={setSelectedRoles}
-                                                displayValue="nombre_rol"
-                                                placeholder="Selecciona los roles"
-                                                showArrow
-                                                closeOnSelect={false}
-                                                className="multi-select-dropdown"
-                                            />
-                                        </div>
-                                    )}
-                                </motion.div>
 
-                                {/* Información del Perfil */}
-                                <motion.div 
-                                    initial={{ scale: 0.95 }} 
-                                    animate={{ scale: 1 }} 
-                                    transition={{ duration: 0.4 }} 
-                                    className="card-body shadow"
-                                >
-                                    <h4 style={{ marginBottom: "25px" }}>Información de mi Perfil</h4>
-                                    <div className="user-profile-info">
-                                        {Object.entries(formData.profile_data_update as Record<string, unknown> || {}).map(([key, value]) =>
-                                            key !== "foto_perfil" ? (
-                                                <div key={key}>
-                                                    <label htmlFor={key}>{formatKey(key)}</label>
+                                    {activeTab === "cuenta" && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                            style={{ width: "100%" }}
+                                        >
+                                            <div className="user-profile-info" style={{ marginBottom: '25px'}}>
+                                                <div className="user-profile-col">
+                                                    <label htmlFor="first_name">Nombres</label>
                                                     <input
                                                         type="text"
                                                         className="form-control"
-                                                        id={key}
-                                                        value={value ? String(value) : ""}
+                                                        id="first_name"
+                                                        value={formData.first_name as string}
+                                                        onChange={handleChange}
+                                                        disabled={!editMode}
+                                                    />
+        
+                                                    <label htmlFor="last_name" style={{ marginTop: '15px' }}>Apellidos</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        id="last_name"
+                                                        value={formData.last_name as string}
                                                         onChange={handleChange}
                                                         disabled={!editMode}
                                                     />
                                                 </div>
-                                            ) : null
-                                        )}
-                                    </div>
+        
+                                                <div className="user-profile-col">
+                                                    <label htmlFor="email">Correo Electrónico</label>
+                                                    <input
+                                                        type="email"
+                                                        className="form-control"
+                                                        id="email"
+                                                        value={formData.email as string}
+                                                        onChange={handleChange}
+                                                        disabled={!editMode}
+                                                    />
+        
+                                                    <label htmlFor="username" style={{ marginTop: '15px' }}>Nombre de Usuario</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        id="username"
+                                                        value={formData.username as string}
+                                                        onChange={handleChange}
+                                                        disabled={!editMode}
+                                                    />
+                                                </div>
+                                            </div>
+        
+                                            {/* TODO: Update role functionality */}
+                                            <div className="mt-3">
+                                                <label>Roles:</label>
+                                                <div>
+                                                    {userData?.roles?.length > 0 ? (
+                                                        userData.roles.map((role) => (
+                                                            <span key={role.id_rol} style={{ fontSize: '14px' }} className="badge bg-primary me-2">
+                                                                {role.nombre_rol}
+                                                            </span>
+                                                        ))
+                                                    ) : (
+                                                        <span className="badge bg-secondary">Sin rol</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {editMode && (
+                                                // TODO: Only edit roles if user is admin
+                                                <AnimatePresence>
+                                                    <motion.div 
+                                                        key="roles-editor"
+                                                        className="mt-3"
+                                                        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                        exit={{ opacity: 0, y: -10, scale: 0.9 }}
+                                                        transition={{ 
+                                                            duration: 0.4, 
+                                                            type: "spring", 
+                                                            stiffness: 400, 
+                                                            damping: 25 
+                                                        }}
+                                                    >
+                                                        <label htmlFor="roles">Roles del Usuario</label>
+                                                        <Select
+                                                            isMulti
+                                                            options={roles}
+                                                            value={selectedRoles}
+                                                            onChange={(selected) => setSelectedRoles(selected as Role[])}
+                                                            getOptionLabel={(option: Role) => option.nombre_rol}
+                                                            getOptionValue={(option: Role) => String(option.id_rol)}
+                                                            placeholder="Selecciona los roles"
+                                                            className="react-select-container"
+                                                            classNamePrefix="react-select"
+                                                        />
+                                                    </motion.div>
+                                                </AnimatePresence>
+                                            )}
+                                        </motion.div>
+                                    )}
+                                    
+                                    {activeTab === "perfil" && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                            style={{ width: "100%" }}
+                                        >
+                                            {/* Información del Perfil */}
+                                            <div className="user-profile-info">
+                                                {Object.entries(formData.profile_data_update as Record<string, unknown> || {}).map(([key, value]) =>
+                                                    key !== "foto_perfil" ? (
+                                                        <div key={key}>
+                                                            <label htmlFor={key}>{formatKey(key)}</label>
+                                                            <input
+                                                                type="text"
+                                                                className="form-control"
+                                                                id={key}
+                                                                value={value ? String(value) : ""}
+                                                                onChange={handleChange}
+                                                                disabled={!editMode}
+                                                            />
+                                                        </div>
+                                                    ) : null
+                                                )}
+                                            </div>
+                                        </motion.div>
+                                    )}
                                 </motion.div>
-
-                                {canEdit && (
-                                    <div className="user-profile-action-btns">
-                                        <button type="button" className="btn btn-outline-primary mt-3" style={{ width: '25%' }} onClick={toggleEditMode}>
-                                            {editMode ? "Cancelar" : "Editar"}
-                                        </button>
-
-                                        {editMode && (
-                                            <button type="submit" className="btn btn-primary mt-3" style={{ width: '25%' }}>
-                                                Guardar
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
                             </div>
 
-                            {/* Foto de Perfil */}
                             <div className="user-profile-form-col" style={{ width: "30%", height: "fit-content" }}>
-                                <div className="card-body shadow" style={{ alignItems: "center", justifyContent: "center", textAlign: 'center' }}>
+                                {/* Foto de Perfil */}
+                                <div className="card-body shadow-sm" style={{ alignItems: "center", justifyContent: "center", textAlign: 'center' }}>
                                     <img 
                                         src={profilePicture || "/assets/default_profile_picture.jpg"}
                                         style={{ width: '200px'}} 
@@ -356,13 +429,36 @@ export function UserProfileView() {
                                         className="user-profile-picture" 
                                     />
                                     <h4 style={{ marginTop: '15px' }}>{userData?.first_name || ""} {userData?.last_name || ""}</h4>
+                                    {/* Roles */}
+                                    <div>
+                                        {userData?.roles?.length > 0 ? (
+                                            userData.roles.map((role) => (
+                                                <span key={role.id_rol} style={{ fontSize: '14px' }} className="badge bg-secondary me-2">
+                                                    {role.nombre_rol}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="badge bg-secondary">Sin rol</span>
+                                        )}
+                                    </div>
                                     {editMode && (
-                                        <input type="file" className="form-control mt-3" accept="image/*" onChange={handleProfilePictureChange} />
+                                        <motion.input
+                                            type="file"
+                                            className="form-control mt-3"
+                                            accept="image/*"
+                                            onChange={handleProfilePictureChange}
+                                            initial={{ opacity: 0, y: -20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                        />
                                     )}
                                 </div>
-                            </div>
 
-                            {/* TODO: Display user activity logs */}
+                                {/* Historial de actividades */}
+                                <div className="card-body shadow-sm">
+                                    <ActivityLog activities={userActivities} setActivities={setUserActivities} entity_type="user" entity_id={userId}/>
+                                </div>
+                            </div>
                         </motion.form>
                     )
                 )}

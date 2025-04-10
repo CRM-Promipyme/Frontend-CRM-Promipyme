@@ -1,20 +1,34 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import { AnimatePresence, motion } from "framer-motion";
-import { AuthRoutes } from "./routes/authRoutes";
 import { Error404 } from "./pages/Error404";
+import { ToastContainer } from "react-toastify";
+import { AuthRoutes } from "./routes/authRoutes";
+import { AnimatePresence } from "framer-motion";
+import { ReportRoutes } from "./routes/reportRoutes";
 import { ContactRoutes } from "./routes/contactRoutes";
-
-
-const pageVariants = {
-    initial: { opacity: 0, x: -50 },
-    animate: { opacity: 1, x: 0, transition: { duration: 0.3 } },
-    exit: { opacity: 0, x: 50, transition: { duration: 0.3 } },
-};
+import { WorkflowRoutes } from "./routes/workflowRoutes";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 
 const AnimatedRoutes = () => {
     const location = useLocation();
+
+    const routes = [
+        {
+            prefixedPath: "/auth",
+            component: <AuthRoutes />,
+        },
+        {
+            prefixedPath: "/contacts",
+            component: <ContactRoutes />,
+        },
+        {
+            prefixedPath: "/workflows",
+            component: <WorkflowRoutes />,
+        },
+        {
+            prefixedPath: "/reports",
+            component: <ReportRoutes />,
+        },
+    ]
 
     return (
         <AnimatePresence mode="wait">
@@ -22,34 +36,17 @@ const AnimatedRoutes = () => {
                 <Route
                     path="/"
                     element={
-                        <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
-                            <h1>Home</h1>
-                        </motion.div>
+                        <h1>Home</h1>
                     }
                 />
-                <Route
-                    path="/auth/*"
-                    element={
-                        <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
-                            <AuthRoutes />
-                        </motion.div>
-                    }
-                />
-                <Route
-                    path="/contacts/*"
-                    element={
-                        <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
-                            <ContactRoutes />
-                        </motion.div>
-                    }
-                />
+                {routes.map((route, index) => (
+                    <Route key={index} path={`${route.prefixedPath}/*`} element={route.component} />
+                ))}
                 {/* 404 - Not Found */}
                 <Route
                     path="*"
                     element={
-                        <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
                             <Error404 />
-                        </motion.div>
                     }
                 />
             </Routes>

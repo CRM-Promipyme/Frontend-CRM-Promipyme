@@ -125,7 +125,6 @@ export function ContactList() {
                         onClick={() => navigate("/contacts/create")}
                         style={{ marginRight: "30px"}}
                     >
-                        {/* TODO: Create contact */}
                         <i className="bi bi-person-plus"></i> Nuevo Contacto
                     </button>
                 </div>

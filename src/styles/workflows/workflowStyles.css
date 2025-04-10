@@ -1,0 +1,490 @@
+.processes-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 35px;
+    justify-content: flex-start;
+    margin-top: 20px;
+}
+
+.workflow-card {
+    max-width: fit-content !important;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 25px;
+}
+
+.workflow-card.card-body {
+    padding: 25px;
+    box-shadow: #0000001a 0px 4px 12px;
+    margin-left: unset;
+    margin-right: unset;
+    max-width: 500px;
+    width: 400px;
+    border: 0.1px solid rgb(204, 204, 204);
+}
+
+.workflow-card-icon i {
+    font-size: 5.5rem;
+}
+
+.workflow-card-link {
+    text-decoration: none;
+}
+
+.workflow-badge-bg {
+    display: flex !important;
+    flex-direction: row;
+    font-size: 20px !important;
+    background-color: #EBEBFB;
+    color: white;
+    margin-bottom: 15px !important;
+    justify-content: space-between;
+    padding: 15px !important;
+    border-radius: 8px 8px 0px 0px !important;
+}
+
+.workflow-badge-bg p {
+    margin-bottom: 0px;
+    font-weight: 650 !important;
+}
+
+.workflow-card .status-badge {
+    background-color: #d1fae5; /* soft green */
+    color: #065f46;           /* dark green text */
+    font-weight: 600;         /* semibold */
+    font-size: 1.125rem;      /* ~18px (text-lg) */
+    padding: 0.25rem 1rem;    /* vertical, horizontal */
+    border-radius: 9999px;    /* fully rounded */
+}
+
+.workflow-steps-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 0px;
+    padding: 15px;
+}
+
+.workflow-steps-container .step-badge-bg {
+    font-size: 16.5px;
+    background-color: #f3f3f3ef;
+    font-weight: 400;
+    color: black;
+    width: 100%;
+    text-align: left;
+}
+
+/* Hover effect for workflow-cards */
+
+.workflow-card.card-body {
+    transition: all 0.35s ease-in-out;
+}
+
+.workflow-card.card-body:hover {
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+    transform: scale(1.05);
+    z-index: 200;
+}
+
+/* Tab layout */
+
+.tab-nav {
+    display: flex;
+    border-bottom: 2px solid #ddd;
+    gap: 10px;
+}
+
+.tab-item {
+    background: none;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.3s ease;
+}
+
+.tab-item i {
+    font-size: 18px;
+}
+
+.tab-item:hover {
+    color: #0056b3;
+}
+
+.tab-item.active {
+    font-weight: bold;
+    color: #0056b3;
+    border-bottom: 3px solid #0056b3;
+}
+
+.tab-content {
+    /* padding: 20px; */
+    min-height: 150px;
+    height: fit-content;
+}
+
+/* Kanban */
+
+.kanban-board {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    height: 80vh;
+    overflow-x: scroll;
+    overflow-y: scroll;
+}
+
+.kanban-columns {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 1rem;
+}
+
+.kanban-column {
+    background: #f4f4f4;
+    min-width: 400px;
+    max-width: 550px;
+    flex: 1;
+    transition: all 0.2s ease-in-out, all 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.empty-column {
+    min-height: 60px;
+    padding: 10px;
+    text-align: center;
+    color: #999;
+    background: rgba(0, 0, 0, 0.05);
+    border: 2px dashed rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    transition: background 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.column-title {
+    width: 100%;
+    font-weight: 550;
+    padding: 10px;
+    color: white;
+    border-radius: 8px 8px 0px 0px;
+    font-size: 1.35rem;
+}
+
+.kanban-board-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 25px;
+    border-bottom: 1px solid #ddd;
+    padding: 20px;
+}
+
+/* Highlight all columns when dragging */
+.highlight-drop {
+    background: rgba(0, 123, 255, 0.1) !important;
+    border: 2px dashed rgba(0, 123, 255, 0.5) !important;
+}
+
+.kanban-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    flex-grow: 1;
+    min-height: 100px;
+    overflow-y: scroll;
+}
+
+.kanban-task {
+    background: white;
+    padding: 15px;
+    border-radius: 5px;
+    cursor: grab;
+    border: 1px solid #ccc;
+    transition: transform 0.2s ease-in-out;
+    user-select: none;
+}
+
+.kanban-task:active {
+    cursor: grabbing;
+    transform: scale(1.05);
+}
+
+.case-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.case-status-badge {
+    padding: 5px;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.case-status-badge.case-open {
+    background-color: #EBFCF4;
+    color: #0F7E5E;
+}
+
+.case-status-badge.case-closed {
+    background-color: #FCEBEB;
+    color: #E00B0B;
+}
+
+.case-contact-information {
+    display: flex;
+    flex-direction: row;
+    margin-top: 10px;
+    gap: 5px;
+    margin-bottom: 10px;
+    color: #71717A;
+}
+
+.case-dates { 
+    display: flex;
+    flex-direction: row;
+    gap: 25px;
+    margin-bottom: 10px;
+}
+
+.case-date .date-item {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+    color: #71717A;
+    font-size: 15px;
+}
+
+.date-item p {
+    margin-bottom: 0px;
+}
+
+.case-date .date-label {
+    margin-bottom: 0px;
+    color: #71717A;
+    font-weight: 500;
+}
+
+.case-value {
+    margin-bottom: 10px;
+}
+
+.case-value p {
+    margin-bottom: 0px;
+    color: #71717A;
+}
+
+.item-value {
+    font-weight: 550 !important;
+    color: black
+}
+
+.case-list-container {
+    padding: 20px;
+    display: flex;
+    flex-direction: row;
+
+}
+
+.case-list-container .case-list-sidepanel {
+    width: 25%;
+}
+
+/* .case-list-container .case-dates {
+    gap: unset;
+} */
+
+.case-list-container .case-list-container-cases {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    padding-right: 10px;
+}
+
+.case-list-container-cases .case-list-title {
+    margin-bottom: -7px;
+}
+
+.case-list-container-cases {
+    overflow-y: scroll;
+    max-height: 80vh;
+}
+
+.case-list-container .selected-case-container {
+    width: 75%;
+    padding-left: 20px;
+}
+
+.selected-case-container .case-title {
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.case-item-container .case-item-header {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    color: #71717A;
+}
+
+.case-item-header p {
+    margin-bottom: 0px;
+}
+
+.selected-case-container .case-status-badge {
+    font-size: unset;
+}
+
+.selected-case-container .case-status {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.case-status-badge.case-in-progress {
+    background-color: #fffaec;
+    color: #EAB308;
+}
+
+.selected-case .column-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 25px;
+}
+
+.case-item-body .case-item p {
+    margin-bottom: 0px;
+}
+
+.case-item-body .case-item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.case-item-body .case-item .label {
+    color: #71717A;
+    font-weight: 500;
+}
+
+.case-status-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border: 1px solid #c7efd9;
+    border-radius: 8px;
+    background-color: #f3fcf6;
+    color: #198754;
+    max-width: 700px;
+}
+
+.case-status-box i {
+    font-size: 24px;
+}
+
+.status-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: block;
+    color: #198754;
+    margin-bottom: 2px;
+}
+
+.status-description {
+    margin: 0;
+    color: #212529;
+    font-weight: 400;
+}
+
+.case-status-box.closed {
+    background-color: #fef3f3;
+    border: 1px solid #f5c2c7;
+    color: #dc3545;
+}
+
+.case-status-box.closed .status-title {
+    color: #dc3545;
+}
+
+.case-contact-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border: 1px solid #d8e8ff;
+    border-radius: 8px;
+    background-color: #f5f9ff;
+    color: #0D6EFD;
+    max-width: 700px;
+    transition: all 0.3s ease;
+}
+
+.case-contact-box .status-title {
+    color: #0D6EFD;
+}
+
+.case-contact-box:hover {
+    scale: 1.05;
+}
+
+.case-stage-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border: 1px solid #f8d7da;
+    border-radius: 8px;
+    background-color: #fff3f4;
+    color: #dc3545;
+    max-width: 700px;
+}
+
+.case-activities {
+    padding: 10px;
+    border: 1px solid lightgray;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+.case-notes-container {
+    margin-top: 20px;
+}
+
+.case-notes-container .case-item-header {
+    margin-bottom: 5px;
+}
+
+.case-list-container-cases .kanban-task {
+    transition: all 0.3s ease;
+}
+
+.case-list-container-cases .kanban-task:hover {
+    transform: scale(1.01);
+    background-color: #F4F8FE;
+
+}
+
+.workflow-settings-container {
+    padding: 25px;
+}
+
+.workflow-settings-container .workflow-form-card {
+    margin: unset;
+    transition: all 0.3s ease;
+}

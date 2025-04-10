@@ -43,3 +43,14 @@ export interface UserListResponse {
     previous: string;
     results: User[];
 }
+
+export interface UserProfile {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    username: string;
+    is_active: boolean;
+    roles: { nombre_rol: string; id_rol: number }[];
+    profile_data: Record<string, unknown>;
+}

@@ -10,15 +10,16 @@ interface AdminRoutePermissionsProps {
 
 export function AdminRoutePermissions({ children, fallbackUrl = "/" }: AdminRoutePermissionsProps) {
     const authStore = useAuthStore();
+    const isAuthenticated = authStore.isAuthenticated();
     const isAdmin = authStore.isAdmin();
     const [toastShown, setToastShown] = useState(false);
 
     useEffect(() => {
-        if (!isAdmin && !toastShown) {
+        if ((!isAdmin && !isAuthenticated) && !toastShown) {
             toast.warning("No tienes permisos para acceder a esta página.");
             setToastShown(true);
         }
-    }, [isAdmin, toastShown]);
+    }, [isAdmin, toastShown, isAuthenticated]);
 
     if (!isAdmin) {
         return <Navigate to={fallbackUrl} replace />;

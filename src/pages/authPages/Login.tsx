@@ -1,8 +1,8 @@
 import axios from "axios";
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { Link } from "react-router-dom";
 import '../../styles/auth/authStyles.css';
+import { Link, useNavigate } from "react-router-dom";
 import { Spinner } from "../../components/ui/Spinner";
 import { useAuthStore } from "../../stores/authStore";
 import { LoginResponse } from "../../types/authTypes";
@@ -13,6 +13,7 @@ const BASE_URL = import.meta.env.VITE_REACT_APP_DJANGO_API_URL;
 
 export function Login() {
     // Estados de autenticación
+    const navigate = useNavigate();
     const authStore = useAuthStore(state => state);
     const login = authStore.login;
 
@@ -26,6 +27,13 @@ export function Login() {
         setPassword(newPassword);
     };
 
+    const redirects = [
+        {
+            role: 'Administrador',
+            redirect: '/auth/auth-menu'
+        }
+    ]
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -37,6 +45,15 @@ export function Login() {
             .then((response) => {
                 if (response.status === 200) {
                     login(response.data);
+                    
+                    const userRoles = response.data.roles;
+                    const redirect = redirects.find(r =>
+                        userRoles.some(roleObj => roleObj.nombre_rol === r.role)
+                    );
+                    if (redirect) {
+                        navigate(redirect.redirect);
+                    }
+                    
                     toast.success("¡Inicio de sesión exitoso!");
                 }
             })

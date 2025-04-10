@@ -5,10 +5,47 @@
     flex-direction: column;
 }
 
+.user-profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 20px;
+    width: 100%;
+    height: fit-content;
+}
+
+.h4-header {
+    font-weight: 700;
+    margin-bottom: 0px;
+    font-size: 1.65rem;
+}
+
+.user-profile-info label {
+    margin-bottom: 5px;
+}
+
+.user-profile-tabs {
+    width: 100%;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    background-color: #EAEAEA;
+    border: 5px solid #EAEAEA;
+}
+
+.user-profile-tabs button {
+    border-radius: 0px;
+}
+
+.user-profile-tabs .secondary-bg {
+    background-color: #EAEAEA;
+}
+
 .user-profile-content .user-profile-form {
     display: flex;
-    gap: 50px;
     flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 50px;
 }
 
 .user-profile-content .user-profile-info {
@@ -49,4 +86,13 @@
 .user-profile-content .user-profile-action-btns {
     display: flex;
     gap: 20px;
+}
+
+.user-profile-cases {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: scroll;
+    max-height: 500px;
+    margin-top: 20px;
 }

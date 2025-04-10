@@ -16,29 +16,33 @@ export const Sidebar: React.FC = () => {
     const navigate = useNavigate();
 
     const logout = () => {
+        navigate("/auth/login");
         toast.warning("Has cerrado sesión...");
 
         // Cerrar sesión
-        authStore.logout();
-
-        navigate("/auth/login");
+        setTimeout(() => {
+            authStore.logout();
+        }, 1000);
     };
 
     const sidebarItems = [
+        { to: "/workflows/processes/menu", icon: "bi bi-diagram-3", text: "Procesos" },
         { to: "/contacts/menu", icon: "bi bi-people", text: "Contactos" },
         { to: "/auth/auth-menu", icon: "bi bi-person-gear", text: "Usuarios" },
-        { to: `/auth/user/profile/${userId}`, icon: "bi bi-person-circle", text: "Mi Perfil" }
+        { to: "/reports/dashboard", icon: "bi bi-file-earmark-spreadsheet", text: "Reportes" },
+        { to: `/auth/user/profile/${userId}`, icon: "bi bi-person-circle", text: "Mi Perfil" },
     ];
 
     return (
         <div className="sidebar shadow-lg" style={{ width: collapsed ? "60px" : "250px" }}>
             {/* Logo */}
-            {!collapsed && (
-                <div className="logo" style={{ marginBottom: "35px" }}>
-                    <img src="/assets/logo_promipyme_white.png" alt="Logo" style={{ width: '235px' }} />
-                </div>
-            )}
-
+            <div className="logo" style={{ marginBottom: collapsed ? "0px" : "35px", justifyContent: collapsed ? "center" : "flex-start", border: collapsed ? "0.5px solid white" : "none" }}>
+                <img 
+                    src= {collapsed ? "/assets/promipyme_logo_sidebar.jpg" : "/assets/logo_promipyme_white.png"}
+                    alt="Logo" 
+                    style={{ width: collapsed ? '42px' : '235px' }} 
+                />
+            </div>
             {/* Links */}
             {sidebarItems.map((item, index) => (
                 <SidebarLink key={index} to={item.to} icon={item.icon}>

@@ -1,0 +1,142 @@
+.totals-container {
+    padding: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    justify-content: flex-start;
+}
+
+.totals-container .card-body {
+    border-radius: 12px;
+    box-shadow: rgba(0, 0, 0, 0.068) 0px 4px 12px;
+    border: 0.1px solid rgb(228, 228, 228);
+    width: fit-content;
+    /* flex: unset; */
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    margin: unset;
+}
+
+.charts-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    justify-content: flex-start;
+    align-content: baseline;
+    padding-left: 25px;
+    padding-right: 25px;
+}
+
+.charts-container .chart-container-col,
+.charts-container .chart-container-row {
+    display: flex;
+    gap: 25px;
+    flex: 1;
+    flex-wrap: wrap;
+}
+
+.charts-container .chart-container-col {
+    flex-direction: column;
+    min-width: 300px;
+    max-width: 480px;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.charts-container .chart-container-row {
+    flex-direction: row;
+    justify-content: space-between;
+    flex: 2;
+}
+
+.charts-container .card-body.chart {
+    flex: 1 1 400px;
+    border-radius: 12px;
+    box-shadow: rgba(0, 0, 0, 0.068) 0px 4px 12px;
+    border: 0.1px solid rgb(228, 228, 228);
+    padding: 25px;
+    text-align: left;
+    align-items: flex-start;
+    flex-direction: column;
+    min-width: 500px;
+    max-width: unset;
+    height: 525px;
+    margin: unset;
+}
+
+.charts-container .card-body.chart.pie-chart {
+    max-width: 350px;
+    min-width: 350px;
+}
+
+.charts-container .card-body.chart div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.charts-container .card-body.chart .chart-title {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    height: fit-content;
+}
+
+.chart-body canvas {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    height: auto !important;
+    width: auto !important;
+}
+
+.charts-container .card-body.activity-log {
+    flex: 1 1 400px;
+    border-radius: 12px;
+    box-shadow: rgba(0, 0, 0, 0.068) 0px 4px 12px;
+    border: 0.1px solid rgb(228, 228, 228);
+    padding: 25px;
+    text-align: left;
+    align-items: flex-start;
+    flex-direction: column;
+    margin: unset;
+    min-width: 550px;
+    max-width: unset;
+    min-height: 525px;
+}
+
+.report-tab-nav {
+    display: flex;
+    gap: 1rem;
+    background-color: #f5f5f5;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    width: fit-content;
+    margin-left: 25px;
+    margin-top: 25px;
+}
+
+.report-tab-item {
+    background: none;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Active tab */
+.report-tab-item.active {
+    background-color: white;
+    color: black;
+    font-weight: 600;
+    box-shadow: 0 0 0 1px #e5e7eb;
+}
+
+.report-tab-item:hover {
+    background-color: #e5e7eb;
+}

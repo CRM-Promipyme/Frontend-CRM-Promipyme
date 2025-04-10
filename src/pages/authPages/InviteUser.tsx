@@ -1,3 +1,4 @@
+import Select from 'react-select';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
@@ -5,7 +6,6 @@ import { Role } from '../../types/authTypes';
 import { fetchRoles } from '../../utils/authUtils';
 import { useAuthStore } from '../../stores/authStore';
 import { Spinner } from '../../components/ui/Spinner';
-import { Multiselect } from "multiselect-react-dropdown"; // Import the multiselect
 import { useSidebarStore } from '../../stores/sidebarStore';
 import { SidebarLayout } from '../../components/layouts/SidebarLayout';
 
@@ -101,12 +101,12 @@ export function InviteUser() {
         // TODO: Re-visit styling for this form
         <SidebarLayout sidebarWidthPx={sidebarWidthPx}>
             <h1 className="page-title" style={{ marginBottom: '0px' }}>Invitar un Nuevo Usuario al Sistema</h1>
-            <div style={{ width: 'auto', maxWidth: '650px', padding: '40px', marginTop: '0px' }}>
+            <div className="invite-user-form-card card-body">
                 <p>Por favor, ingresa los datos del usuario que deseas invitar al sistema:</p>
 
                 <form
                     className="auth-login-form"
-                    style={{ textAlign: "left", lineHeight: '2' }}
+                    style={{ textAlign: "left", lineHeight: '2', width: '100%' }}
                     onSubmit={handleSubmit}
                 >
                     <label htmlFor="first_name">Nombres</label>
@@ -118,7 +118,7 @@ export function InviteUser() {
                         id="first_name"
                         value={formData.first_name}
                         onChange={handleChange}
-                        placeholder="Escribe tus nombres aquí..."
+                        placeholder="Escribe sus nombres aquí..."
                         required
                     />
 
@@ -131,7 +131,7 @@ export function InviteUser() {
                         id="last_name"
                         value={formData.last_name}
                         onChange={handleChange}
-                        placeholder="Escribe tus apellidos aquí..."
+                        placeholder="Escribe sus apellidos aquí..."
                         required
                     />
 
@@ -144,23 +144,24 @@ export function InviteUser() {
                         id="email"
                         value={formData.email}
                         onChange={handleChange}
-                        placeholder="Escribe tu correo electrónico aquí..."
+                        placeholder="Escribe su correo electrónico aquí..."
                         required
                     />
 
                     <label htmlFor="roles">Roles del Usuario</label>
-                    <Multiselect
+                    <Select
+                        isMulti
                         options={roles}
-                        selectedValues={selectedRoles}
-                        onSelect={setSelectedRoles}
-                        onRemove={setSelectedRoles}
-                        displayValue="nombre_rol"
-                        placeholder="Selecciona los roles"
-                        showArrow
-                        closeOnSelect={false}
-                        className="multi-select-dropdown"
+                        value={selectedRoles}
+                        onChange={(selectedOptions) => {
+                            setSelectedRoles([...selectedOptions]);
+                        }}
+                        getOptionLabel={(option: Role) => option.nombre_rol}
+                        getOptionValue={(option: Role) => String(option.id_rol)}
+                        placeholder="Selecciona sus roles"
+                        className="react-select-container"
+                        classNamePrefix="react-select"
                     />
-                    
                     <button
                         style={{
                             width: '100%',
