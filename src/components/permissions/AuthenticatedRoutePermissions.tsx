@@ -3,19 +3,19 @@ import { toast } from "react-toastify";
 import { useAuthStore } from "../../stores/authStore";
 import { useState, useEffect } from "react";
 
-interface AdminRoutePermissionsProps {
+interface AuthenticatedRoutePermissionsProps {
     children: React.ReactNode;
     fallbackUrl?: string;
 }
 
-export function AdminRoutePermissions({ children, fallbackUrl = "/" }: AdminRoutePermissionsProps) {
+export function AuthenticatedRoutePermissions({ children, fallbackUrl = "/" }: AuthenticatedRoutePermissionsProps) {
     const authStore = useAuthStore();
     const isAuthenticated = authStore.isAuthenticated();
     const isAdmin = authStore.isAdmin();
     const [toastShown, setToastShown] = useState(false);
 
     useEffect(() => {
-        if ((!isAdmin && !isAuthenticated) && !toastShown) {
+        if (!isAuthenticated && !toastShown) {
             toast.warning("No tienes permisos para acceder a esta página.");
             setToastShown(true);
         }

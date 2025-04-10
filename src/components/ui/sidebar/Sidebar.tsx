@@ -16,12 +16,13 @@ export const Sidebar: React.FC = () => {
     const navigate = useNavigate();
 
     const logout = () => {
+        navigate("/auth/login");
         toast.warning("Has cerrado sesión...");
 
         // Cerrar sesión
-        authStore.logout();
-
-        navigate("/auth/login");
+        setTimeout(() => {
+            authStore.logout();
+        }, 1000);
     };
 
     const sidebarItems = [

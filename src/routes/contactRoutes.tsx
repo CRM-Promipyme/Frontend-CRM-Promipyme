@@ -1,8 +1,9 @@
-import { Route, Routes } from 'react-router-dom'
+import { Route } from 'react-router-dom'
 import { ContactList } from '../pages/contactPages/ContactList'
 import { ContactsMenu } from '../pages/contactPages/ContactsMenu'
 import { ContactDetail } from '../pages/contactPages/ContactDetail'
 import { CreateContact } from '../pages/contactPages/CreateContact'
+import { With404Fallback } from '../components/permissions/With404Fallback';
 
 export function ContactRoutes() {
     const publicContactRoutes = [
@@ -13,10 +14,10 @@ export function ContactRoutes() {
     ]
 
     return (
-        <Routes>
+        <With404Fallback>
             {publicContactRoutes.map((route, index) => (
                 <Route key={index} path={route.path} element={<route.comp />} />
             ))}
-        </Routes>
+        </With404Fallback>
     )
 }

@@ -56,17 +56,7 @@ export function UserProfileView() {
             }
         };
 
-        const loadUserActivities = async () => {
-            try {
-                const activities = await fetchEntityActivities('user', userId as string);
-                setUserActivities(activities);
-            } catch (error) {
-                console.error("Error fetching user activities:", error);
-            }
-        }
-    
         loadRoles();
-        loadUserActivities();
     }, [accessToken, roles.length, userId]);
 
     // Show edit functionality only if the user is the same as the logged in user, or if the user is an admin
@@ -195,8 +185,10 @@ export function UserProfileView() {
             setUserData(updatedData);
             
             // Re-fetch user activities to update the log
-            const activities = await fetchEntityActivities('user', userId as string);
-            setUserActivities(activities);
+            const activitiesResponse = await fetchEntityActivities("user", userId || "");
+            if (activitiesResponse && activitiesResponse.results) {
+                setUserActivities(activitiesResponse.results);
+            }
             
             setEditMode(false);
             toast.success("Perfil actualizado correctamente.");
@@ -464,7 +456,7 @@ export function UserProfileView() {
 
                                 {/* Historial de actividades */}
                                 <div className="card-body shadow-sm">
-                                    <ActivityLog activities={userActivities} />
+                                    <ActivityLog activities={userActivities} setActivities={setUserActivities} entity_type="user" entity_id={userId}/>
                                 </div>
                             </div>
                         </motion.form>

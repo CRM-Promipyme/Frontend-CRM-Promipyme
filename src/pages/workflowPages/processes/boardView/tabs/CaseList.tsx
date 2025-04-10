@@ -13,7 +13,6 @@ import { lowerColorOpacity } from "../../../../../utils/formatUtils";
 import { ActivityLog } from "../../../../../components/ui/ActivityLog";
 import { WorkflowKanbanProps } from "../../../../../types/kanbanBoardTypes"
 import { fetchProcessCases } from "../../../../../controllers/caseControllers";
-import { fetchEntityActivities } from "../../../../../controllers/activityControllers";
 
 export function CaseList({ process }: WorkflowKanbanProps) {
     // Local states
@@ -57,21 +56,8 @@ export function CaseList({ process }: WorkflowKanbanProps) {
 
     // Load activities on case selection
     useEffect(() => {
-        const loadCaseActivities = async () => {
-            try {
-                // Parse int to str
-                const caseId = selectedCase?.id_caso.toString();
-                const activities = await fetchEntityActivities('case', caseId as string );
-                setCaseActivities(activities);
-            } catch (error) {
-                console.error("Error fetching case activities:", error);
-                toast.error("Ha ocurrido un error al cargar las actividades del caso, por favor, intente más tarde...");
-            }
-        }
-
         if (selectedCase) {
             setLoading(true);
-            loadCaseActivities();
             setLoading(false);
         }
     }, [selectedCase]);
@@ -367,7 +353,9 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                                         </>
                                     )}
                                     <div className="case-activities">
-                                        <ActivityLog activities={caseActivities} />
+                                        {selectedCase && (
+                                            <ActivityLog activities={caseActivities} setActivities={setCaseActivities} entity_type="case" entity_id={selectedCase?.id_caso.toString()}/>
+                                        )}
                                     </div>
                                 </div>
                             </div>

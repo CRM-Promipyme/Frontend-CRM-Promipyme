@@ -50,15 +50,6 @@ export function ContactDetail() {
 
     // Fetch contact activities and cases on component mount
     useEffect(() => {
-        const fetchActivities = async () => {
-            try {
-                const fetchedActivities = await fetchEntityActivities('contact', contact_id as string);
-                setActivities(fetchedActivities);
-            } catch (error) {
-                console.error("Error fetching contact activities:", error);
-            }
-        };
-
         const fetchCases = async () => {
             try {
                 const fetchedCases = await fetchContactCases(parseInt(contact_id as string));
@@ -69,7 +60,6 @@ export function ContactDetail() {
             }
         }
 
-        fetchActivities();
         fetchCases();
     }, [contact_id]);
 
@@ -260,8 +250,8 @@ export function ContactDetail() {
             }
 
             // Refetch activities to show the updated activity
-            const updatedActivities = await fetchEntityActivities('contact', contact_id as string);
-            setActivities(updatedActivities);
+            const updatedActivitiesResponse = await fetchEntityActivities('contact', contact_id as string);
+            setActivities(updatedActivitiesResponse.results);
 
             toast.success("Contacto actualizado correctamente.");
             setEditMode(false);
@@ -634,7 +624,7 @@ export function ContactDetail() {
                             <div className="user-profile-form-col" style={{ height: "fit-content", width: '30%' }}>
                                 {/* Historial de actividades */}
                                 <div className="card-body shadow-sm">
-                                    <ActivityLog activities={activities} />
+                                    <ActivityLog activities={activities} setActivities={setActivities} entity_type="contact" entity_id={contact_id}/>
                                 </div>
 
                                 <div className="card-body shadow-sm" style={{ marginTop: '-30px' }}>
@@ -642,8 +632,8 @@ export function ContactDetail() {
                                     <div className="user-profile-cases" style={{ width: '100%' }}>
                                         {relatedCases.length > 0 ? (
                                                 relatedCases.map((caseObj) => (
-                                                    <Link to={`/workflows/board-view/${caseObj.proceso}?active_tab=case-list-tab&selected_case=${caseObj.id_caso}`} style={{ textDecoration: 'none' }}>
-                                                        <div key={caseObj.id_caso} className="kanban-task">
+                                                    <Link key={caseObj.id_caso} to={`/workflows/board-view/${caseObj.proceso}?active_tab=case-list-tab&selected_case=${caseObj.id_caso}`} style={{ textDecoration: 'none' }}>
+                                                        <div className="kanban-task">
                                                             <h4 className="case-title">{caseObj.nombre_caso}</h4>
 
                                                             <div className="case-contact-information">

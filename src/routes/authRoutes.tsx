@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Route } from 'react-router-dom'
 import { Login } from "../pages/authPages/Login";
 import { UserList } from '../pages/authPages/UserList';
 import { RoleList } from '../pages/authPages/RoleList';
@@ -6,23 +6,28 @@ import { AdminMenu } from '../pages/authPages/AuthMenu';
 import { InviteUser } from '../pages/authPages/InviteUser';
 import { RequestAccount } from '../pages/authPages/RequestAccount';
 import { UserProfileView } from '../pages/authPages/UserProfileView';
+import { With404Fallback } from '../components/permissions/With404Fallback';
 import { AccountApprovalQueue } from '../pages/authPages/AccountApprovalQueue';
 import { RequestPasswordReset } from '../pages/authPages/RequestPasswordReset';
 import { AdminRoutePermissions } from '../components/permissions/AdminRoutePermissions';
 import { PasswordResetConfirmation } from '../pages/authPages/PasswordResetConfirmation';
+import { AuthenticatedRoutePermissions } from '../components/permissions/AuthenticatedRoutePermissions';
 
 export function AuthRoutes() {
     const publicAuthRoutes = [
         {path: "/login", comp: Login},
         {path: "/request-account", comp: RequestAccount},
-        {path: "/user/profile/:userId", comp: UserProfileView},
-        {path: "/auth-menu", comp: AdminMenu},
         {path: "/request-password-reset", comp: RequestPasswordReset},
         {path: "/confirm-password-reset/:uid/:token", comp: PasswordResetConfirmation}
     ]
 
-    const fallbackUrl = "/auth/auth-menu";
     const privateAuthRoutes = [
+        {path: "/user/profile/:userId", comp: UserProfileView},
+        {path: "/auth-menu", comp: AdminMenu},
+    ]
+
+    const fallbackUrl = "/auth/auth-menu";
+    const adminAuthRoutes = [
         {path: "/invite-user", comp: InviteUser},
         {path: "/user-list", comp: UserList},
         {path: "/account-approval-queue", comp: AccountApprovalQueue},
@@ -30,17 +35,24 @@ export function AuthRoutes() {
     ]
 
     return (
-        <Routes>
+        <With404Fallback>
             {publicAuthRoutes.map((route, index) => (
                 <Route key={index} path={route.path} element={<route.comp />} />
             ))}
             {privateAuthRoutes.map((route, index) => (
+                <Route key={index} path={route.path} element={
+                    <AuthenticatedRoutePermissions fallbackUrl={fallbackUrl}>
+                        <route.comp />
+                    </AuthenticatedRoutePermissions>
+                } />
+            ))}
+            {adminAuthRoutes.map((route, index) => (
                 <Route key={index} path={route.path} element={
                     <AdminRoutePermissions fallbackUrl={fallbackUrl}>
                         <route.comp />
                     </AdminRoutePermissions>
                 } />
             ))}
-        </Routes>
+        </With404Fallback>
     )
 }

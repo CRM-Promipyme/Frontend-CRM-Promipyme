@@ -39,3 +39,13 @@ export interface Caso {
     creador_caso: number;
     tags: number[];
 }
+
+export interface DashboardCase {
+    nombre_caso: string;
+    proceso: string;
+    etapa_actual: string;
+    fecha_creacion: string;
+    fecha_cierre: string;
+    abierto: boolean;
+    exitoso: boolean;
+}

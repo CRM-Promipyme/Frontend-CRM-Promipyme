@@ -1,10 +1,11 @@
-import { Route, Routes } from 'react-router-dom'
+import { Route } from 'react-router-dom'
 import { CreateCase } from '../pages/workflowPages/cases/CreateCase'
+import { UpdateCase } from '../pages/workflowPages/cases/UpdateCase'
+import { With404Fallback } from '../components/permissions/With404Fallback'
 import { CreateWorkflow } from '../pages/workflowPages/processes/CreateWorkflow'
 import { AdminRoutePermissions } from '../components/permissions/AdminRoutePermissions'
 import { WorkflowSelectionMenu } from '../pages/workflowPages/processes/WorkflowSelectionMenu'
 import { WorkflowBoardView } from '../pages/workflowPages/processes/boardView/WorkflowBoardView'
-import { UpdateCase } from '../pages/workflowPages/cases/UpdateCase'
 
 export function WorkflowRoutes() {
     const publicWorkflowRoutes = [
@@ -21,7 +22,7 @@ export function WorkflowRoutes() {
     ]
 
     return (
-        <Routes>
+        <With404Fallback>
             {publicWorkflowRoutes.map((route, index) => (
                 <Route key={index} path={route.path} element={<route.comp />} />
             ))}
@@ -33,6 +34,6 @@ export function WorkflowRoutes() {
                     </AdminRoutePermissions>
                 } />
             ))}
-        </Routes>
+        </With404Fallback>
     )
 }
