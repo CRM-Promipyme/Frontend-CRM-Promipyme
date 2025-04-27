@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import api from "../../../../../../controllers/api";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
     DndContext,
     KeyboardSensor,
@@ -38,9 +38,10 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         fromColumnId: string;
         toColumnId: string;
     } | null>(null);
-    
+    const [caseName, setCaseName] = useState<string>("");
     const [changeMotive, setChangeMotive] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     const columnIds = useMemo(() => columns.map(col => col.id), [columns]);
 
@@ -114,39 +115,51 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     // Component mount
     useEffect(() => {
         setColor(process.color);
-    
+        
         if (process.etapas) {
-            const initialColumns = process.etapas.map((etapa) => ({
-                id: etapa.id_etapa.toString(),
-                title: etapa.nombre_etapa,
-                cases: [],
-                nextPageUrl: null,
-            }));
-    
-            setColumns(initialColumns);
-    
-            // Fetch all stages in parallel
-            Promise.all(
-                process.etapas.map((etapa) =>
-                    fetchStageCases(process.id_proceso, etapa.id_etapa).then((result) => ({
-                        etapaId: etapa.id_etapa.toString(),
-                        data: result,
-                    }))
-                )
-            ).then((results) => {
-                setColumns((prev) =>
-                    prev.map((col) => {
-                        const res = results.find((r) => r.etapaId === col.id);
-                        return res && res.data
-                            ? { ...col, cases: res.data.results, nextPageUrl: res.data.next }
-                            : col;
-                    })
-                );
-            }).finally(() => {
-                setLoading(false);
-            });
+            if (debounceTimer.current) {
+                clearTimeout(debounceTimer.current);
+            }
+
+            debounceTimer.current = setTimeout(() => {
+                setColor(process.color);
+        
+                const initialColumns = process.etapas.map((etapa) => ({
+                    id: etapa.id_etapa.toString(),
+                    title: etapa.nombre_etapa,
+                    cases: [],
+                    nextPageUrl: null,
+                }));
+        
+                setColumns(initialColumns);
+        
+                // Fetch all stages in parallel
+                Promise.all(
+                    process.etapas.map((etapa) =>
+                        fetchStageCases(process.id_proceso, etapa.id_etapa, caseName).then((result) => ({
+                            etapaId: etapa.id_etapa.toString(),
+                            data: result,
+                        }))
+                    )
+                ).then((results) => {
+                    setColumns((prev) =>
+                        prev.map((col) => {
+                            const res = results.find((r) => r.etapaId === col.id);
+                            return res && res.data
+                                ? { ...col, cases: res.data.results, nextPageUrl: res.data.next }
+                                : col;
+                        })
+                    );
+                }).finally(() => {
+                    setLoading(false);
+                });
+            }, 500); // <-- 500ms delay
+        
+            return () => {
+                if (debounceTimer.current) clearTimeout(debounceTimer.current);
+            };
         }
-    }, [process]);
+    }, [process, caseName]);
 
     const onLoadMore = async (columnId: string) => {
         const col = columns.find(c => c.id === columnId);
@@ -172,11 +185,10 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         }
     };
 
-    // TODO: Filter cases by name and select columns to show
     return (
         <>
             <div className="kanban-board-controls">
-                <input type="text" className="form-control" placeholder="Buscar Caso" style={{ maxWidth: '400px' }}/>
+                <input type="text" className="form-control" placeholder="Nombre del Caso" value={caseName} onChange={(e) => setCaseName(e.target.value)} style={{ maxWidth: '400px' }}/>
                 {process && (
                     <Link to={`/workflows/cases/create/${process.id_proceso}`}>
                         <button className="btn btn-primary">
