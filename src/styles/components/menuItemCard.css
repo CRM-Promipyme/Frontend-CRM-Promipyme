@@ -12,6 +12,7 @@
     margin-right: unset;
     max-width: 400px;
     border: 0.1px solid rgb(228, 228, 228);
+    height: 300px;
 }
 
 /* Hover effect for menu-item-cards */

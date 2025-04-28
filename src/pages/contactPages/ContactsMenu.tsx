@@ -18,6 +18,12 @@ export function ContactsMenu() {
             description: "Añadir un nuevo contacto al sistema.",
             icon: "bi bi-person-plus",
             url: "/contacts/create"
+        },
+        {
+            title: "Administrar campos de contacto",
+            description: "Configurar los campos personalizados para los contactos.",
+            icon: "bi bi-ui-checks",
+            url: "/contacts/customize-fields"
         }
     ]
 
