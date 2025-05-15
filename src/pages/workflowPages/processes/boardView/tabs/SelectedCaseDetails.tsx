@@ -8,6 +8,7 @@ import { formatNumber } from "../../../../../utils/formatUtils";
 import { Caso, Proceso } from "../../../../../types/workflowTypes";
 import { lowerColorOpacity } from "../../../../../utils/formatUtils";
 import { ActivityLog } from "../../../../../components/ui/ActivityLog";
+import { NotesSection } from "./kanbanBoard/NotesSection";
 
 interface SelectedCaseDetailsProps {
     selectedCase: Caso;
@@ -105,20 +106,9 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                         </div>
                                     </div>
                                     <div className="case-notes-container">
-                                        {/* TODO: Case notes are not functional yet */}
-                                        <div className="case-item-container">
-                                            <div className="case-item-header">
-                                                <i className="bi bi-chat-right-dots"></i>
-                                                <p>Notas y Comentarios</p>
-                                            </div>
-                                            <div className="case-item-body">
-                                                <textarea
-                                                    className="form-control"
-                                                    placeholder="Escribe una nota o comentario..."
-                                                    style={{ marginBottom: '10px' }}
-                                                ></textarea>
-                                            </div>
-                                        </div>
+                                        <NotesSection
+                                            id={selectedCase.id_caso} 
+                                        />
                                     </div>
                                 </div>
                                 <div className="column">
