@@ -113,8 +113,6 @@
     padding: 0.5rem;
     border-radius: 0.5rem;
     width: fit-content;
-    margin-left: 25px;
-    margin-top: 25px;
 }
 
 .report-tab-item {
@@ -139,4 +137,15 @@
 
 .report-tab-item:hover {
     background-color: #e5e7eb;
+}
+
+.nav-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    flex-direction: row;
+    margin-top: 25px;
+    margin-left: 25px;
+    margin-right: 25px;
+    gap: 25px;
 }

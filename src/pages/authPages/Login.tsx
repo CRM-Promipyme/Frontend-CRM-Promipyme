@@ -15,7 +15,6 @@ export function Login() {
     // Estados de autenticación
     const navigate = useNavigate();
     const authStore = useAuthStore(state => state);
-    const login = authStore.login;
 
     // Estados locales
     const [useEmail, setUseEmail] = useState(false); // Toggle entre email/username
@@ -44,7 +43,7 @@ export function Login() {
         axios.post<LoginResponse>(`${BASE_URL}/auth/login/`, payload)
             .then((response) => {
                 if (response.status === 200) {
-                    login(response.data);
+                    authStore.login(response.data);
                     
                     const userRoles = response.data.roles;
                     const redirect = redirects.find(r =>

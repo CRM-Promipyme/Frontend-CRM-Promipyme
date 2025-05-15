@@ -1,27 +1,37 @@
 import { Navigate } from "react-router-dom";
-import { toast } from "react-toastify";
 import { useAuthStore } from "../../stores/authStore";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 interface AuthenticatedRoutePermissionsProps {
     children: React.ReactNode;
     fallbackUrl?: string;
 }
 
-export function AuthenticatedRoutePermissions({ children, fallbackUrl = "/" }: AuthenticatedRoutePermissionsProps) {
+export function AuthenticatedRoutePermissions({ children, fallbackUrl = "/auth/login" }: AuthenticatedRoutePermissionsProps) {
     const authStore = useAuthStore();
-    const isAuthenticated = authStore.isAuthenticated();
-    const isAdmin = authStore.isAdmin();
-    const [toastShown, setToastShown] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [authenticated, setAuthenticated] = useState(false);
 
     useEffect(() => {
-        if (!isAuthenticated && !toastShown) {
-            toast.warning("No tienes permisos para acceder a esta página.");
-            setToastShown(true);
-        }
-    }, [isAdmin, toastShown, isAuthenticated]);
+        authStore.isAuthenticated()
+            .then(result => {
+                setAuthenticated(result);
+                if (!result) {
+                    toast.error("Tu sesión ha expirado, inicia sesión nuevamente.");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }, [authStore]);
 
-    if (!isAdmin) {
+    if (loading) return null;
+
+    if (!authenticated) {
         return <Navigate to={fallbackUrl} replace />;
     }
 

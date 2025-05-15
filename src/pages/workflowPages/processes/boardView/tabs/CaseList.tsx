@@ -1,18 +1,19 @@
 import { format } from "date-fns";
+import Select from "react-select";
 import { es } from "date-fns/locale";
 import { toast } from "react-toastify";
-import { useEffect, useState } from "react"
+import api from "../../../../../controllers/api";
+import { useEffect, useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Caso } from "../../../../../types/workflowTypes";
 import { daysLeft } from "../../../../../utils/formatUtils";
+import { SelectedCaseDetails } from "./SelectedCaseDetails";
 import { Activity } from "../../../../../types/activityTypes";
 import { Spinner } from "../../../../../components/ui/Spinner";
 import { formatNumber } from "../../../../../utils/formatUtils";
-import { lowerColorOpacity } from "../../../../../utils/formatUtils";
-import { ActivityLog } from "../../../../../components/ui/ActivityLog";
 import { WorkflowKanbanProps } from "../../../../../types/kanbanBoardTypes"
-import { fetchProcessCases } from "../../../../../controllers/caseControllers";
+import { AnimatedSelectMenu } from "../../../../../components/ui/forms/AnimatedSelectMenu";
 
 export function CaseList({ process }: WorkflowKanbanProps) {
     // Local states
@@ -22,7 +23,13 @@ export function CaseList({ process }: WorkflowKanbanProps) {
     const [selectedCase, setSelectedCase] = useState<Caso | null>(null);
     const [caseActivities, setCaseActivities] = useState<Activity[]>([]);
     const [searchParams, setSearchParams] = useSearchParams();
-    // const [nextPaginationUrl, setNextPaginationUrl] = useState('');
+    const [nextPaginationUrl, setNextPaginationUrl] = useState<string | null>(null);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
+    const casesContainerRef = useRef<HTMLDivElement>(null);
+    const [caseStatusFilter, setCaseStatusFilter] = useState<string>("");
+    const [stageIdFilter, setStageIdFilter] = useState<string>("");
+    const [caseNameFilter, setCaseNameFilter] = useState<string>("");
+    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     // collect active case from URL search params
     useEffect(() => {
@@ -33,26 +40,96 @@ export function CaseList({ process }: WorkflowKanbanProps) {
         }
     }, [searchParams, cases]);
 
-    // Load cases on component mount
+    // Load cases with debounce on filters change
     useEffect(() => {
-        const loadCases = async () => {
-            try {
-                if (process.id_proceso) {
-                    const response = await fetchProcessCases(process.id_proceso);
+        if (!process.id_proceso) return;
 
-                    setCaseQty(response.count);
-                    setCases(response.results);
-                    // setNextPaginationUrl(response.next);
+        if (debounceTimer.current) {
+            clearTimeout(debounceTimer.current);
+        }
+
+        debounceTimer.current = setTimeout(async () => {
+            try {
+                setLoading(true);
+
+                const params: Record<string, string> = {
+                    process_id: process.id_proceso.toString(),
+                };
+                if (caseStatusFilter) params.case_status = caseStatusFilter;
+                if (stageIdFilter) params.stage_id = stageIdFilter;
+                if (caseNameFilter) params.case_name = caseNameFilter;
+
+                const queryString = new URLSearchParams(params).toString();
+                const response = await api.get(`/workflows/casos/list/?${queryString}`);
+
+                setCaseQty(response.data.count);
+                setCases(response.data.results);
+                setNextPaginationUrl(response.data.next);
+            } catch (error) {
+                console.error("Error loading cases:", error);
+                toast.error("Ha ocurrido un error al cargar los casos, por favor, intente más tarde...");
+            } finally {
+                setLoading(false);
+            }
+        }, 500);
+
+        return () => {
+            if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        };
+    }, [process.id_proceso, caseStatusFilter, stageIdFilter, caseNameFilter]);
+
+    // Infinite scroll observer
+    useEffect(() => {
+        const loadMoreCases = async () => {
+            if (!nextPaginationUrl) return;
+
+            try {
+                setIsFetchingMore(true);
+                const response = await fetchMoreCases(nextPaginationUrl);
+
+                if (response) {
+                    setCases(prev => [...prev, ...response.results]);
+                    setNextPaginationUrl(response.next);
                 }
             } catch {
-                console.log("Error loading cases...");
-                toast.error("Ha ocurrido un error al cargar los casos, por favor, intente más tarde...");
+                console.error("Error loading more cases...");
+            } finally {
+                setIsFetchingMore(false);
             }
+        };
+
+        const handleScroll = () => {
+            if (!casesContainerRef.current || !nextPaginationUrl || isFetchingMore) return;
+
+            const { scrollTop, scrollHeight, clientHeight } = casesContainerRef.current;
+
+            if (scrollTop + clientHeight >= scrollHeight - 50) { // 50px of threshold
+                loadMoreCases();
+            }
+        };
+
+        const container = casesContainerRef.current;
+        if (container) {
+            container.addEventListener("scroll", handleScroll);
         }
-        
-        loadCases();
-        setLoading(false);
-    }, [process]);
+
+        return () => {
+            if (container) {
+                container.removeEventListener("scroll", handleScroll);
+            }
+        };
+    }, [nextPaginationUrl, isFetchingMore]);
+
+
+    async function fetchMoreCases(url: string) {
+        try {
+            const response = await api.get(url);
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching more cases:", error);
+            return null;
+        }
+    }
 
     // Load activities on case selection
     useEffect(() => {
@@ -72,26 +149,78 @@ export function CaseList({ process }: WorkflowKanbanProps) {
         <div className="case-list-container">
             <div className="case-list-sidepanel">
                 <div className="case-list-sidepanel-search-controls">
+                    {/* Name input stays regular */}
                     <input
                         style={{ marginBottom: "15px" }}
                         type="text"
-                        name="first_name"
+                        name="case_name"
                         className="form-control"
-                        id="first_name"
-                        // value={formData.first_name}
-                        // onChange={handleChange}
+                        value={caseNameFilter}
+                        onChange={(e) => setCaseNameFilter(e.target.value)}
                         placeholder="Filtrar por nombre..."
-                        required
                     />
+
+                    {/* Status dropdown */}
+                    <div style={{ marginBottom: "15px" }}>
+                        <Select
+                            options={[
+                                { value: "", label: "Todos los estados" },
+                                { value: "open", label: "Abiertos" },
+                                { value: "closed", label: "Cerrados" }
+                            ]}
+                            value={
+                                caseStatusFilter !== ""
+                                    ? { value: caseStatusFilter, label: caseStatusFilter === "open" ? "Abiertos" : "Cerrados" }
+                                    : { value: "", label: "Todos los estados" }
+                            }
+                            onChange={(opt) => setCaseStatusFilter((opt as { value: string })?.value ?? "")}
+                            isClearable
+                            components={{ Menu: AnimatedSelectMenu }}
+                            menuPortalTarget={document.body}
+                            styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                            placeholder="Filtrar por estado..."
+                        />
+                    </div>
+
+                    {/* Stage dropdown */}
+                    <div>
+                        <Select
+                            options={[
+                                { value: "", label: "Todas las etapas" },
+                                ...process.etapas.map((etapa) => ({
+                                    value: etapa.id_etapa.toString(),
+                                    label: etapa.nombre_etapa
+                                }))
+                            ]}
+                            value={
+                                stageIdFilter !== ""
+                                    ? process.etapas
+                                        .map(etapa => ({ value: etapa.id_etapa.toString(), label: etapa.nombre_etapa }))
+                                        .find(opt => opt.value === stageIdFilter) || null
+                                    : { value: "", label: "Todas las etapas" }
+                            }
+                            onChange={(opt) => setStageIdFilter((opt as { value: string })?.value ?? "")}
+                            isClearable
+                            components={{ Menu: AnimatedSelectMenu }}
+                            menuPortalTarget={document.body}
+                            styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                            placeholder="Filtrar por etapa..."
+                        />
+                    </div>
                 </div>
-                <div className="case-list-container-cases">
-                    <p className="case-list-title text-muted">{caseQty} casos encontrados</p>
+
+                <div className="case-list-container-cases" ref={casesContainerRef} style={{ overflowY: "auto", maxHeight: "80vh" }}>
+                    <p className="case-list-title text-muted" style={{ marginTop: '10px' }}>{caseQty} casos encontrados</p>
                     {cases.length > 0 ? (
                         cases.map((caseObj: Caso) => (
-                            <div key={caseObj.id_caso} className="kanban-task" onClick={() => {
-                                searchParams.set("selected_case", caseObj.id_caso.toString()); // update the case
-                                setSearchParams(searchParams);
-                            }}>
+                            <div
+                                key={caseObj.id_caso}
+                                className="kanban-task"
+                                onClick={() => {
+                                    searchParams.set("selected_case", caseObj.id_caso.toString());
+                                    setSearchParams(searchParams);
+                                }}
+                            >
                                 <h4 className="case-title">{caseObj.nombre_caso}</h4>
 
                                 <div className="case-contact-information">
@@ -134,8 +263,8 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                                             className="item-value"
                                             style={{
                                                 color: daysLeft(new Date(caseObj.fecha_cierre_estimada)) >= 0
-                                                    ? "#0F7E5E"  // Green for positive (or zero) days
-                                                    : "#FF8A05"  // Orange for negative days
+                                                    ? "#0F7E5E"
+                                                    : "#FF8A05"
                                             }}
                                         >
                                             {daysLeft(new Date(caseObj.fecha_cierre_estimada))} días
@@ -153,6 +282,7 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                     ) : (
                         <p className="text-muted text-center">No hay casos disponibles en el sistema.</p>
                     )}
+                    {isFetchingMore && <Spinner className="spinner-border-sm" />}
                 </div>
             </div>
             <motion.div
@@ -163,205 +293,14 @@ export function CaseList({ process }: WorkflowKanbanProps) {
             >
                 <AnimatePresence mode="wait">
                     {selectedCase ? (
-                        <motion.div 
-                            key={selectedCase.id_caso}
-                            className="selected-case"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <div className="case-title">
-                                <h3 style={{ fontWeight: 700 }}>{selectedCase.nombre_caso}</h3>
-                                {selectedCase.abierto ? (
-                                    <div className="case-status">
-                                        <span className="case-status-badge case-open">Abierto</span>
-                                        <span className="case-status-badge case-in-progress">En proceso</span>
-                                        {selectedCase.exitoso && (
-                                            <span className="case-status-badge case-open">Exitoso</span>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="case-status">
-                                        <span className="case-status-badge case-closed">Cerrado</span>
-                                    </div>
-                                )}
-                            </div>
-                            
-                            <div className="column-container">
-                                <div className="column">
-                                    <Link to={`/workflows/cases/update/${selectedCase.id_caso}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                        <button
-                                            className="btn btn-primary"
-                                            style={{ marginBottom: '20px', marginTop: '0px' }}
-                                        >
-                                            Editar
-                                        </button>
-                                    </Link>
-                                    <div className="case-item-container">
-                                        <div className="case-item-header">
-                                            <i className="bi bi-file-earmark-text"></i>
-                                            <p>Descripción</p>
-                                        </div>
-                                        <div className="case-item-body">
-                                            <p>{selectedCase.descripcion_caso}</p>
-                                        </div>
-                                        <div className="case-item-container">
-                                            <div className="case-item-header">
-                                                <i className="bi bi-currency-dollar"></i>
-                                                <p>Valor del Caso:</p>
-                                            </div>
-                                            <div className="case-item-body">
-                                                <p style={{ fontWeight: 700, fontSize: "1.5rem" }}>RD$ {formatNumber(parseFloat(selectedCase.valor_caso))}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <Link 
-                                        to={`/contacts/details/${selectedCase.contact}`} 
-                                        style={{ textDecoration: 'none', color: 'inherit' }} 
-                                    >
-                                        <div className="case-contact-box" style={{ marginBottom: '20px' }}>
-                                                <i className="bi bi-file-person" style={{ fontSize: '30px' }}></i>
-                                                <div>
-                                                    <strong className="status-title">Contacto Relacionado</strong>
-                                                    <p className="status-description">{selectedCase.contact_first_name} {selectedCase.contact_last_name}</p>
-                                                </div>
-                                        </div>
-                                    </Link>
-                                    <div className="case-stage-box" style={{ color: process.color, backgroundColor: lowerColorOpacity(process.color, 0.05), borderColor: lowerColorOpacity(process.color, 0.15) }}>
-                                        <i className="bi bi-kanban" style={{ fontSize: '25px' }}></i>
-                                        <div>
-                                            <strong className="status-title" style={{ color: process.color }}>Etapa Actual</strong>
-                                            {selectedCase.etapa_actual && process.etapas.find((step) => step.id_etapa === selectedCase.etapa_actual) ? (
-                                                <p className="status-description">{process.etapas.find((step) => step.id_etapa === selectedCase.etapa_actual)?.nombre_etapa}</p>
-                                            ) : (
-                                                <p className="status-description">N/A</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="case-notes-container">
-                                        {/* TODO: Case notes are not functional yet */}
-                                        <div className="case-item-container">
-                                            <div className="case-item-header">
-                                                <i className="bi bi-chat-right-dots"></i>
-                                                <p>Notas y Comentarios</p>
-                                            </div>
-                                            <div className="case-item-body">
-                                                <textarea
-                                                    className="form-control"
-                                                    placeholder="Escribe una nota o comentario..."
-                                                    style={{ marginBottom: '10px' }}
-                                                ></textarea>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="column">
-                                    <div className="case-item-container" style={{ padding: '20px' }}>
-                                        <div className="case-item-header" style={{ marginBottom: '5px'}}>
-                                            <i className="bi bi-calendar-week"></i>
-                                            <p style={{ fontWeight: 650, }}>Fechas Importantes</p>
-                                        </div>
-                                        <div className="case-item-body">
-                                            <div className="case-item">
-                                                <p className="label">Creado:</p>
-                                                <p>{format(new Date(selectedCase.fecha_creacion), "d 'de' MMMM 'de' yyyy '-' h:mm aaa", { locale: es })}</p>
-                                            </div>
-                                            <div className="case-item">
-                                                <p className="label">Fecha de Cierre:</p>
-                                                <p>{format(new Date(selectedCase.fecha_cierre), "d 'de' MMMM 'de' yyyy '-' h:mm aaa", { locale: es })}</p>
-                                            </div>
-                                            <div className="case-item">
-                                                <p className="label">Fecha de Cierre Estimada:</p>
-                                                <p>{format(new Date(selectedCase.fecha_cierre_estimada), "d 'de' MMMM 'de' yyyy '-' h:mm aaa", { locale: es })}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="case-item-container" style={{ padding: '20px' }}>
-                                        <div className="case-item-header" style={{ marginBottom: '5px'}}>
-                                            <i className="bi bi-clock"></i>
-                                            <p style={{ fontWeight: 650, }}>Estado en el tiempo</p>
-                                        </div>
-                                        <div className="case-item-body">
-                                            <div className="case-item">
-                                                <p className="label">Días restantes:</p>
-                                                <span className="case-status-badge" style={{ backgroundColor: '#f8f8f8' }}>
-                                                    <p
-                                                        style={{
-                                                            color: daysLeft(new Date(selectedCase.fecha_cierre_estimada)) >= 0
-                                                                ? "#0F7E5E"  // Green for positive (or zero) days
-                                                                : "#FF8A05"  // Orange for negative days
-                                                            , fontWeight: 700
-                                                        }}
-                                                    >
-                                                        {daysLeft(new Date(selectedCase.fecha_cierre_estimada))} días
-                                                    </p>
-                                                </span>
-                                            </div>
-                                            <div className="case-item">
-                                                <p className="label">Última actualización:</p>
-                                                <p>{format(new Date(selectedCase.ultima_actualizacion), "d 'de' MMMM 'de' yyyy '-' h:mm aaa", { locale: es })}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="case-item-container" style={{ padding: '20px' }}>
-                                        <div className="case-item-header" style={{ marginBottom: '5px'}}>
-                                            <i className="bi bi-clock"></i>
-                                            <p style={{ fontWeight: 650, }}>Estado en el tiempo</p>
-                                        </div>
-                                        <div className="case-item-body">
-                                            <div className="case-item">
-                                                <p className="label">Días restantes:</p>
-                                                <span className="case-status-badge" style={{ backgroundColor: '#f8f8f8' }}>
-                                                    <p
-                                                        style={{
-                                                            color: daysLeft(new Date(selectedCase.fecha_cierre_estimada)) >= 0
-                                                                ? "#0F7E5E"  // Green for positive (or zero) days
-                                                                : "#FF8A05"  // Orange for negative days
-                                                            , fontWeight: 700
-                                                        }}
-                                                    >
-                                                        {daysLeft(new Date(selectedCase.fecha_cierre_estimada))} días
-                                                    </p>
-                                                </span>
-                                            </div>
-                                            <div className="case-item">
-                                                <p className="label">Última actualización:</p>
-                                                <p>{format(new Date(selectedCase.ultima_actualizacion), "d 'de' MMMM 'de' yyyy '-' h:mm aaa", { locale: es })}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {selectedCase.abierto && (
-                                        <>
-                                            {daysLeft(new Date(selectedCase.fecha_cierre_estimada)) >= 0 ? (
-                                                <div className="case-status-box">
-                                                    <i className="bi bi-check-circle"></i>
-                                                    <div>
-                                                        <strong className="status-title">Caso en tiempo</strong>
-                                                        <p className="status-description">Este caso está progresando según lo programado.</p>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="case-status-box closed">
-                                                    <i className="bi bi-check-circle"></i>
-                                                    <div>
-                                                        <strong className="status-title">Caso atrasado</strong>
-                                                        <p className="status-description">Este caso está atrasado en base a la fecha de cierre estimada.</p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
-                                    <div className="case-activities">
-                                        {selectedCase && (
-                                            <ActivityLog activities={caseActivities} setActivities={setCaseActivities} entity_type="case" entity_id={selectedCase?.id_caso.toString()}/>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
+                        <SelectedCaseDetails
+                            selectedCase={selectedCase}
+                            process={process}
+                            caseActivities={caseActivities}
+                            setCaseActivities={setCaseActivities}
+                        />
                     ) : (
-                        <motion.p 
+                        <motion.p
                             key="empty-selection"
                             className="text-muted text-center"
                             initial={{ opacity: 0 }}

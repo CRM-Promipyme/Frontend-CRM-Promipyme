@@ -6,6 +6,7 @@ import { CreateWorkflow } from '../pages/workflowPages/processes/CreateWorkflow'
 import { AdminRoutePermissions } from '../components/permissions/AdminRoutePermissions'
 import { WorkflowSelectionMenu } from '../pages/workflowPages/processes/WorkflowSelectionMenu'
 import { WorkflowBoardView } from '../pages/workflowPages/processes/boardView/WorkflowBoardView'
+import { AuthenticatedRoutePermissions } from '../components/permissions/AuthenticatedRoutePermissions'
 
 export function WorkflowRoutes() {
     const publicWorkflowRoutes = [
@@ -14,6 +15,7 @@ export function WorkflowRoutes() {
         {path: "/board-view/:workflowId", comp: WorkflowBoardView},
     ]
 
+    const authFallback = "/auth/login";
     const fallbackUrl = "/workflows/processes/menu";
     const privateWorkflowRoutes = [
         {path: "/processes/create", comp: CreateWorkflow},
@@ -24,7 +26,11 @@ export function WorkflowRoutes() {
     return (
         <With404Fallback>
             {publicWorkflowRoutes.map((route, index) => (
-                <Route key={index} path={route.path} element={<route.comp />} />
+                <Route key={index} path={route.path} element={
+                    <AuthenticatedRoutePermissions fallbackUrl={authFallback}>
+                        <route.comp />
+                    </AuthenticatedRoutePermissions>
+                } />
             ))}
             
             {privateWorkflowRoutes.map((route, index) => (

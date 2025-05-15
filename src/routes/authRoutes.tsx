@@ -21,6 +21,7 @@ export function AuthRoutes() {
         {path: "/confirm-password-reset/:uid/:token", comp: PasswordResetConfirmation}
     ]
 
+    const authFallback = "/auth/login";
     const privateAuthRoutes = [
         {path: "/user/profile/:userId", comp: UserProfileView},
         {path: "/auth-menu", comp: AdminMenu},
@@ -41,7 +42,7 @@ export function AuthRoutes() {
             ))}
             {privateAuthRoutes.map((route, index) => (
                 <Route key={index} path={route.path} element={
-                    <AuthenticatedRoutePermissions fallbackUrl={fallbackUrl}>
+                    <AuthenticatedRoutePermissions fallbackUrl={authFallback}>
                         <route.comp />
                     </AuthenticatedRoutePermissions>
                 } />
