@@ -3,6 +3,9 @@ import api from "../../../../../../controllers/api";
 import {useAuthStore} from "../../../../../../stores/authStore";
 import { toast } from "react-toastify";
 import { PopupModal } from "../../../../../../components/ui/PopupModal";
+import { motion } from "framer-motion";
+import { pageVariants } from "../../../../../../utils/motionVariants";
+import { Link } from "react-router-dom";
 
 
 const BASE_URL = import.meta.env.VITE_REACT_APP_DJANGO_API_URL;
@@ -15,7 +18,9 @@ interface Note {
     descripcion_nota: string,
     fecha_creacion: string,
     caso: number,
-    creador_nota: number
+    creador_nota: number,
+    creador_first_name: string,
+    creador_last_name: string,
 }
 
 interface NotesResponse {
@@ -212,14 +217,16 @@ export function NotesSection({ id }: NotesSectionProps) {
                             width: '100%' 
                         }}
                     />
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
-                        <button 
-                            type="submit"
-                            className="btn btn-primary"
-                        >
-                            Enviar 
-                        </button>
-                    </div>
+                    {noteText.length > 0 && (
+                        <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit" style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+                            <button
+                                type="submit"
+                                className="btn btn-primary"
+                            >
+                                Enviar
+                            </button>
+                        </motion.div>
+                    )}
                 </form>
 
                 {/* Updated Notes Display Section */}
@@ -244,59 +251,76 @@ export function NotesSection({ id }: NotesSectionProps) {
                             <div style={{ 
                                 display: 'flex', 
                                 justifyContent: 'space-between', 
-                                alignItems: 'center',
+                                alignItems: 'baseline',
                                 marginBottom: '5px' 
                             }}>
-                                <strong>Usuario {note.creador_nota}</strong>
-                                <div>
-                                    <small className="text-muted me-2">
+                                <div className="note-header">
+                                    <strong>
+                                        <Link
+                                            to={`/auth/user/profile/${note.creador_nota}`}
+                                            className="user-profile-url"
+                                        >
+                                            {`${note.creador_first_name} ${note.creador_last_name}`}
+                                        </Link>
+                                    </strong>
+                                    <small className="text-muted me-2" style={{ marginTop: '0px'}}>
                                         {formatDate(note.fecha_creacion)}
                                     </small>
+                                </div>
+                                <div>
                                     {/* Only show edit button if the note creator matches current user */}
                                     {userId === note.creador_nota && editingNoteId !== note.id_nota_caso && (
-                                        <button 
+                                        <motion.button
+                                            whileHover={{ scale: 1.1 }}
+                                            whileTap={{ scale: 0.9 }}
                                             className="btn btn-outline-primary btn-sm"
                                             onClick={() => handleEditClick(note)}
                                         >
                                             <i className="bi bi-pencil"/>
-                                        </button>
+                                        </motion.button>
                                     )}
                                     {/* You might want to apply the same condition to delete button */}
                                     {authStore.isAdmin() && (
-                                        <button
+                                        <motion.button
+                                            whileHover={{ scale: 1.1 }}
+                                            whileTap={{ scale: 0.9 }}
                                             className="btn btn-outline-danger btn-sm" 
                                             style={{ marginLeft: '5px' }}
                                             onClick={() => handleDeleteClick(note)}
                                         >
                                             <i className="bi bi-trash"></i>
-                                        </button>
+                                        </motion.button>
                                     )}
                                 </div>
                             </div>
                             
                             {editingNoteId === note.id_nota_caso ? (
-                                <div>
+                                <motion.div
+                                    variants={pageVariants}
+                                >
                                     <textarea
                                         className="form-control mb-2"
                                         value={editedText}
                                         onChange={(e) => setEditedText(e.target.value)}
                                         style={{ width: '100%' }}
                                     />
-                                    <div className="d-flex justify-content-end gap-2">
-                                        <button 
+                                    <motion.div className="d-flex justify-content-end gap-2" variants={pageVariants}>
+                                        <motion.button 
+                                            whileHover={{ scale: 1.1 }}
                                             className="btn btn-secondary btn-sm"
                                             onClick={handleEditCancel}
                                         >
                                             Cancelar
-                                        </button>
-                                        <button 
+                                        </motion.button>
+                                        <motion.button 
+                                            whileHover={{ scale: 1.1 }}
                                             className="btn btn-primary btn-sm"
                                             onClick={() => handleEditSave(note.id_nota_caso)}
                                         >
                                             Guardar
-                                        </button>
-                                    </div>
-                                </div>
+                                        </motion.button>
+                                    </motion.div>
+                                </motion.div>
                             ) : (
                                 <p style={{ margin: 0 }}>{note.descripcion_nota}</p>
                             )}
