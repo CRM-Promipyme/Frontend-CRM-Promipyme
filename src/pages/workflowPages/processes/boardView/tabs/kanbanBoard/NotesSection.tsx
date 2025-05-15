@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import api from "../../../../../../controllers/api";
-import authStore from "../../../../../../stores/authStore";
+import {useAuthStore} from "../../../../../../stores/authStore";
 import { toast } from "react-toastify";
-import axios from "axios";
-import { se, tr } from "date-fns/locale";
+import { PopupModal } from "../../../../../../components/ui/PopupModal";
+
 
 const BASE_URL = import.meta.env.VITE_REACT_APP_DJANGO_API_URL;
 
@@ -25,8 +25,16 @@ interface NotesResponse {
     results: Note[];
 }
 
+interface NoteToDelete {
+    id: number;
+    descripcion: string;
+}
+
 export function NotesSection({ id }: NotesSectionProps) {
+    const authStore = useAuthStore();
+    const userId = authStore.userId;
     const [noteText, setNoteText] = useState<string>("");
+    const [showModal, setShowModal] = useState(false);
     const [notes, setNotes] = useState<Note[]>([]);
     const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
     const [editedText, setEditedText] = useState<string>("");
@@ -34,6 +42,7 @@ export function NotesSection({ id }: NotesSectionProps) {
     const [nextPage, setNextPage] = useState<string | null>(null);
     const notesContainerRef = useRef<HTMLDivElement>(null);
     const [loadingMore, setLoadingMore] = useState(false);
+    const [noteToDelete, setNoteToDelete] = useState<NoteToDelete | null>(null);
 
     const fetchNotes = async (url?: string) => {
         if (loadingMore && !url) return;
@@ -100,7 +109,7 @@ export function NotesSection({ id }: NotesSectionProps) {
         if (!container) return;
 
         const handleScroll = () => {
-            if (loading || loadingMore || !nextPage) return;
+            if (!container || loading || !nextPage) return;
 
             const { scrollTop, scrollHeight, clientHeight } = container;
             if (scrollHeight - scrollTop <= clientHeight + 100) {
@@ -125,17 +134,18 @@ export function NotesSection({ id }: NotesSectionProps) {
         const payload = {
             note_description: noteText.trim(),
         }
-        await api.post(`${BASE_URL}/workflows/casos/manage/notes/${id}/`, payload)
-            .then((response) => {
-                if (response.status === 201) {
-                    toast.success("¡Nota enviada exitosamente!");
-                    setNoteText("");
+        try {
+            const response = await api.post(`${BASE_URL}/workflows/casos/manage/notes/${id}/`, payload)
+                    if (response.status === 201) {
+                        toast.success("¡Nota enviada exitosamente!");
+                        setNoteText("");
+                        fetchNotes();
+                    }
                 }
-            })
-            .catch((error) => {
+        catch(error){
                 console.error(error);
                 toast.error("Error al enviar la nota.");
-            });
+        };
     };
     
     const formatDate = (dateString: string) => {
@@ -148,16 +158,42 @@ export function NotesSection({ id }: NotesSectionProps) {
             minute: '2-digit'
         });
     }
-
-    async function fetchMoreNotes(url: string) {
-            try {
-                const response = await api.get(url);
-                return response.data;
-            } catch (error) {
-                console.error("Error fetching more cases:", error);
-                return null;
+    const deleteNote = async (noteId: number) => {
+        try {
+            if (!authStore.isAdmin()) {
+                toast.error("No tienes permisos para eliminar esta nota.");
+                return;
             }
+    
+            const response = await api.delete(`${BASE_URL}/workflows/casos/manage/notes/${id}/?note_id=${noteId}`);
+    
+            if (response.status === 200) {
+                // Refetch primero
+                fetchNotes();
+    
+                // Luego cerrar modal y resetear estado
+                setShowModal(false);
+                setNoteToDelete(null);
+    
+                // Mostrar el toast
+                toast.success("¡Nota eliminada exitosamente!");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Error al eliminar la nota.");
         }
+    };
+    
+    // Add this function to handle delete click
+    const handleDeleteClick = (note: Note) => {
+        setNoteToDelete({
+            id: note.id_nota_caso,
+            descripcion: note.descripcion_nota
+        });
+        setShowModal(true);
+        fetchNotes();
+    };
+
     return (
         <div>
             <div className="case-item-container">
@@ -198,9 +234,7 @@ export function NotesSection({ id }: NotesSectionProps) {
                     }}
                 >
                     {notes.map((note) => (
-                        <div 
-                            key={note.id_nota_caso} 
-                            className="note-item"
+                        <div key={note.id_nota_caso} className="note-item"
                             style={{
                                 padding: '10px',
                                 borderBottom: '1px solid #eee',
@@ -218,12 +252,23 @@ export function NotesSection({ id }: NotesSectionProps) {
                                     <small className="text-muted me-2">
                                         {formatDate(note.fecha_creacion)}
                                     </small>
-                                    {editingNoteId !== note.id_nota_caso && (
+                                    {/* Only show edit button if the note creator matches current user */}
+                                    {userId === note.creador_nota && editingNoteId !== note.id_nota_caso && (
                                         <button 
                                             className="btn btn-outline-primary btn-sm"
                                             onClick={() => handleEditClick(note)}
                                         >
                                             <i className="bi bi-pencil"/>
+                                        </button>
+                                    )}
+                                    {/* You might want to apply the same condition to delete button */}
+                                    {authStore.isAdmin() && (
+                                        <button
+                                            className="btn btn-outline-danger btn-sm" 
+                                            style={{ marginLeft: '5px' }}
+                                            onClick={() => handleDeleteClick(note)}
+                                        >
+                                            <i className="bi bi-trash"></i>
                                         </button>
                                     )}
                                 </div>
@@ -266,6 +311,43 @@ export function NotesSection({ id }: NotesSectionProps) {
                     )}
                 </div>
             </div>
+
+            {/* Add the PopupModal component at the end of your JSX */}
+            {showModal && noteToDelete && (
+                <PopupModal
+                    show={showModal}
+                    onClose={() => {
+                        setShowModal(false);
+                        setNoteToDelete(null);
+                    }}
+                >
+                    <div>
+                        <h5>Confirmar Eliminación</h5>
+                        <p>¿Estás seguro de que deseas eliminar esta nota?</p>
+                        <p className="text-muted" style={{ fontSize: '1em' }}>
+                            "{noteToDelete.descripcion.slice(0, 50)}
+                            {noteToDelete.descripcion.length > 50 ? '...' : ''}"
+                        </p>
+                        <div className="d-flex justify-content-end gap-2 mt-3">
+                            <button 
+                                className="btn btn-secondary"
+                                onClick={() => {
+                                    setShowModal(false);
+                                    setNoteToDelete(null);
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                className="btn btn-danger"
+                                onClick={() => deleteNote(noteToDelete.id)}
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </PopupModal>
+            )}
         </div>
     );
 }
