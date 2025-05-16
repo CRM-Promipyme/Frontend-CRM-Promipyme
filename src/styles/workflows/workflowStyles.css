@@ -488,3 +488,19 @@
     margin: unset;
     transition: all 0.3s ease;
 }
+
+.user-profile-url {
+    text-decoration: none;
+    color: #007bff;
+    transition: all 0.3s ease;
+}
+
+.user-profile-url:hover {
+    transform: scale(1.05);
+}
+
+.note-header {
+    display: flex;
+    flex-direction: column;
+
+}
