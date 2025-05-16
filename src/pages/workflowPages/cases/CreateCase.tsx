@@ -16,6 +16,8 @@ import { fetchContacts } from "../../../controllers/contactControllers";
 import { SidebarLayout } from "../../../components/layouts/SidebarLayout";
 import { fetchProcesses } from "../../../controllers/workflowControllers";
 import { AnimatedSelectMenu } from "../../../components/ui/forms/AnimatedSelectMenu";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 type ContactOption = { label: string; value: number };
 
@@ -33,8 +35,8 @@ export function CreateCase() {
     const [caseName, setCaseName] = useState("");
     const [caseDescription, setCaseDescription] = useState("");
     const [caseValue, setCaseValue] = useState("");
-    const [estimatedCloseDate, setEstimatedCloseDate] = useState("");
-    const [closingDate, setClosingDate] = useState("");
+    const [estimatedCloseDate, setEstimatedCloseDate] = useState<Date | null>(null);
+    const [closingDate, setClosingDate] = useState<Date | null>(null);
     const [open, setOpen] = useState(true);
     const [successful, setSuccessful] = useState(false);
 
@@ -73,8 +75,8 @@ export function CreateCase() {
             case_name: caseName,
             case_description: caseDescription,
             case_value: caseValue,
-            case_estimated_close_date: estimatedCloseDate,
-            closing_date: closingDate,
+            case_estimated_close_date: estimatedCloseDate?.toISOString(),
+            closing_date: closingDate?.toISOString(),
             open,
             successful,
             process_id: selectedProcessId,
@@ -159,7 +161,7 @@ export function CreateCase() {
 
                         {/* Case Value */}
                         <div className="mb-3">
-                            <label>Valor del Caso (RD$)</label>
+                            <label>Valor del Caso (RD$) </label>
                             <input
                                 type="number"
                                 className={`form-control ${parseFloat(caseValue) < 0 ? 'is-invalid' : ''}`}
@@ -269,23 +271,33 @@ export function CreateCase() {
 
                         {/* Estimated Closing Date */}
                         <div className="mb-3">
-                            <label>Fecha Estimada de Cierre</label>
-                            <input
-                                type="datetime-local"
+                            <label>Fecha Estimada de Cierre </label>
+                            <DatePicker
+                                selected={estimatedCloseDate}
+                                onChange={(date: Date) => setEstimatedCloseDate(date)}
+                                showTimeSelect
+                                timeFormat="HH:mm"
+                                timeIntervals={15}
+                                dateFormat="MMMM d, yyyy h:mm aa"
                                 className="form-control"
-                                value={estimatedCloseDate}
-                                onChange={(e) => setEstimatedCloseDate(e.target.value)}
+                                placeholderText="Selecciona fecha y hora"
+                                timeCaption="Hora"
                             />
                         </div>
 
                         {/* Actual Closing Date */}
                         <div className="mb-3">
                             <label>Fecha Real de Cierre</label>
-                            <input
-                                type="datetime-local"
+                            <DatePicker
+                                selected={closingDate}
+                                onChange={(date: Date) => setClosingDate(date)}
+                                showTimeSelect
+                                timeFormat="HH:mm"
+                                timeIntervals={15}
+                                dateFormat="MMMM d, yyyy h:mm aa"
                                 className="form-control"
-                                value={closingDate}
-                                onChange={(e) => setClosingDate(e.target.value)}
+                                placeholderText="Selecciona fecha y hora"
+                                timeCaption="Hora"
                             />
                         </div>
 
