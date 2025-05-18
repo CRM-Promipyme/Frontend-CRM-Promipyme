@@ -29,6 +29,46 @@ export interface Contact {
     direcciones: DireccionesContacto[];
 }
 
+export interface CampoAdicional {
+    id: number;
+    field_value: string | number | boolean;
+}
+
+export interface AditionalFieldUpdate {
+    id: number;
+    field_name: string;
+    field_type: number | string;
+    field_value: string;
+    type_id: number;
+}
+
+export interface CreateContactType {
+    contact_id: number;
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    email: string;
+    fecha_nacimiento: string;
+    fecha_ingreso: string;
+    last_updated: string;
+    telefonos: TelefonosContacto[];
+    direcciones: DireccionesContacto[];
+    campos_adicionales: CampoAdicional[];
+}
+
+export interface UpdateContact {
+    contact_id: number;
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+    email: string;
+    fecha_nacimiento: string;
+    fecha_ingreso: string;
+    last_updated: string;
+    telefonos: TelefonosContacto[];
+    direcciones: DireccionesContacto[];
+    campos_adicionales: AditionalFieldUpdate[];
+}
 
 export interface TelefonosContacto {
     numero_telefonico: string;
@@ -52,4 +92,16 @@ export interface ContactListResponse {
     next: string;
     previous: string;
     results: Contact[];
+}
+
+export interface Field {
+    id?: number;
+    field_name: string;
+    field_type: number | string;
+    field_type_name?: string;
+}
+
+export interface FieldTypeOption {
+    id: number;
+    field_type_name: string;
 }

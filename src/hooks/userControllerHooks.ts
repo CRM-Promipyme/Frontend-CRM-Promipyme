@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import {
-    Contact,
     Provincia,
     TipoTelefono,
+    UpdateContact
 } from "../types/contactTypes";
 
 // Hook to fetch dropdown options (provincias with cities and tipos_telefono)
@@ -49,8 +49,8 @@ export function useContactData(
     contact_id: string | undefined,
     accessToken: string | null
 ) {
-    const [contactData, setContactData] = useState<Contact | null>(null);
-    const [formData, setFormData] = useState<Contact | null>(null);
+    const [contactData, setContactData] = useState<UpdateContact | null>(null);
+    const [formData, setFormData] = useState<UpdateContact | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
@@ -71,9 +71,11 @@ export function useContactData(
 
                 if (!response.ok) throw new Error("Failed to fetch contact data");
 
-                const data: Contact = await response.json();
+                const data: UpdateContact = await response.json();
                 setContactData(data);
                 setFormData(data); // Initialize form state with fetched data
+
+                console.log("Fetched contact data:", data);
             } catch (error) {
                 console.error("Error fetching contact data:", error);
                 toast.error("Hubo un error al cargar los datos del contacto.");

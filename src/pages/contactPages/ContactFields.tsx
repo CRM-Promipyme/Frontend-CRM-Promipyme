@@ -5,19 +5,8 @@ import { useEffect, useState } from "react";
 import { Spinner } from "../../components/ui/Spinner";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSidebarStore } from "../../stores/sidebarStore";
+import { Field, FieldTypeOption } from "../../types/contactTypes";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
-
-interface Field {
-    id?: number;
-    field_name: string;
-    field_type: number | string;
-    field_type_name?: string;
-}
-
-interface FieldTypeOption {
-    id: number;
-    field_type_name: string;
-}
 
 export function ContactFields() {
     const sidebarWidthPx = useSidebarStore((state) => state.sidebarWidthPx);
@@ -35,7 +24,7 @@ export function ContactFields() {
 
     const fetchFields = async () => {
         try {
-            const res = await api.get("/contacts/fields/"); // Update to your correct API path
+            const res = await api.get("/contacts/fields/");
             setContactFields(res.data.additional_fields);
             setBaseFields(res.data.base_fields);
         } catch (error) {
@@ -55,12 +44,22 @@ export function ContactFields() {
     };
 
     const handleSubmit = async () => {
-        // Validate duplicate field names
+        // Normalize names for comparison
         const fieldNames = contactFields.map(f => f.field_name.trim().toLowerCase());
+        const baseFieldNames = baseFields.map(f => f.field_name.trim().toLowerCase());
+
+        // Check for duplicates within custom fields
         const hasDuplicates = fieldNames.some((name, idx) => fieldNames.indexOf(name) !== idx);
-    
+
+        // Check for conflicts with base fields
+        const hasBaseConflict = fieldNames.some(name => baseFieldNames.includes(name));
+
         if (hasDuplicates) {
             toast.error("No se pueden tener campos con el mismo nombre.");
+            return;
+        }
+        if (hasBaseConflict) {
+            toast.error("No se pueden crear campos con nombres que ya existen en los campos base.");
             return;
         }
     
@@ -68,6 +67,7 @@ export function ContactFields() {
         try {
             const payload = {
                 contact_fields: contactFields.map(field => ({
+                    id: field.id ? field.id : '',
                     field_name: field.field_name,
                     field_type: typeof field.field_type === "number" ? field.field_type : parseInt(field.field_type as string, 10)
                 }))
