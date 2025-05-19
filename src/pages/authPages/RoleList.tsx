@@ -2,6 +2,7 @@ import { toast } from "react-toastify";
 import { Role } from "../../types/authTypes";
 import { fetchRoles } from '../../utils/authUtils';
 import { useEffect, useState, useRef } from "react";
+import { RolePermissions } from "./RolePermissions";
 import { useAuthStore } from "../../stores/authStore";
 import { Spinner } from "../../components/ui/Spinner";
 import { useSidebarStore } from "../../stores/sidebarStore"
@@ -19,6 +20,7 @@ export function RoleList() {
     const [roles, setRoles] = useState<Role[]>([]);
     const [selectedRole, setSelectedRole] = useState<Role | null>(null);
     const [showModal, setShowModal] = useState<boolean>(false);
+    const [showPermissionsModal, setShowPermissionsModal] = useState(false);
     const [modalType, setModalType] = useState<"update" | "delete" | "create">("update");
 
     const [searchName, setSearchName] = useState<string>("");
@@ -44,18 +46,6 @@ export function RoleList() {
         setLoading(false);
     }, [accessToken, roles]);
 
-    const handleEditModal = async (role: Role) => {
-        setModalType("update");
-        setSelectedRole(role);
-
-        if (!accessToken) {
-            toast.error("Tu sesión ha caducado. Por favor, inicia sesión nuevamente para continuar.");
-            return;
-        }
-
-        setShowModal(true);
-    };
-
     // Filter roles on search input change
     useEffect(() => {
         if (debounceTimer.current) {
@@ -78,43 +68,6 @@ export function RoleList() {
             setFilteredRoles(rolesData);
         } catch {
             toast.error("No se pudieron obtener los roles.");
-        }
-    };
-
-    const handleEdit = async () => {
-        if (!selectedRole) return;
-
-        try {
-            const response = await fetch(`${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/manage/system-roles/${selectedRole.id_rol}/`, {
-                method: "PUT",
-                headers: {
-                    "Authorization": `Bearer ${accessToken}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ 
-                    nombre_rol: selectedRole.nombre_rol
-                }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message);
-            }
-
-            toast.success("Nueva información de rol guardada exitosamente.");
-            setShowModal(false);
-            
-            // Re-fetch roles
-            setLoading(true);
-            await loadRoles();
-            setLoading(false);
-            
-        } catch (error) {
-            if (error instanceof Error) {
-                toast.error(`${error.message}`);
-            } else {
-                toast.error("Ha ocurrido un error al guardar la información del rol, por favor, intente más tarde...");
-            }
         }
     };
 
@@ -213,55 +166,66 @@ export function RoleList() {
             {loading ? (
                 <Spinner />
             ) : (
-                <div className="table-responsive">
-                    <table className="table table-bordered rounded-borders">
-                        {/* TODO: Consider adding more information: Last updated at, etc. */}
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th><i className="bi bi-type"></i> Nombre</th>
-                                <th>Permisos</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredRoles.length > 0 ? (
-                                filteredRoles.map((role) => (
-                                    <tr key={role.id_rol}>
-                                        <td>{role.id_rol}</td>
-                                        <td>{role.nombre_rol || "—"}</td>
-                                        <td></td>
-                                        {/* TODO: Permisos de rol */}
-                                        <td className="row-action-container">
-                                            <button className="btn btn-sm btn-outline-primary" onClick={() => handleEditModal(role)}>
-                                                <i className="bi bi-pencil"></i> Editar
-                                            </button>
-                                            <button className="btn btn-sm btn-outline-danger" onClick={() => { setModalType("delete"); setSelectedRole(role); setShowModal(true); }}>
-                                                <i className="bi bi-trash"></i> Eliminar
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr><td colSpan={7} className="text-center">No hay cuentas actualmente.</td></tr>
-                            )}
-                        </tbody>
-                    </table>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", marginTop: "24px", marginLeft: "30px" }}>
+                    {filteredRoles.length > 0 ? (
+                        filteredRoles.map((role) => (
+                            <div
+                                key={role.id_rol}
+                                style={{
+                                    border: "1px solid #e5e7eb",
+                                    borderRadius: "12px",
+                                    padding: "24px",
+                                    minWidth: "260px",
+                                    background: "#fff",
+                                    boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "space-between"
+                                }}
+                            >
+                                <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 8 }}>
+                                    {role.nombre_rol || "—"}
+                                </div>
+                                <div style={{ color: "#888", fontSize: 13, marginBottom: 16 }}>
+                                    ID: {role.id_rol}
+                                </div>
+                                <div style={{ display: "flex", gap: "10px" }}>
+                                    <button
+                                        className="btn btn-sm btn-outline-primary"
+                                        onClick={() => { setSelectedRole(role); setShowPermissionsModal(true); }}
+                                    >
+                                        <i className="bi bi-pencil"></i> Editar
+                                    </button>
+                                    <button
+                                        className="btn btn-sm btn-outline-danger"
+                                        onClick={() => { setModalType("delete"); setSelectedRole(role); setShowModal(true); }}
+                                    >
+                                        <i className="bi bi-trash"></i> Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center w-100">No hay roles actualmente.</div>
+                    )}
                 </div>
             )}
 
+            {/* Modal de permisos */}
+            {showPermissionsModal && selectedRole && (
+                <RolePermissions
+                    selectedRole={selectedRole}
+                    onClose={() => setShowPermissionsModal(false)}
+                />
+            )}
+
+            {/* Modal de edición */}
+
             {showModal && (
                 <PopupModal show={showModal} onClose={() => setShowModal(false)}>
-                    <div className="modal-header" style={{ marginBottom: '15px'}}>
-                        {modalType === "create" && (
-                            <h3>Crear Nuevo Rol</h3>
-                        )}
-                        {modalType === "update" && (
-                            <h3>Editar Rol</h3>
-                        )}
-                        {modalType === "delete" && (
-                            <h3>Eliminar Rol</h3>
-                        )}
+                    <div className="modal-header" style={{ marginBottom: '15px' }}>
+                        { modalType === "create" ? <h3>Crear Rol</h3> : null }
+                        { modalType === "delete" ? <h3>Eliminar Rol</h3> : null }
                         <span className="scale" onClick={() => setShowModal(false)}>
                             <i className="bi bi-x-circle"></i>
                         </span>
@@ -276,7 +240,7 @@ export function RoleList() {
                         <div className="mb-3">
                             <label htmlFor="first_name">Nombre del Rol</label>
                             <input
-                                style={{ marginTop: '5px'}}
+                                style={{ marginTop: '5px' }}
                                 type="text"
                                 className="form-control"
                                 placeholder="Escribe el nombre del rol aquí..."
@@ -288,23 +252,16 @@ export function RoleList() {
                     </div>
 
                     {modalType === "create" && (
-                        <div className="modal-actions" style={{ marginTop: "20px", display: 'flex', justifyContent: 'space-around' }}>
+                        <div className="modal-actions" style={{ marginTop: "20px", gap: '15px', display: 'flex', justifyContent: 'flex-end' }}>
                             <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
                             <button className="btn btn-primary" onClick={handleCreate}>Crear</button>
                         </div>
                     )}
-                
-                    {modalType === "update" && (
-                        <div className="modal-actions" style={{ marginTop: "20px", display: 'flex', justifyContent: 'space-around' }}>
-                            <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
-                            <button className="btn btn-primary" onClick={handleEdit}>Guardar</button>
-                        </div>
-                    )} 
-                    
+
                     {modalType === "delete" && (
                         <>
                             <p>¿Estás seguro de que deseas eliminar este rol?</p>
-                            <div className="modal-actions" style={{ marginTop: "20px", display: 'flex', justifyContent: 'space-around' }}>
+                            <div className="modal-actions" style={{ marginTop: "20px", gap: '15px', display: 'flex', justifyContent: 'flex-end' }}>
                                 <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
                                 <button className="btn btn-danger" onClick={handleDelete}>Eliminar</button>
                             </div>

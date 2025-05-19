@@ -30,7 +30,7 @@ export function Login() {
         {
             role: 'Administrador',
             redirect: '/auth/auth-menu'
-        }
+        },
     ]
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -51,6 +51,8 @@ export function Login() {
                     );
                     if (redirect) {
                         navigate(redirect.redirect);
+                    } else {
+                        navigate(`/auth/user/profile/${response.data.user_id}`);
                     }
                     
                     toast.success("¡Inicio de sesión exitoso!");
