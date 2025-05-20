@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import "../../styles/components/dashboard.css";
 import { Spinner } from "../../components/ui/Spinner";
 import { DashboardCase } from '../../types/workflowTypes';
-import { useSidebarStore } from "../../stores/sidebarStore";
 import { DashboardTotals } from "../../types/dashboardTypes";
 import { AnimatedNumberCounter } from '../../components/ui/AnimatedNumberCounter';
 import { fetchDashboardInfo } from "../../controllers/dashboardControllers";

@@ -1,5 +1,6 @@
 import { useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { CustomReport } from './CustomReport';
 import "../../styles/components/dashboard.css";
 import { useSidebarStore } from "../../stores/sidebarStore";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
@@ -20,7 +21,7 @@ export function ReportScreen() {
 
     const tabs = [
         { id: "general", label: "General", icon: "bi bi-file-bar-graph", component: <Dashboard dateStart={dateStart} dateEnd={dateEnd} /> },
-        { id: "Reportes", label: "Reportes", icon: "bi bi-file-earmark-bar-graph", component: <div>Reportes</div> },
+        { id: "Reportes", label: "Reportes", icon: "bi bi-file-earmark-bar-graph", component: <CustomReport dateStart={dateStart} dateEnd={dateEnd} /> },
     ];
     const tabVariants = {
         hidden: { opacity: 0, x: -20 },
