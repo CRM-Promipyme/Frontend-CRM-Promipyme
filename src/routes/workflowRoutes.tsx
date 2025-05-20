@@ -11,16 +11,27 @@ import { AuthenticatedRoutePermissions } from '../components/permissions/Authent
 export function WorkflowRoutes() {
     const publicWorkflowRoutes = [
         {path: "/processes/menu", comp: WorkflowSelectionMenu},
-        {path: "/processes/create", comp: CreateWorkflow},
         {path: "/board-view/:workflowId", comp: WorkflowBoardView},
     ]
 
     const authFallback = "/auth/login";
     const fallbackUrl = "/workflows/processes/menu";
     const privateWorkflowRoutes = [
-        {path: "/processes/create", comp: CreateWorkflow},
-        {path: "/cases/create/:workflowId", comp: CreateCase},
-        {path: "/cases/update/:caseId", comp: UpdateCase},
+        {
+            path: "/processes/create",
+            comp: CreateWorkflow,
+            requiredBasePermissions: []
+        },
+        {
+            path: "/cases/create/:workflowId",
+            comp: CreateCase,
+            requiredBasePermissions: []
+        },
+        {
+            path: "/cases/update/:caseId",
+            comp: UpdateCase,
+            requiredBasePermissions: []
+        },
     ]
 
     return (
@@ -35,7 +46,7 @@ export function WorkflowRoutes() {
             
             {privateWorkflowRoutes.map((route, index) => (
                 <Route key={index} path={route.path} element={
-                    <AdminRoutePermissions fallbackUrl={fallbackUrl}>
+                    <AdminRoutePermissions fallbackUrl={fallbackUrl} requiredBasePermissions={route.requiredBasePermissions}>
                         <route.comp />
                     </AdminRoutePermissions>
                 } />

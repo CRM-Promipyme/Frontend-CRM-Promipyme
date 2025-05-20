@@ -14,12 +14,20 @@ export function ContactRoutes() {
         {path: "/menu", comp: ContactsMenu},
         {path: "/list", comp: ContactList},
         {path: "/details/:contact_id", comp: ContactDetail},
-        {path: "/create", comp: CreateContact}
     ]
 
     const fallbackUrl = "/contacts/menu";
     const adminContactRoutes = [
-        {path: "/customize-fields", comp: ContactFields},
+        {
+            path: "/customize-fields", 
+            comp: ContactFields,
+            requiredBasePermissions: ["modify_contact_fields"]
+        },
+        {
+            path: "/create",
+            comp: CreateContact,
+            requiredBasePermissions: ["create_contacts"]
+        }
     ]
 
     return (
@@ -33,7 +41,7 @@ export function ContactRoutes() {
             ))}
             {adminContactRoutes.map((route, index) => (
                 <Route key={index} path={route.path} element={
-                    <AdminRoutePermissions fallbackUrl={fallbackUrl}>
+                    <AdminRoutePermissions fallbackUrl={fallbackUrl} requiredBasePermissions={route.requiredBasePermissions}>
                         <route.comp />
                     </AdminRoutePermissions>
                 } />

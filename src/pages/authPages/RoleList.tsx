@@ -13,6 +13,7 @@ import { AnimatedNumberCounter } from "../../components/ui/AnimatedNumberCounter
 export function RoleList() {
     // Estados globales
     const sidebarWidthPx = useSidebarStore((state) => state.sidebarWidthPx)
+    const authStore = useAuthStore();
     const accessToken = useAuthStore((state) => state.accessToken);
 
     // Estados locales
@@ -140,6 +141,37 @@ export function RoleList() {
         }
     };
 
+    const handleModalTypeChange = async (requiredPermission: string, modalType: "update" | "delete" | "create") => {
+        // Allow admins to always proceed
+        if (authStore.isAdmin && authStore.isAdmin()) {
+            if (modalType === "update") {
+                return true;
+            } else {
+                setModalType(modalType);
+                setShowModal(true);
+                return true;
+            }
+        }
+        
+        const permissions = await authStore.retrievePermissions();
+        const hasPermission = permissions.some((perm: any) =>
+            perm.base_permissions &&
+            perm.base_permissions[requiredPermission] === true
+        );
+        if (!hasPermission) {
+            toast.warning("No tienes permisos para realizar esta acción.");
+            return false;
+        } else {
+            if (modalType === "update") {
+                return true;
+            } else {
+                setModalType(modalType);
+                setShowModal(true);
+                return true;
+            }
+        }
+    };
+
     return (
         <SidebarLayout sidebarWidthPx={sidebarWidthPx}>
             <h1 className="page-title">
@@ -151,7 +183,11 @@ export function RoleList() {
             </h1>
 
             <div className="table-actions-container">
-                <button className="btn btn-primary" onClick={() => { setModalType("create"); setSelectedRole({ id_rol: 0, nombre_rol: "" }); setShowModal(true); }}>
+                <button className="btn btn-primary" onClick={() => { 
+                        handleModalTypeChange("create_roles", "create");
+                        setSelectedRole({ id_rol: 0, nombre_rol: "" });
+                    }}
+                >
                     <i className="bi bi-plus"></i> Crear Nuevo Rol
                 </button>
                 <input
@@ -192,13 +228,23 @@ export function RoleList() {
                                 <div style={{ display: "flex", gap: "10px" }}>
                                     <button
                                         className="btn btn-sm btn-outline-primary"
-                                        onClick={() => { setSelectedRole(role); setShowPermissionsModal(true); }}
+                                        // onClick={() => { setSelectedRole(role); setShowPermissionsModal(true); }}
+                                        onClick={async () => {
+                                            if (await handleModalTypeChange("update_roles", "update")) {
+                                                setSelectedRole(role);
+                                                setShowPermissionsModal(true);
+                                            }
+                                        }}
                                     >
                                         <i className="bi bi-pencil"></i> Editar
                                     </button>
                                     <button
                                         className="btn btn-sm btn-outline-danger"
-                                        onClick={() => { setModalType("delete"); setSelectedRole(role); setShowModal(true); }}
+                                        // onClick={() => { setModalType("delete"); setSelectedRole(role); setShowModal(true); }}
+                                        onClick={() => {
+                                            handleModalTypeChange("delete_roles", "delete");
+                                            setSelectedRole(role);
+                                        }}
                                     >
                                         <i className="bi bi-trash"></i> Eliminar
                                     </button>

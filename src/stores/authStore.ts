@@ -1,5 +1,6 @@
 import axios from "axios";
 import { create } from "zustand";
+import api from "../controllers/api";
 import { LoginResponse, Role } from "../types/authTypes";
 
 interface AuthState {
@@ -10,6 +11,7 @@ interface AuthState {
     login: (response: LoginResponse) => Promise<boolean>;
     logout: () => void;
     isAuthenticated: () => Promise<boolean>;
+    retrievePermissions: () => Promise<object[]>;
     isAdmin: () => boolean;
     updateRoles: (roles: Role[]) => void;
 }
@@ -75,6 +77,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         } catch (error) {
             console.error("Error validating token:", error);
             return false;
+        }
+    },
+
+    retrievePermissions: async (): Promise<object[]> => {
+        try {
+            const response = await api.get(`/auth/manage/system-roles/permissions/user/${get().userId}/`);
+            const permissions = response.data.role_permissions;
+            
+            return permissions;
+        } catch (error) {
+            console.error("Error retrieving permissions:", error);
+            return [];
         }
     },
 

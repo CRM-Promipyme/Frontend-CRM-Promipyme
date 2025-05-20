@@ -18,6 +18,7 @@ import { PendingAccount, PendingAccountResponse, Role } from "../../types/authTy
 
 export function AccountApprovalQueue() {
     // Estados globales
+    const authStore = useAuthStore();
     const sidebarWidthPx = useSidebarStore((state) => state.sidebarWidthPx);
     const accessToken = useAuthStore((state) => state.accessToken);
 
@@ -140,21 +141,53 @@ export function AccountApprovalQueue() {
 
     // Obtener roles y mostrar modal de aprobación
     const handleOpenApproveModal = async (account: PendingAccount) => {
-        setModalType("approve");
-        setSelectedAccount(account);
-        
-        if (!accessToken) {
-            toast.error("Tu sesión ha caducado. Por favor, inicia sesión nuevamente para continuar.");
-            return;
-        };
+        // Allow admins to always proceed
+        if (authStore.isAdmin && authStore.isAdmin()) {
+            setModalType("approve");
+            setSelectedAccount(account);
+            
+            if (!accessToken) {
+                toast.error("Tu sesión ha caducado. Por favor, inicia sesión nuevamente para continuar.");
+                return;
+            };
 
-        try {
-            const roles = await fetchRoles(accessToken);
-            setRoles(roles);
-            setSelectedRoles([]);
-            setShowModal(true);
-        } catch {
-            toast.error("No se pudieron obtener los roles.");
+            try {
+                const roles = await fetchRoles(accessToken);
+                setRoles(roles);
+                setSelectedRoles([]);
+                setShowModal(true);
+            } catch {
+                toast.error("No se pudieron obtener los roles.");
+            }
+
+            return;
+        }
+        
+        const permissions = await authStore.retrievePermissions();
+        const hasPermission = permissions.some((perm: any) =>
+            perm.base_permissions &&
+            perm.base_permissions['approve_accounts'] === true
+        );
+        if (!hasPermission) {
+            toast.warning("No tienes permisos para realizar esta acción.");
+            return false;
+        } else {
+            setModalType("approve");
+            setSelectedAccount(account);
+            
+            if (!accessToken) {
+                toast.error("Tu sesión ha caducado. Por favor, inicia sesión nuevamente para continuar.");
+                return;
+            };
+            
+            try {
+                const roles = await fetchRoles(accessToken);
+                setRoles(roles);
+                setSelectedRoles([]);
+                setShowModal(true);
+            } catch {
+                toast.error("No se pudieron obtener los roles.");
+            }
         }
     };
 
@@ -185,6 +218,31 @@ export function AccountApprovalQueue() {
             toast.error("Error al aprobar la cuenta.");
         }
     };
+
+    const handleOpenRejectModal = async (account: PendingAccount) => {
+        // Allow admins to always proceed
+        if (authStore.isAdmin && authStore.isAdmin()) {
+            setModalType("reject");
+            setSelectedAccount(account);
+            setShowModal(true);
+
+            return;
+        }
+        
+        const permissions = await authStore.retrievePermissions();
+        const hasPermission = permissions.some((perm: any) =>
+            perm.base_permissions &&
+            perm.base_permissions['deny_accounts'] === true
+        );
+        if (!hasPermission) {
+            toast.warning("No tienes permisos para realizar esta acción.");
+            return false;
+        } else {
+            setModalType("reject");
+            setSelectedAccount(account);
+            setShowModal(true);
+        }
+    }
 
     // Reject API call
     const handleReject = async () => {
@@ -272,7 +330,7 @@ export function AccountApprovalQueue() {
                                             <button className="btn btn-outline-primary btn-sm me-2" onClick={() => handleOpenApproveModal(account)}>
                                                 Aprobar
                                             </button>
-                                            <button className="btn btn-outline-danger btn-sm" onClick={() => { setModalType("reject"); setSelectedAccount(account); setShowModal(true); }}>
+                                            <button className="btn btn-outline-danger btn-sm" onClick={() => handleOpenRejectModal(account)}>
                                                 Rechazar
                                             </button>
                                         </td>
