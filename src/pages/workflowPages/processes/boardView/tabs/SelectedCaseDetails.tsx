@@ -1,14 +1,15 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Link } from "react-router-dom";
+import { CaseTasks } from "./CaseTasks";
 import { motion, AnimatePresence } from "framer-motion";
+import { NotesSection } from "./kanbanBoard/NotesSection";
 import { daysLeft } from "../../../../../utils/formatUtils";
 import { Activity } from "../../../../../types/activityTypes";
 import { formatNumber } from "../../../../../utils/formatUtils";
 import { Caso, Proceso } from "../../../../../types/workflowTypes";
 import { lowerColorOpacity } from "../../../../../utils/formatUtils";
 import { ActivityLog } from "../../../../../components/ui/ActivityLog";
-import { NotesSection } from "./kanbanBoard/NotesSection";
 
 interface SelectedCaseDetailsProps {
     selectedCase: Caso;
@@ -180,6 +181,11 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                             )}
                                         </>
                                     )}
+                                    <div className="case-tasks">
+                                        {selectedCase && (
+                                            <CaseTasks selectedCase={selectedCase} process={process} />
+                                        )}
+                                    </div>
                                     <div className="case-activities">
                                         {selectedCase && (
                                             <ActivityLog activities={caseActivities} setActivities={setCaseActivities} entity_type="case" entity_id={selectedCase?.id_caso.toString()}/>

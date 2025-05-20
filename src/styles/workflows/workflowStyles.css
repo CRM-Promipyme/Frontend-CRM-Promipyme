@@ -457,7 +457,7 @@
 
 .case-activities {
     padding: 10px;
-    border: 1px solid lightgray;
+    /* border: 1px solid lightgray; */
     border-radius: 10px;
     margin-top: 20px;
 }
