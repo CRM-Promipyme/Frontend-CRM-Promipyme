@@ -18,6 +18,7 @@ import { Caso } from "../../../../../../types/workflowTypes";
 import { useAuthStore } from "../../../../../../stores/authStore";
 import { Spinner } from "../../../../../../components/ui/Spinner";
 import { PopupModal } from "../../../../../../components/ui/PopupModal";
+import { useKanbanSocket } from "../../../../../../hooks/kanbanSocketService";
 import { SortableContext, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Column, WorkflowKanbanProps } from "../../../../../../types/kanbanBoardTypes";
 import { fetchStageCases, updateCaseStage } from "../../../../../../controllers/caseControllers";
@@ -211,6 +212,37 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
             console.error("Error loading more cases:", err);
         }
     };
+
+    const handleSocketMessage = (data: any) => {
+        console.log("Socket message received:", data);
+
+        if (
+            data.message === "case-moved" &&
+            data.process_id === process.id_proceso &&
+            data.to_stage_id &&
+            data.from_stage_id
+        ) {
+            // Fetch both the source and target columns
+            Promise.all([
+                fetchStageCases(process.id_proceso, data.from_stage_id, caseName),
+                fetchStageCases(process.id_proceso, data.to_stage_id, caseName)
+            ]).then(([fromResult, toResult]) => {
+                setColumns(prev =>
+                    prev.map(col => {
+                        if (col.id === String(data.from_stage_id)) {
+                            return { ...col, cases: fromResult.results, nextPageUrl: fromResult.next };
+                        }
+                        if (col.id === String(data.to_stage_id)) {
+                            return { ...col, cases: toResult.results, nextPageUrl: toResult.next };
+                        }
+                        return col;
+                    })
+                );
+            });
+        }
+    };
+
+    useKanbanSocket(handleSocketMessage);
 
     return (
         <>
