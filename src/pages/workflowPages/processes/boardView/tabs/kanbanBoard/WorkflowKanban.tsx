@@ -15,6 +15,7 @@ import {
 import { KanbanTask } from "./KanbanTask";
 import { KanbanColumn } from "./KanbanColumn";
 import { Caso } from "../../../../../../types/workflowTypes";
+import { useAuthStore } from "../../../../../../stores/authStore";
 import { Spinner } from "../../../../../../components/ui/Spinner";
 import { PopupModal } from "../../../../../../components/ui/PopupModal";
 import { SortableContext, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
@@ -24,6 +25,7 @@ import { toast } from "react-toastify";
 
 export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     // Local States
+    const authStore = useAuthStore();
     const [activeTask, setActiveTask] = useState<Caso | null>(null);
     const [isDragging, setIsDragging] = useState(false); // Track drag state
     const sensors = useSensors(
@@ -38,6 +40,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         fromColumnId: string;
         toColumnId: string;
     } | null>(null);
+    const [canMove, setCanMove] = useState(false);
     const [caseName, setCaseName] = useState<string>("");
     const [changeMotive, setChangeMotive] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -84,6 +87,30 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     const confirmStageChange = async () => {
         if (!pendingMove) return;
     
+        // Check for admin privileges or permissions
+        let allowed = false;
+        if (authStore.isAdmin()) {
+            allowed = true;
+        } else {
+            const permissions = await authStore.retrievePermissions();
+            // Check workflow_permissions for this process and stage
+            allowed = permissions.some((rolePerm: any) =>
+                (rolePerm.workflow_permissions || []).some((wp: any) =>
+                    wp.proceso === process.id_proceso &&
+                    Array.isArray(wp.etapa) &&
+                    wp.etapa.includes(Number(pendingMove.fromColumnId)) &&
+                    wp.etapa.includes(Number(pendingMove.toColumnId))
+                )
+            );
+        }
+
+        setCanMove(allowed);
+
+        if (!allowed) {
+            toast.warning("No tienes permisos para mover el caso a esta etapa.");
+            return;
+        }
+
         try {
             await updateCaseStage(pendingMove.caseId, parseInt(pendingMove.toColumnId), changeMotive);
     
@@ -108,7 +135,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
             setPendingMove(null);
             toast.success("Caso movido de etapa exitosamente.");
         } catch {
-            toast.warning("No se pudo actualizar el caso. Intente de nuevo.");
+            toast.warning("No se pudo mover el caso. Intente de nuevo.");
         }
     };
 
