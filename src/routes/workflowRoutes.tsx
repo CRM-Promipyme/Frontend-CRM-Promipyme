@@ -2,6 +2,7 @@ import { Route } from 'react-router-dom'
 import { CreateCase } from '../pages/workflowPages/cases/CreateCase'
 import { UpdateCase } from '../pages/workflowPages/cases/UpdateCase'
 import { With404Fallback } from '../components/permissions/With404Fallback'
+import { BaseCaseList } from '../pages/workflowPages/processes/BaseCaseList'
 import { CreateWorkflow } from '../pages/workflowPages/processes/CreateWorkflow'
 import { AdminRoutePermissions } from '../components/permissions/AdminRoutePermissions'
 import { WorkflowSelectionMenu } from '../pages/workflowPages/processes/WorkflowSelectionMenu'
@@ -17,6 +18,11 @@ export function WorkflowRoutes() {
     const authFallback = "/auth/login";
     const fallbackUrl = "/workflows/processes/menu";
     const privateWorkflowRoutes = [
+        {
+            path: "/case-list",
+            comp: BaseCaseList,
+            requiredBasePermissions: []
+        },
         {
             path: "/processes/create",
             comp: CreateWorkflow,
