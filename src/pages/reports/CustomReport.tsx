@@ -1,11 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { useAuthStore } from "../../stores/authStore";
 import AsyncSelect from "react-select/async";
 import Select from "react-select";
 import api from "../../controllers/api";
 import { toast } from "react-toastify";
 import { Spinner } from "../../components/ui/Spinner";
-import { Pie, Bar } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2";
 import "../../styles/components/dashboard.css";
+import { Activity } from "../../types/activityTypes";
+import { ActivityLog } from "../../components/ui/ActivityLog";
+import { Dashboard } from "./Dashboard";
 
 interface CustomReportProps {
     dateStart: string;
@@ -32,8 +37,15 @@ interface ProcessOption {
     label: string;
 }
 
+type ReportType = "usuario" | "departamento";
+
 export function CustomReport({ dateStart, dateEnd }: CustomReportProps) {
+    // Report type
+    const [reportType, setReportType] = useState<ReportType>("departamento");
+
     // Filters
+    const userId = useAuthStore(state => state.userId);
+    const [userActivities, setUserActivities] = useState<Activity[]>([]);
     const [user, setUser] = useState<any>(null);
     const [role, setRole] = useState<RoleOption | null>(null);
     const [process, setProcess] = useState<ProcessOption | null>(null);
@@ -42,10 +54,20 @@ export function CustomReport({ dateStart, dateEnd }: CustomReportProps) {
 
     // Data
     const [loading, setLoading] = useState(false);
-    const [dashboardTotals, setDashboardTotals] = useState<any>(null);
-    const [dashboardCases, setDashboardCases] = useState<any[]>([]);
     const [report, setReport] = useState<ReportRow[]>([]);
     const [fetched, setFetched] = useState(false);
+    const navigate = useNavigate();
+    const location = useLocation();
+    const authStore = useAuthStore();
+    const [canExport, setCanExport] = useState(false);
+
+    const handleShare = () => {
+        const params = new URLSearchParams(location.search);
+        params.set("shared", "1");
+        const shareUrl = `${window.location.origin}${location.pathname}?${params.toString()}`;
+        navigator.clipboard.writeText(shareUrl);
+        toast.success("¡Enlace copiado!");
+    };
 
     // Fetch roles and processes on mount
     useEffect(() => {
@@ -79,31 +101,96 @@ export function CustomReport({ dateStart, dateEnd }: CustomReportProps) {
         }
     };
 
-    // Fetch both dashboard and report data
+    // On mount: check permissions and set initial filters from URL
+    useEffect(() => {
+        (async () => {
+            if (authStore.isAdmin()) {
+                setCanExport(true);
+            } else {
+                const perms = await authStore.retrievePermissions();
+                const hasExport = perms.role_permissions.some((rp: any) =>
+                    rp.base_permissions?.export_reports
+                );
+                setCanExport(hasExport);
+            }
+
+            // Read query params
+            const params = new URLSearchParams(location.search);
+            const qReportType = params.get("reportType") as ReportType;
+            const qUser = params.get("user");
+            const qRole = params.get("role");
+            const qProcess = params.get("process");
+
+            if (qReportType === "usuario") setReportType("usuario");
+            else setReportType("departamento");
+
+            if (qUser) setUser({ value: qUser, label: "" });
+            if (qRole) setRole({ value: Number(qRole), label: "" });
+            if (qProcess) setProcess({ value: Number(qProcess), label: "" });
+        })();
+        // eslint-disable-next-line
+    }, []);
+
+    // Auto-fetch report if shared=1 and all required filters are set
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const shared = params.get("shared");
+        const qReportType = params.get("reportType") as ReportType;
+
+        if (shared === "1") {
+            if (
+                (qReportType === "usuario" && user) ||
+                (qReportType === "departamento" && (role || process))
+            ) {
+                fetchReport();
+            }
+        }
+        // eslint-disable-next-line
+    }, [reportType, user, role, process, dateStart, dateEnd]);
+
+    // When generating report, update URL with relevant params
     const fetchReport = async () => {
         if (!dateStart || !dateEnd) {
             toast.error("Selecciona un rango de fechas.");
             return;
         }
+        if (reportType === "usuario" && !user) {
+            toast.error("Selecciona un usuario.");
+            return;
+        }
         setLoading(true);
         setFetched(false);
         try {
-            const params: any = {
+            // Build params from current URL
+            const params = new URLSearchParams(location.search);
+
+            params.set("reportType", reportType);
+            if (reportType === "usuario" && user) {
+                params.set("user", user.value);
+                params.delete("role");
+                params.delete("process");
+            } else if (reportType === "departamento") {
+                params.delete("user");
+                if (role) params.set("role", String(role.value));
+                else params.delete("role");
+                if (process) params.set("process", String(process.value));
+                else params.delete("process");
+            }
+
+            // Update the URL
+            navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+
+            const apiParams: any = {
                 date_start: dateStart,
                 date_end: dateEnd
             };
-            if (user) params.user_id = user.value;
-            if (role) params.role_id = role.value;
-            if (process) params.process_id = process.value;
-
-            // Fetch both endpoints in parallel
-            const [dashboardRes, reportRes] = await Promise.all([
-                api.get("/reports/dashboard", { params }),
-                api.get("/reports/dashboard/user-role-report/", { params })
-            ]);
-            setDashboardTotals(dashboardRes.data.data.totals);
-            setDashboardCases(dashboardRes.data.data.cases);
-            setReport(reportRes.data.data);
+            if (reportType === "usuario" && user) apiParams.user_id = user.value;
+            if (reportType === "departamento") {
+                if (role) apiParams.role_id = role.value;
+                if (process) apiParams.process_id = process.value;
+            }
+            const res = await api.get("/reports/dashboard/user-role-report/", { params: apiParams });
+            setReport(res.data.data);
             setFetched(true);
         } catch {
             toast.error("No se pudo generar el reporte.");
@@ -112,84 +199,101 @@ export function CustomReport({ dateStart, dateEnd }: CustomReportProps) {
         }
     };
 
-    // General dashboard charts
-    const openCases = dashboardCases.filter(c => c.abierto).length;
-    const closedCases = dashboardCases.filter(c => !c.abierto).length;
-    const successfulCases = dashboardCases.filter(c => c.exitoso).length;
-    const failedCases = dashboardCases.filter(c => !c.exitoso).length;
-    const processCounts = dashboardCases.reduce((acc, c) => {
-        acc[c.proceso] = (acc[c.proceso] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>);
+    // Prepare data for charts
+    const filteredReport = useMemo(() => {
+        if (reportType === "usuario" && user) {
+            return report.filter(r => r.user_id === user.value);
+        }
+        return report;
+    }, [report, reportType, user]);
 
-    const openClosedData = {
-        labels: ['Abiertos', 'Cerrados'],
-        datasets: [{
-            data: [openCases, closedCases],
-            backgroundColor: ['#0d6efd', '#dc3545'],
-            borderWidth: 0,
-        }],
-    };
-
-    const successFailedData = {
-        labels: ['Exitosos', 'Fallidos'],
-        datasets: [{
-            data: [successfulCases, failedCases],
-            backgroundColor: ['#2CBA79', '#E00B0B'],
-            borderWidth: 0,
-        }],
-    };
-
-    const processData = {
-        labels: Object.keys(processCounts),
-        datasets: [{
-            label: 'Casos por Proceso',
-            data: Object.values(processCounts),
-            backgroundColor: '#0d6efd',
-            borderRadius: 6,
-        }],
-    };
-
-    // Custom report charts
-    const chartData = useMemo(() => {
-        if (!report.length) return null;
+    // Chart: Average completion time (in minutes)
+    const avgTimeData = useMemo(() => {
+        const labels = filteredReport.map(r => r.full_name);
+        const data = filteredReport.map(r =>
+            r.avg_task_completion_time
+                ? parseFloat(r.avg_task_completion_time.split(":").reduce((acc, t, i) => acc + parseFloat(t) * [60, 1, 1/60][i], 0).toFixed(2))
+                : 0
+        );
         return {
-            assigned: {
-                labels: report.map(r => r.full_name),
-                datasets: [{
-                    label: "Tareas Asignadas",
-                    data: report.map(r => r.total_tasks_assigned),
-                    backgroundColor: "#0d6efd"
-                }]
-            },
-            completed: {
-                labels: report.map(r => r.full_name),
-                datasets: [{
-                    label: "Tareas Completadas",
-                    data: report.map(r => r.total_tasks_completed),
-                    backgroundColor: "#2CBA79"
-                }]
-            },
-            cases: {
-                labels: report.map(r => r.full_name),
-                datasets: [{
-                    label: "Casos Creados",
-                    data: report.map(r => r.total_cases_created),
-                    backgroundColor: "#f5c211"
-                }]
-            }
+            labels,
+            datasets: [{
+                label: "Promedio (minutos)",
+                data,
+                backgroundColor: "#0d6efd"
+            }]
         };
-    }, [report]);
+    }, [filteredReport]);
 
-    // Totals cards
-    const totalsList = dashboardTotals ? [
-        { label: "Cantidad de Procesos", value: dashboardTotals.total_workflows, icon: "bi-diagram-3", variant: "secondary" },
-        { label: "Total de Casos", value: dashboardTotals.total_cases, icon: "bi-collection", variant: "primary" },
-        { label: "Casos Completados", value: dashboardTotals.total_completed_cases, icon: "bi-check-circle", variant: "info" },
-        { label: "Casos Pendientes", value: dashboardTotals.total_pending_cases, icon: "bi-clock", variant: "warning" },
-        { label: "Casos Exitosos", value: dashboardTotals.total_successful_cases, icon: "bi-trophy", variant: "success" },
-        { label: "Casos Fallidos", value: dashboardTotals.total_failed_cases, icon: "bi-x-circle", variant: "danger" },
-    ] : [];
+    // Chart: Cases created
+    const casesCreatedData = useMemo(() => ({
+        labels: filteredReport.map(r => r.full_name),
+        datasets: [{
+            label: "Casos Creados",
+            data: filteredReport.map(r => r.total_cases_created),
+            backgroundColor: "#f5c211"
+        }]
+    }), [filteredReport]);
+
+    // Chart: Tasks assigned/completed
+    const tasksData = useMemo(() => ({
+        labels: filteredReport.map(r => r.full_name),
+        datasets: [
+            {
+                label: "Tareas Asignadas",
+                data: filteredReport.map(r => r.total_tasks_assigned),
+                backgroundColor: "#0d6efd"
+            },
+            {
+                label: "Tareas Completadas",
+                data: filteredReport.map(r => r.total_tasks_completed),
+                backgroundColor: "#2CBA79"
+            }
+        ]
+    }), [filteredReport]);
+
+    // Chart: Cases completed
+    const casesCompletedData = useMemo(() => ({
+        labels: filteredReport.map(r => r.full_name),
+        datasets: [{
+            label: "Casos Completados",
+            data: filteredReport.map(r => r.total_cases_completed),
+            backgroundColor: "#2CBA79"
+        }]
+    }), [filteredReport]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const qRole = params.get("role");
+        const qProcess = params.get("process");
+        const qUser = params.get("user");
+
+        if (qUser && (!user || user.value !== qUser)) {
+            // Fetch user info for label
+            api.get("/auth/users/list", { params: { id: qUser } })
+                .then(res => {
+                    const u = res.data.results?.[0];
+                    if (u) {
+                        setUser({
+                            value: u.id,
+                            label: `${u.first_name} ${u.last_name} (${u.email})`
+                        });
+                    }
+                })
+                .catch(() => {
+                    setUser({ value: qUser, label: "(Usuario desconocido)" });
+                });
+        } else {
+            if (qRole && roles.length > 0) {
+                const foundRole = roles.find(r => String(r.value) === String(qRole));
+                if (foundRole) setRole(foundRole);
+            }
+            if (qProcess && processes.length > 0) {
+                const foundProcess = processes.find(p => String(p.value) === String(qProcess));
+                if (foundProcess) setProcess(foundProcess);
+            }
+        }
+    }, [roles, processes]);
 
     return (
         <div style={{ width: "100%", padding: 0 }}>
@@ -204,51 +308,83 @@ export function CustomReport({ dateStart, dateEnd }: CustomReportProps) {
                 width: "100%",
                 maxWidth: "100vw"
             }}>
-                <div style={{ minWidth: 220, flex: 1 }}>
-                    <label className="form-label">Usuario</label>
-                    <AsyncSelect
-                        cacheOptions
-                        loadOptions={loadUsers}
-                        defaultOptions={false}
-                        value={user}
-                        onChange={setUser}
-                        placeholder="Buscar usuario"
-                        isClearable
-                        classNamePrefix="react-select"
-                    />
-                </div>
-                <div style={{ minWidth: 180, flex: 1 }}>
-                    <label className="form-label">Rol</label>
+                <div style={{ minWidth: 180 }}>
+                    <label className="form-label">Tipo de Reporte</label>
                     <Select
-                        options={roles}
-                        value={role}
-                        onChange={setRole}
-                        placeholder="Seleccionar rol"
-                        isClearable
-                        classNamePrefix="react-select"
-                        filterOption={(option, input) =>
-                            option.label.toLowerCase().includes(input.toLowerCase())
+                        options={[
+                            { value: "departamento", label: "Reporte de Departamento" },
+                            { value: "usuario", label: "Reporte de Usuario" }
+                        ]}
+                        value={
+                            reportType === "usuario"
+                                ? { value: "usuario", label: "Reporte de Usuario" }
+                                : { value: "departamento", label: "Reporte de Departamento" }
                         }
+                        onChange={opt => setReportType(opt?.value as ReportType)}
+                        classNamePrefix="react-select"
+                        isSearchable={false}
                     />
                 </div>
-                <div style={{ minWidth: 220, flex: 1 }}>
-                    <label className="form-label">Proceso</label>
-                    <Select
-                        options={processes}
-                        value={process}
-                        onChange={setProcess}
-                        placeholder="Seleccionar proceso"
-                        isClearable
-                        classNamePrefix="react-select"
-                        filterOption={(option, input) =>
-                            option.label.toLowerCase().includes(input.toLowerCase())
-                        }
-                    />
-                </div>
+                {reportType === "usuario" && (
+                    <div style={{ minWidth: 220, flex: 1 }}>
+                        <label className="form-label">Usuario</label>
+                        <AsyncSelect
+                            cacheOptions
+                            loadOptions={loadUsers}
+                            defaultOptions={false}
+                            value={user}
+                            onChange={setUser}
+                            placeholder="Buscar usuario"
+                            isClearable
+                            classNamePrefix="react-select"
+                        />
+                    </div>
+                )}
+                {reportType === "departamento" && (
+                    <>
+                        <div style={{ minWidth: 180, flex: 1 }}>
+                            <label className="form-label">Rol</label>
+                            <Select
+                                options={roles}
+                                value={role}
+                                onChange={setRole}
+                                placeholder="Seleccionar rol"
+                                isClearable
+                                classNamePrefix="react-select"
+                                filterOption={(option, input) =>
+                                    option.label.toLowerCase().includes(input.toLowerCase())
+                                }
+                            />
+                        </div>
+                        <div style={{ minWidth: 220, flex: 1 }}>
+                            <label className="form-label">Proceso</label>
+                            <Select
+                                options={processes}
+                                value={process}
+                                onChange={setProcess}
+                                placeholder="Seleccionar proceso"
+                                isClearable
+                                classNamePrefix="react-select"
+                                filterOption={(option, input) =>
+                                    option.label.toLowerCase().includes(input.toLowerCase())
+                                }
+                            />
+                        </div>
+                    </>
+                )}
                 <div>
                     <button className="btn btn-primary" style={{ minWidth: 120 }} onClick={fetchReport} disabled={loading}>
                         {loading ? "Generando..." : "Generar"}
                     </button>
+                    {canExport && fetched && (
+                        <button
+                            className="btn btn-outline-secondary ms-2"
+                            onClick={handleShare}
+                            title="Compartir este reporte"
+                        >
+                            Compartir
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -261,103 +397,44 @@ export function CustomReport({ dateStart, dateEnd }: CustomReportProps) {
 
             {fetched && !loading && (
                 <div style={{ width: "100%", padding: 0 }}>
-                    {/* Totals cards */}
-                    <div className="totals-container" style={{ marginBottom: 16, width: "100%", flexWrap: "wrap" }}>
-                        {totalsList.map((item, idx) => (
-                            <div key={idx} className="card-body">
-                                <i className={`bi ${item.icon} text-${item.variant} me-3`} style={{ fontSize: "2rem" }}></i>
-                                <div>
-                                    <h6 className="mb-1 text-muted">{item.label}</h6>
-                                    <h4 className={`text-${item.variant} fw-bold`}>{item.value}</h4>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* General charts */}
-                    <div className="charts-container" style={{ marginBottom: 24, width: "100%", display: "flex", gap: 24, flexWrap: "wrap" }}>
-                        <div className="card-body chart pie-chart" style={{ flex: 1, minWidth: 320 }}>
-                            <div className="chart-title">
-                                <h5 className="h4-header">Distribución de Casos</h5>
-                                <p className="text-muted mb-3">Abiertos vs. Cerrados</p>
-                            </div>
-                            <div style={{ position: "relative", width: "100%", height: "260px" }}>
-                                <Pie data={openClosedData} options={{ responsive: true, plugins: { legend: { position: 'bottom' } }, cutout: '70%' }} />
-                            </div>
-                        </div>
-                        <div className="card-body chart pie-chart" style={{ flex: 1, minWidth: 320 }}>
-                            <div className="chart-title">
-                                <h5 className="h4-header">Estado de Casos</h5>
-                                <p className="text-muted mb-3">Exitosos vs. Fallidos</p>
-                            </div>
-                            <div style={{ position: "relative", width: "100%", height: "260px" }}>
-                                <Pie data={successFailedData} options={{ responsive: true, plugins: { legend: { position: 'bottom' } }, cutout: '70%' }} />
-                            </div>
-                        </div>
-                        <div className="card-body chart" style={{ flex: 1, minWidth: 320 }}>
-                            <div className="chart-title">
-                                <h5 className="h4-header">Casos por Proceso</h5>
-                                <p className="text-muted mb-3">Distribución por tipo de proceso</p>
-                            </div>
-                            <Bar data={processData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
-                        </div>
-                    </div>
-
-                    {/* Custom report charts and table */}
-                    {report.length === 0 ? (
+                    {filteredReport.length === 0 ? (
                         <div className="text-muted text-center py-4">No hay datos para este filtro.</div>
                     ) : (
                         <div>
                             <div className="charts-container" style={{ marginBottom: 32, width: "100%", display: "flex", gap: 24, flexWrap: "wrap" }}>
-                                <div className="card-body chart pie-chart" style={{ flex: 1, minWidth: 320 }}>
+                                <div className="card-body chart" style={{ flex: 1, minWidth: 320 }}>
                                     <div className="chart-title">
-                                        <h5 className="h4-header">Tareas Asignadas</h5>
+                                        <h5 className="h4-header">Promedio de Tiempo de Tarea (min)</h5>
                                     </div>
-                                    <Bar data={chartData!.assigned} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+                                    <Bar data={avgTimeData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
                                 </div>
-                                <div className="card-body chart pie-chart" style={{ flex: 1, minWidth: 320 }}>
-                                    <div className="chart-title">
-                                        <h5 className="h4-header">Tareas Completadas</h5>
-                                    </div>
-                                    <Bar data={chartData!.completed} options={{ responsive: true, plugins: { legend: { display: false } } }} />
-                                </div>
-                                <div className="card-body chart pie-chart" style={{ flex: 1, minWidth: 320 }}>
+                                <div className="card-body chart" style={{ flex: 1, minWidth: 320 }}>
                                     <div className="chart-title">
                                         <h5 className="h4-header">Casos Creados</h5>
                                     </div>
-                                    <Bar data={chartData!.cases} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+                                    <Bar data={casesCreatedData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
                                 </div>
+                                <div className="card-body chart" style={{ flex: 1, minWidth: 320 }}>
+                                    <div className="chart-title">
+                                        <h5 className="h4-header">Tareas Asignadas vs Completadas</h5>
+                                    </div>
+                                    <Bar data={tasksData} options={{ responsive: true, plugins: { legend: { position: "bottom" } } }} />
+                                </div>
+                                <div className="card-body chart" style={{ flex: 1, minWidth: 320 }}>
+                                    <div className="chart-title">
+                                        <h5 className="h4-header">Casos Completados</h5>
+                                    </div>
+                                    <Bar data={casesCompletedData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+                                </div>
+                                {user && (
+                                    <div className="card-body activity-log">
+                                        <ActivityLog activities={userActivities} setActivities={setUserActivities} entity_type='user' entity_id={userId}/>
+                                    </div>
+                                )}
                             </div>
-                            <div className="card-body" style={{ marginTop: 24, width: "100%", overflowX: "auto" }}>
-                                <h5 className="h4-header" style={{ marginBottom: 16 }}>Detalle de Usuarios</h5>
-                                <table className="table table-striped table-bordered" style={{ minWidth: 900 }}>
-                                    <thead>
-                                        <tr>
-                                            <th>Usuario</th>
-                                            <th>Tareas Asignadas</th>
-                                            <th>Tareas Completadas</th>
-                                            <th>Promedio Tiempo de Tarea</th>
-                                            <th>Casos Creados</th>
-                                            <th>Casos Completados</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {report.map(row => (
-                                            <tr key={row.user_id}>
-                                                <td>
-                                                    <b>{row.full_name}</b>
-                                                    <div className="text-muted" style={{ fontSize: 13 }}>{row.username}</div>
-                                                </td>
-                                                <td>{row.total_tasks_assigned}</td>
-                                                <td>{row.total_tasks_completed}</td>
-                                                <td>{row.avg_task_completion_time ?? <span className="text-muted">—</span>}</td>
-                                                <td>{row.total_cases_created}</td>
-                                                <td>{row.total_cases_completed}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                            {reportType === "departamento" && (
+                                <Dashboard dateStart={dateStart} dateEnd={dateEnd} />
+                            )}
                         </div>
                     )}
                 </div>
