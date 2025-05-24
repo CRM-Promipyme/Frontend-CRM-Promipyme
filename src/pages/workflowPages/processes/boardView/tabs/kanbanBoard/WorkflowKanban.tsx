@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import api from "../../../../../../controllers/api";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
     DndContext,
     KeyboardSensor,
@@ -15,8 +15,10 @@ import {
 import { KanbanTask } from "./KanbanTask";
 import { KanbanColumn } from "./KanbanColumn";
 import { Caso } from "../../../../../../types/workflowTypes";
+import { useAuthStore } from "../../../../../../stores/authStore";
 import { Spinner } from "../../../../../../components/ui/Spinner";
 import { PopupModal } from "../../../../../../components/ui/PopupModal";
+import { useKanbanSocket } from "../../../../../../hooks/kanbanSocketService";
 import { SortableContext, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Column, WorkflowKanbanProps } from "../../../../../../types/kanbanBoardTypes";
 import { fetchStageCases, updateCaseStage } from "../../../../../../controllers/caseControllers";
@@ -24,6 +26,7 @@ import { toast } from "react-toastify";
 
 export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     // Local States
+    const authStore = useAuthStore();
     const [activeTask, setActiveTask] = useState<Caso | null>(null);
     const [isDragging, setIsDragging] = useState(false); // Track drag state
     const sensors = useSensors(
@@ -38,9 +41,11 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         fromColumnId: string;
         toColumnId: string;
     } | null>(null);
-    
+    const [canMove, setCanMove] = useState(false);
+    const [caseName, setCaseName] = useState<string>("");
     const [changeMotive, setChangeMotive] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     const columnIds = useMemo(() => columns.map(col => col.id), [columns]);
 
@@ -83,6 +88,30 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     const confirmStageChange = async () => {
         if (!pendingMove) return;
     
+        // Check for admin privileges or permissions
+        let allowed = false;
+        if (authStore.isAdmin()) {
+            allowed = true;
+        } else {
+            const permissions = await authStore.retrievePermissions();
+            // Check workflow_permissions for this process and stage
+            allowed = permissions.some((rolePerm: any) =>
+                (rolePerm.workflow_permissions || []).some((wp: any) =>
+                    wp.proceso === process.id_proceso &&
+                    Array.isArray(wp.etapa) &&
+                    wp.etapa.includes(Number(pendingMove.fromColumnId)) &&
+                    wp.etapa.includes(Number(pendingMove.toColumnId))
+                )
+            );
+        }
+
+        setCanMove(allowed);
+
+        if (!allowed) {
+            toast.warning("No tienes permisos para mover el caso a esta etapa.");
+            return;
+        }
+
         try {
             await updateCaseStage(pendingMove.caseId, parseInt(pendingMove.toColumnId), changeMotive);
     
@@ -107,46 +136,58 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
             setPendingMove(null);
             toast.success("Caso movido de etapa exitosamente.");
         } catch {
-            toast.warning("No se pudo actualizar el caso. Intente de nuevo.");
+            toast.warning("No se pudo mover el caso. Intente de nuevo.");
         }
     };
 
     // Component mount
     useEffect(() => {
         setColor(process.color);
-    
+        
         if (process.etapas) {
-            const initialColumns = process.etapas.map((etapa) => ({
-                id: etapa.id_etapa.toString(),
-                title: etapa.nombre_etapa,
-                cases: [],
-                nextPageUrl: null,
-            }));
-    
-            setColumns(initialColumns);
-    
-            // Fetch all stages in parallel
-            Promise.all(
-                process.etapas.map((etapa) =>
-                    fetchStageCases(process.id_proceso, etapa.id_etapa).then((result) => ({
-                        etapaId: etapa.id_etapa.toString(),
-                        data: result,
-                    }))
-                )
-            ).then((results) => {
-                setColumns((prev) =>
-                    prev.map((col) => {
-                        const res = results.find((r) => r.etapaId === col.id);
-                        return res && res.data
-                            ? { ...col, cases: res.data.results, nextPageUrl: res.data.next }
-                            : col;
-                    })
-                );
-            }).finally(() => {
-                setLoading(false);
-            });
+            if (debounceTimer.current) {
+                clearTimeout(debounceTimer.current);
+            }
+
+            debounceTimer.current = setTimeout(() => {
+                setColor(process.color);
+        
+                const initialColumns = process.etapas.map((etapa) => ({
+                    id: etapa.id_etapa.toString(),
+                    title: etapa.nombre_etapa,
+                    cases: [],
+                    nextPageUrl: null,
+                }));
+        
+                setColumns(initialColumns);
+        
+                // Fetch all stages in parallel
+                Promise.all(
+                    process.etapas.map((etapa) =>
+                        fetchStageCases(process.id_proceso, etapa.id_etapa, caseName).then((result) => ({
+                            etapaId: etapa.id_etapa.toString(),
+                            data: result,
+                        }))
+                    )
+                ).then((results) => {
+                    setColumns((prev) =>
+                        prev.map((col) => {
+                            const res = results.find((r) => r.etapaId === col.id);
+                            return res && res.data
+                                ? { ...col, cases: res.data.results, nextPageUrl: res.data.next }
+                                : col;
+                        })
+                    );
+                }).finally(() => {
+                    setLoading(false);
+                });
+            }, 500); // <-- 500ms delay
+        
+            return () => {
+                if (debounceTimer.current) clearTimeout(debounceTimer.current);
+            };
         }
-    }, [process]);
+    }, [process, caseName]);
 
     const onLoadMore = async (columnId: string) => {
         const col = columns.find(c => c.id === columnId);
@@ -172,11 +213,41 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         }
     };
 
-    // TODO: Filter cases by name and select columns to show
+    const handleSocketMessage = (data: any) => {
+        console.log("Socket message received:", data);
+
+        if (
+            data.message === "case-moved" &&
+            data.process_id === process.id_proceso &&
+            data.to_stage_id &&
+            data.from_stage_id
+        ) {
+            // Fetch both the source and target columns
+            Promise.all([
+                fetchStageCases(process.id_proceso, data.from_stage_id, caseName),
+                fetchStageCases(process.id_proceso, data.to_stage_id, caseName)
+            ]).then(([fromResult, toResult]) => {
+                setColumns(prev =>
+                    prev.map(col => {
+                        if (col.id === String(data.from_stage_id)) {
+                            return { ...col, cases: fromResult.results, nextPageUrl: fromResult.next };
+                        }
+                        if (col.id === String(data.to_stage_id)) {
+                            return { ...col, cases: toResult.results, nextPageUrl: toResult.next };
+                        }
+                        return col;
+                    })
+                );
+            });
+        }
+    };
+
+    useKanbanSocket(handleSocketMessage);
+
     return (
         <>
             <div className="kanban-board-controls">
-                <input type="text" className="form-control" placeholder="Buscar Caso" style={{ maxWidth: '400px' }}/>
+                <input type="text" className="form-control" placeholder="Nombre del Caso" value={caseName} onChange={(e) => setCaseName(e.target.value)} style={{ maxWidth: '400px' }}/>
                 {process && (
                     <Link to={`/workflows/cases/create/${process.id_proceso}`}>
                         <button className="btn btn-primary">

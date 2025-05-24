@@ -43,9 +43,13 @@ export const updateCase = async (caseId: number, caseData: unknown) => {
  * @param stageId The stage ID
  * @returns a list of cases (paginated, comes in the form of {'count': number, 'next': string, 'previous': string, 'results': Case[]})
  */
-export const fetchStageCases = async (processId: number, stageId: number) => {
+export const fetchStageCases = async (processId: number, stageId: number, caseName: string) => {
     try {
-        const response = await api.get(`/workflows/casos/board-view/${processId}/${stageId}`);
+        let endpoint = `/workflows/casos/board-view/${processId}/${stageId}/`;
+        if (caseName) {
+            endpoint += `?case_name=${caseName}`;
+        }
+        const response = await api.get(endpoint);
         return response.data;
     } catch (error) {
         console.error("Error fetching cases:", error);

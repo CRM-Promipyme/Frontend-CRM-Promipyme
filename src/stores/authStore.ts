@@ -1,4 +1,6 @@
+import axios from "axios";
 import { create } from "zustand";
+import api from "../controllers/api";
 import { LoginResponse, Role } from "../types/authTypes";
 
 interface AuthState {
@@ -9,6 +11,7 @@ interface AuthState {
     login: (response: LoginResponse) => Promise<boolean>;
     logout: () => void;
     isAuthenticated: () => Promise<boolean>;
+    retrievePermissions: () => Promise<object[]>;
     isAdmin: () => boolean;
     updateRoles: (roles: Role[]) => void;
 }
@@ -61,10 +64,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     isAuthenticated: async (): Promise<boolean> => {
-        // TODO: Validar en el backend si el token es válido
         const token = get().accessToken;
-        if (!token) return false
-        else return true;
+        if (token === null) return false;
+        
+        try {
+            const response = await axios.post(
+                `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/validate-token/${token}/`,
+                {}
+            );
+            
+            return response.data.valid === true;
+        } catch (error) {
+            console.error("Error validating token:", error);
+            return false;
+        }
+    },
+
+    retrievePermissions: async (): Promise<object[]> => {
+        try {
+            const response = await api.get(`/auth/manage/system-roles/permissions/user/${get().userId}/`);
+            const permissions = response.data.role_permissions;
+            
+            return permissions;
+        } catch (error) {
+            console.error("Error retrieving permissions:", error);
+            return [];
+        }
     },
 
     isAdmin: () => {

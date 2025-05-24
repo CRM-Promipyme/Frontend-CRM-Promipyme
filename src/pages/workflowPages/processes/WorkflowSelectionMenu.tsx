@@ -96,9 +96,15 @@ export function WorkflowSelectionMenu() {
                         onChange={(e) => handleFilterChange(e.target.value)}
                     />
                     <Link to="/workflows/processes/create">
-                        <button className="filter-btn btn btn-primary">
+                        <button className="filter-btn btn btn-outline-primary">
                             <i className="bi bi-plus-lg" style={{ marginRight: '5px' }}></i>
                             Crear un Nuevo Proceso
+                        </button>
+                    </Link>
+                    <Link to="/workflows/case-list">
+                        <button className="filter-btn btn btn-outline-primary">
+                            <i className="bi bi-briefcase" style={{ marginRight: '5px' }}></i>
+                            Lista de Casos
                         </button>
                     </Link>
                 </div>

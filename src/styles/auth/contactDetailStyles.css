@@ -28,3 +28,27 @@
 .create-contact-form-card form {
     width: 100%;
 }
+
+.contact-fields-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 25px;
+    width: 100%;
+    justify-content: center;
+}
+
+.contact-field-card.card-body {
+    justify-content: center;
+    box-shadow: #0000001a 0px 4px 12px;
+    margin-left: unset;
+    margin-right: unset;
+    width: 50%;
+    border: 0.1px solid rgb(204, 204, 204);
+    align-self: flex-start;
+    margin: 0;
+}
+
+.contact-field-card.card-body form {
+    width: 100%;
+}

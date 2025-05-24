@@ -18,6 +18,7 @@ import {
     TipoTelefono,
     TelefonosContacto,
     DireccionesContacto,
+    AditionalFieldUpdate,
 } from "../../types/contactTypes";
 import { Caso } from "../../types/workflowTypes";
 import { Activity } from "../../types/activityTypes";
@@ -41,6 +42,7 @@ export function ContactDetail() {
         contact_id,
         accessToken
     );
+    const [additionalFields, setAdditionalFields] = useState<AditionalFieldUpdate[]>([]);
     const dropdownOptions = useDropdownOptions(accessToken);
     const [editMode, setEditMode] = useState<boolean>(false);
     const canEdit = authStore.isAdmin(); // Only admin users can edit
@@ -62,6 +64,12 @@ export function ContactDetail() {
 
         fetchCases();
     }, [contact_id]);
+
+    useEffect(() => {
+        if (formData?.campos_adicionales) {
+            setAdditionalFields(formData.campos_adicionales);
+        }
+    }, [formData?.campos_adicionales]);
 
     // Handle input changes for basic info
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,6 +229,12 @@ export function ContactDetail() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            // Merge additionalFields into formData before sending
+            const updatedFormData = {
+                ...formData,
+                campos_adicionales: additionalFields,
+            };
+
             const response = await fetch(
                 `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/contacts/manage/${contact_id}/`,
                 {
@@ -229,7 +243,7 @@ export function ContactDetail() {
                         Authorization: `Bearer ${accessToken}`,
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify(formData),
+                    body: JSON.stringify(updatedFormData),
                 }
             );
 
@@ -382,6 +396,55 @@ export function ContactDetail() {
                                                         onChange={handleChange}
                                                         disabled={!editMode}
                                                     />
+
+                                                    {additionalFields
+                                                    .slice(0, Math.ceil(additionalFields.length / 2))
+                                                    .map((field, idx) => (
+                                                        <div key={field.id} style={{ marginTop: "5px" }}>
+                                                            <label>{field.field_name}</label>
+                                                            {field.field_type === "Booleano" ? (
+                                                                <Select
+                                                                    options={[
+                                                                        { value: "True", label: "Verdadero" },
+                                                                        { value: "False", label: "Falso" }
+                                                                    ]}
+                                                                    value={
+                                                                        field.field_value === "True"
+                                                                            ? { value: "True", label: "Verdadero" }
+                                                                            : field.field_value === "False"
+                                                                            ? { value: "False", label: "Falso" }
+                                                                            : null
+                                                                    }
+                                                                    onChange={selected =>
+                                                                        setAdditionalFields(prev =>
+                                                                            prev.map((f, i) =>
+                                                                                i === idx ? { ...f, field_value: selected ? selected.value : "" } : f
+                                                                            )
+                                                                        )
+                                                                    }
+                                                                    placeholder="Seleccione..."
+                                                                    className="react-select-container"
+                                                                    classNamePrefix="react-select"
+                                                                    isClearable
+                                                                    isDisabled={!editMode}
+                                                                />
+                                                            ) : (
+                                                                <input
+                                                                    type={field.field_type === "Número" ? "number" : "text"}
+                                                                    className="form-control"
+                                                                    value={field.field_value ?? ""}
+                                                                    onChange={e =>
+                                                                        setAdditionalFields(prev =>
+                                                                            prev.map((f, i) =>
+                                                                                i === idx ? { ...f, field_value: e.target.value } : f
+                                                                            )
+                                                                        )
+                                                                    }
+                                                                    disabled={!editMode}
+                                                                />
+                                                            )}
+                                                        </div>
+                                                    ))}
                                                 </div>
                                                 <div className="user-profile-col">
                                                     <label>Apellidos</label>
@@ -403,6 +466,60 @@ export function ContactDetail() {
                                                         onChange={handleChange}
                                                         disabled={!editMode}
                                                     />
+                                                    
+                                                    
+                                                    {additionalFields
+                                                    .slice(Math.ceil(additionalFields.length / 2))
+                                                    .map((field, idx) => {
+                                                        // idx here is relative to the second half, so add offset for setAdditionalFields
+                                                        const realIdx = idx + Math.ceil(additionalFields.length / 2);
+                                                        return (
+                                                            <div key={field.id} style={{ marginTop: "5px" }}>
+                                                                <label>{field.field_name}</label>
+                                                                {field.field_type === "Booleano" ? (
+                                                                    <Select
+                                                                        options={[
+                                                                            { value: "True", label: "Verdadero" },
+                                                                            { value: "False", label: "Falso" }
+                                                                        ]}
+                                                                        value={
+                                                                            field.field_value === "True"
+                                                                                ? { value: "True", label: "Verdadero" }
+                                                                                : field.field_value === "False"
+                                                                                ? { value: "False", label: "Falso" }
+                                                                                : null
+                                                                        }
+                                                                        onChange={selected =>
+                                                                            setAdditionalFields(prev =>
+                                                                                prev.map((f, i) =>
+                                                                                    i === realIdx ? { ...f, field_value: selected ? selected.value : "" } : f
+                                                                                )
+                                                                            )
+                                                                        }
+                                                                        placeholder="Seleccione..."
+                                                                        className="react-select-container"
+                                                                        classNamePrefix="react-select"
+                                                                        isClearable
+                                                                        isDisabled={!editMode}
+                                                                    />
+                                                                ) : (
+                                                                    <input
+                                                                        type={field.field_type === "Número" ? "number" : "text"}
+                                                                        className="form-control"
+                                                                        value={field.field_value ?? ""}
+                                                                        onChange={e =>
+                                                                            setAdditionalFields(prev =>
+                                                                                prev.map((f, i) =>
+                                                                                    i === realIdx ? { ...f, field_value: e.target.value } : f
+                                                                                )
+                                                                            )
+                                                                        }
+                                                                        disabled={!editMode}
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                         </motion.div>

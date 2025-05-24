@@ -1,10 +1,11 @@
 import Select from "react-select";
-import { useState } from "react";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
+import api from "../../controllers/api";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { CreateContactType, Field } from "../../types/contactTypes";
 import "../../styles/auth/contactDetailStyles.css";
-import { Contact } from "../../types/contactTypes";
 import { Spinner } from "../../components/ui/Spinner";
 import { useAuthStore } from "../../stores/authStore";
 import { useSidebarStore } from "../../stores/sidebarStore";
@@ -45,6 +46,22 @@ export function CreateContact() {
     const [formData, setFormData] = useState(initialFormData);
     const [loading, setLoading] = useState<boolean>(false);
     const navigate = useNavigate();
+    const [contactFields, setContactFields] = useState<Field[]>([]);
+    const [additionalFieldValues, setAdditionalFieldValues] = useState<Record<number, string | number | boolean>>({});
+
+    useEffect(() => {
+        const fetchFields = async () => {
+            try {
+                const res = await api.get("/contacts/fields/");
+                setContactFields(res.data.additional_fields);
+                // Optionally: setBaseFields(res.data.base_fields);
+            } catch (error) {
+                console.error(error);
+                toast.error("Error al cargar los campos de contacto");
+            }
+        };
+        fetchFields();
+    }, []);
 
     // Basic input change handler
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -163,7 +180,19 @@ export function CreateContact() {
         e.preventDefault();
         setLoading(true);
         try {
-            const createdContact = await createContact(formData as Contact);
+            // Prepare campos_adicionales from additionalFieldValues
+            const campos_adicionales = Object.entries(additionalFieldValues)
+                .filter(([, value]) => value !== "" && value !== null)
+                .map(([id, value]) => ({
+                    id: Number(id),
+                    field_value: value
+                }));
+
+            const createdContact = await createContact({
+                ...formData,
+                campos_adicionales
+            } as CreateContactType);
+
             toast.success("Contacto creado correctamente.");
             // Optionally, reset the form after successful creation:
             setFormData(initialFormData);
@@ -246,6 +275,52 @@ export function CreateContact() {
                                 onChange={handleChange}
                             />
                         </div>
+
+                        {contactFields.length > 0 && (
+                            <>
+                                <h4 className="mt-4">Campos Adicionales</h4>
+                                {contactFields.map((field) => (
+                                    <div key={field.id} className="mb-3">
+                                        <label className="form-label">{field.field_name}</label>
+                                        {field.field_type_name === "Booleano" ? (
+                                            <Select
+                                                options={[
+                                                    { value: true, label: "Verdadero" },
+                                                    { value: false, label: "Falso" }
+                                                ]}
+                                                value={
+                                                    [true, false].includes(additionalFieldValues[field.id!] as boolean)
+                                                        ? { value: additionalFieldValues[field.id!], label: additionalFieldValues[field.id!] ? "Verdadero" : "Falso" }
+                                                        : null
+                                                }
+                                                onChange={selected =>
+                                                    setAdditionalFieldValues(prev => ({
+                                                        ...prev,
+                                                        [field.id!]: selected ? selected.value : ""
+                                                    }))
+                                                }
+                                                placeholder="Seleccione..."
+                                                className="react-select-container"
+                                                classNamePrefix="react-select"
+                                                isClearable
+                                            />
+                                        ) : (
+                                            <input
+                                                type={field.field_type_name === "Número" ? "number" : "text"}
+                                                className="form-control"
+                                                value={additionalFieldValues[field.id!] ?? ""}
+                                                onChange={e =>
+                                                    setAdditionalFieldValues(prev => ({
+                                                        ...prev,
+                                                        [field.id!]: e.target.value
+                                                    }))
+                                                }
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                            </>
+                        )}
 
                         {/* Información de Contacto */}
                         <h4 style={{ marginBottom: "25px", marginTop: '25px' }}>Información de Contacto</h4>

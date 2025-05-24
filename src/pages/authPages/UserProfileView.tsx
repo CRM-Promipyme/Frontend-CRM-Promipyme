@@ -355,7 +355,7 @@ export function UserProfileView() {
                                                     )}
                                                 </div>
                                             </div>
-                                            {editMode && (
+                                            {editMode && authStore.isAdmin() && (
                                                 // TODO: Only edit roles if user is admin
                                                 <AnimatePresence>
                                                     <motion.div 

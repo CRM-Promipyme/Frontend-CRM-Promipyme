@@ -21,6 +21,7 @@ export function AuthRoutes() {
         {path: "/confirm-password-reset/:uid/:token", comp: PasswordResetConfirmation}
     ]
 
+    const authFallback = "/auth/login";
     const privateAuthRoutes = [
         {path: "/user/profile/:userId", comp: UserProfileView},
         {path: "/auth-menu", comp: AdminMenu},
@@ -28,10 +29,26 @@ export function AuthRoutes() {
 
     const fallbackUrl = "/auth/auth-menu";
     const adminAuthRoutes = [
-        {path: "/invite-user", comp: InviteUser},
-        {path: "/user-list", comp: UserList},
-        {path: "/account-approval-queue", comp: AccountApprovalQueue},
-        {path: "/manage/system-roles/list", comp: RoleList}
+        {
+            path: "/invite-user",
+            comp: InviteUser,
+            requiredBasePermissions: ["invite_users"]
+        },
+        {
+            path: "/user-list",
+            comp: UserList,
+            requiredBasePermissions: ["see_user_list"]
+        },
+        {
+            path: "/account-approval-queue",
+            comp: AccountApprovalQueue,
+            requiredBasePermissions: ["approve_accounts", "deny_accounts"]
+        },
+        {
+            path: "/manage/system-roles/list",
+            comp: RoleList,
+            requiredBasePermissions: ["create_roles", "update_roles", "delete_roles"]
+        }
     ]
 
     return (
@@ -41,14 +58,14 @@ export function AuthRoutes() {
             ))}
             {privateAuthRoutes.map((route, index) => (
                 <Route key={index} path={route.path} element={
-                    <AuthenticatedRoutePermissions fallbackUrl={fallbackUrl}>
+                    <AuthenticatedRoutePermissions fallbackUrl={authFallback}>
                         <route.comp />
                     </AuthenticatedRoutePermissions>
                 } />
             ))}
             {adminAuthRoutes.map((route, index) => (
                 <Route key={index} path={route.path} element={
-                    <AdminRoutePermissions fallbackUrl={fallbackUrl}>
+                    <AdminRoutePermissions fallbackUrl={fallbackUrl} requiredBasePermissions={route.requiredBasePermissions}>
                         <route.comp />
                     </AdminRoutePermissions>
                 } />

@@ -6,9 +6,9 @@ import api from "./api";
  * @returns the dashboard information
  * @throws error if the request fails
  */
-export const fetchDashboardInfo = async () => {
+export const fetchDashboardInfo = async (dateStart: string, dateEnd: string) => {
     try {
-        const response = await api.get("/reports/dashboard/");
+        const response = await api.get("/reports/dashboard/?date_start=" + dateStart + "&date_end=" + dateEnd);
         return response.data;
     } catch (error) {
         console.error("Error fetching dashboard info:", error);

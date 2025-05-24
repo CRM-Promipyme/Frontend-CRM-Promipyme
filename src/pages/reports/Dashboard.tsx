@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import "../../styles/components/dashboard.css";
 import { Spinner } from "../../components/ui/Spinner";
 import { DashboardCase } from '../../types/workflowTypes';
-import { useSidebarStore } from "../../stores/sidebarStore";
 import { DashboardTotals } from "../../types/dashboardTypes";
 import { AnimatedNumberCounter } from '../../components/ui/AnimatedNumberCounter';
 import { fetchDashboardInfo } from "../../controllers/dashboardControllers";
@@ -36,8 +35,12 @@ Chart.register(
     Legend
 );
 
-export function Dashboard() {
-    const sidebarWidthPx = useSidebarStore((state) => state.sidebarWidthPx);
+interface DashboardProps {
+    dateStart: string;
+    dateEnd: string;
+}
+
+export function Dashboard({ dateStart, dateEnd }: DashboardProps) {
     const [loading, setLoading] = useState(true);
     const [totals, setTotals] = useState<DashboardTotals | null>(null);
     const [cases, setCases] = useState<DashboardCase[]>([]);
@@ -55,7 +58,8 @@ export function Dashboard() {
     useEffect(() => {
         const loadInformation = async () => {
             try {
-                const response = await fetchDashboardInfo();
+                setLoading(true);
+                const response = await fetchDashboardInfo(dateStart, dateEnd);
                 setTotals(response.data.totals);
                 setCases(response.data.cases);
             } catch (error) {
@@ -65,9 +69,17 @@ export function Dashboard() {
                 setLoading(false);
             }
         };
-        
-        loadInformation();
-    }, []);
+
+        // if dates are empty, show the spinner
+        if (dateStart === "" || dateEnd === "") {
+            setLoading(true);
+            return;
+        }
+    
+        if (dateStart && dateEnd) {
+            loadInformation();
+        }
+    }, [dateStart, dateEnd]);
 
     const openCases = cases.filter(c => c.abierto).length;
     const closedCases = cases.filter(c => !c.abierto).length;

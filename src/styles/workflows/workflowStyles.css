@@ -299,7 +299,7 @@
 }
 
 .case-list-container .case-list-sidepanel {
-    width: 25%;
+    width: 28%;
 }
 
 /* .case-list-container .case-dates {
@@ -457,7 +457,7 @@
 
 .case-activities {
     padding: 10px;
-    border: 1px solid lightgray;
+    /* border: 1px solid lightgray; */
     border-radius: 10px;
     margin-top: 20px;
 }
@@ -487,4 +487,20 @@
 .workflow-settings-container .workflow-form-card {
     margin: unset;
     transition: all 0.3s ease;
+}
+
+.user-profile-url {
+    text-decoration: none;
+    color: #007bff;
+    transition: all 0.3s ease;
+}
+
+.user-profile-url:hover {
+    transform: scale(1.05);
+}
+
+.note-header {
+    display: flex;
+    flex-direction: column;
+
 }
