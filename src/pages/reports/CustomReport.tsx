@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuthStore } from "../../stores/authStore";
 import AsyncSelect from "react-select/async";
 import Select from "react-select";
@@ -11,6 +11,8 @@ import "../../styles/components/dashboard.css";
 import { Activity } from "../../types/activityTypes";
 import { ActivityLog } from "../../components/ui/ActivityLog";
 import { Dashboard } from "./Dashboard";
+import { Role, RolePermission, User } from "../../types/authTypes";
+import { Proceso } from "../../types/workflowTypes";
 
 interface CustomReportProps {
     dateStart: string;
@@ -38,6 +40,14 @@ interface ProcessOption {
 }
 
 type ReportType = "usuario" | "departamento";
+
+export interface ReportApiParams {
+    date_start: string;
+    date_end: string;
+    user_id?: number;
+    role_id?: number;
+    process_id?: number;
+}
 
 export function CustomReport({ dateStart, dateEnd }: CustomReportProps) {
     // Report type
@@ -72,13 +82,13 @@ export function CustomReport({ dateStart, dateEnd }: CustomReportProps) {
     // Fetch roles and processes on mount
     useEffect(() => {
         api.get("/auth/dropdown-opts/?roles=true").then(res => {
-            setRoles(res.data.roles.map((r: any) => ({
+            setRoles(res.data.roles.map((r: Role) => ({
                 value: r.id_rol,
                 label: r.nombre_rol
             })));
         });
         api.get("/workflows/procesos/list").then(res => {
-            setProcesses(res.data.processes.map((p: any) => ({
+            setProcesses(res.data.processes.map((p: Proceso) => ({
                 value: p.id_proceso,
                 label: p.nombre_proceso
             })));
@@ -92,7 +102,7 @@ export function CustomReport({ dateStart, dateEnd }: CustomReportProps) {
             const res = await api.get("/auth/users/list", {
                 params: { name: inputValue }
             });
-            return res.data.results.map((u: any) => ({
+            return res.data.results.map((u: User) => ({
                 value: u.id,
                 label: `${u.first_name} ${u.last_name} (${u.email})`
             }));
@@ -108,7 +118,7 @@ export function CustomReport({ dateStart, dateEnd }: CustomReportProps) {
                 setCanExport(true);
             } else {
                 const perms = await authStore.retrievePermissions();
-                const hasExport = perms.role_permissions.some((rp: any) =>
+                const hasExport = perms.some((rp: RolePermission) =>
                     rp.base_permissions?.export_reports
                 );
                 setCanExport(hasExport);
@@ -180,7 +190,7 @@ export function CustomReport({ dateStart, dateEnd }: CustomReportProps) {
             // Update the URL
             navigate(`${location.pathname}?${params.toString()}`, { replace: true });
 
-            const apiParams: any = {
+            const apiParams: ReportApiParams = {
                 date_start: dateStart,
                 date_end: dateEnd
             };
@@ -293,10 +303,10 @@ export function CustomReport({ dateStart, dateEnd }: CustomReportProps) {
                 if (foundProcess) setProcess(foundProcess);
             }
         }
-    }, [roles, processes]);
+    }, [roles, processes, location.search, user]);
 
     return (
-        <div style={{ width: "100%", padding: 0 }}>
+        <div style={{ width: "100%", padding: '10px' }}>
             {/* Filter controls */}
             <div style={{
                 display: "flex",
@@ -426,7 +436,7 @@ export function CustomReport({ dateStart, dateEnd }: CustomReportProps) {
                                     </div>
                                     <Bar data={casesCompletedData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
                                 </div>
-                                {user && (
+                                {user && userId != null && (
                                     <div className="card-body activity-log">
                                         <ActivityLog activities={userActivities} setActivities={setUserActivities} entity_type='user' entity_id={userId}/>
                                     </div>

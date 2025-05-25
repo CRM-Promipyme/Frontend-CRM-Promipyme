@@ -54,3 +54,34 @@ export interface UserProfile {
     roles: { nombre_rol: string; id_rol: number }[];
     profile_data: Record<string, unknown>;
 }
+
+export interface BasePermissions {
+    id: number;
+    rol: string;
+    visualize_reports: boolean;
+    export_reports: boolean;
+    modify_contact_fields: boolean;
+    create_contacts: boolean;
+    delete_contacts: boolean;
+    invite_users: boolean;
+    see_user_list: boolean;
+    approve_accounts: boolean;
+    deny_accounts: boolean;
+    create_roles: boolean;
+    update_roles: boolean;
+    delete_roles: boolean;
+}
+
+export interface WorkflowPermission {
+    id: number;
+    rol: string;
+    proceso: number;
+    etapa: number[];
+}
+
+export interface RolePermission {
+    base_permissions: BasePermissions;
+    workflow_permissions: WorkflowPermission[];
+}
+
+export type PermissionsResponse = RolePermission[];

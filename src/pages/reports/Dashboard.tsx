@@ -45,7 +45,7 @@ export function Dashboard({ dateStart, dateEnd }: DashboardProps) {
     const [totals, setTotals] = useState<DashboardTotals | null>(null);
     const [cases, setCases] = useState<DashboardCase[]>([]);
     const [caseActivities, setCaseActivities] = useState<Activity[]>([]);
-
+    
     const totalsList = totals ? [
         { label: "Cantidad de Procesos", value: totals.total_workflows, icon: "bi-diagram-3", variant: "secondary" },
         { label: "Total de Casos", value: totals.total_cases, icon: "bi-collection", variant: "primary" },
@@ -54,7 +54,7 @@ export function Dashboard({ dateStart, dateEnd }: DashboardProps) {
         { label: "Casos Exitosos", value: totals.total_successful_cases, icon: "bi-trophy", variant: "success" },
         { label: "Casos Fallidos", value: totals.total_failed_cases, icon: "bi-x-circle", variant: "danger" },
     ] : [];
-
+    
     useEffect(() => {
         const loadInformation = async () => {
             try {
@@ -69,28 +69,28 @@ export function Dashboard({ dateStart, dateEnd }: DashboardProps) {
                 setLoading(false);
             }
         };
-
+        
         // if dates are empty, show the spinner
         if (dateStart === "" || dateEnd === "") {
             setLoading(true);
             return;
         }
-    
+        
         if (dateStart && dateEnd) {
             loadInformation();
         }
     }, [dateStart, dateEnd]);
-
+    
     const openCases = cases.filter(c => c.abierto).length;
     const closedCases = cases.filter(c => !c.abierto).length;
     const successfulCases = cases.filter(c => c.exitoso).length;
     const failedCases = cases.filter(c => !c.exitoso).length;
-
+    
     const processCounts = cases.reduce((acc, c) => {
         acc[c.proceso] = (acc[c.proceso] || 0) + 1;
         return acc;
     }, {} as Record<string, number>);
-
+    
     const orderedSpanishMonths = [
         "enero", "febrero", "marzo", "abril", "mayo", "junio",
         "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
@@ -107,8 +107,8 @@ export function Dashboard({ dateStart, dateEnd }: DashboardProps) {
         acc[month] = monthlyPerformanceRaw[month] || 0;
         return acc;
     }, {} as Record<string, number>);
-
-    const sharedOptions: ChartOptions<'pie' | 'bar'> = {
+    
+    const pieOptions: ChartOptions<'pie'> = {
         responsive: true,
         plugins: {
             legend: {
@@ -125,7 +125,25 @@ export function Dashboard({ dateStart, dateEnd }: DashboardProps) {
             }
         }
     };
-
+    
+    const barOptions: ChartOptions<'bar'> = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    boxWidth: 15,
+                    padding: 20,
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: (ctx) => `${ctx.label}: ${ctx.raw} casos`
+                }
+            }
+        }
+    };
+    
     const lineOptions: ChartOptions<'line'> = {
         responsive: true,
         plugins: {
@@ -212,7 +230,7 @@ export function Dashboard({ dateStart, dateEnd }: DashboardProps) {
                                 <p className="text-muted mb-3">Abiertos vs. Cerrados</p>
                             </div>
                             <div style={{ position: "relative", width: "100%", height: "260px" }}>
-                                <Pie data={openClosedData} options={{ ...sharedOptions, cutout: '70%' }} />
+                                <Pie data={openClosedData} options={{ ...pieOptions }} />
                             </div>
                         </div>
                         <div className="card-body chart pie-chart">
@@ -221,7 +239,7 @@ export function Dashboard({ dateStart, dateEnd }: DashboardProps) {
                                 <p className="text-muted mb-3">Exitosos vs. Fallidos</p>
                             </div>
                             <div style={{ position: "relative", width: "100%", height: "260px" }}>
-                                <Pie data={successFailedData} options={{ ...sharedOptions, cutout: '70%' }} />
+                                <Pie data={successFailedData} options={{ ...pieOptions, cutout: '70%' }} />
                             </div>
                         </div>
                         <div className="card-body chart">
@@ -229,7 +247,7 @@ export function Dashboard({ dateStart, dateEnd }: DashboardProps) {
                                 <h5 className="h4-header">Casos por Proceso</h5>
                                 <p className="text-muted mb-3">Distribución por tipo de proceso</p>
                             </div>
-                            <Bar data={processData} options={sharedOptions} />
+                            <Bar data={processData} options={barOptions} />
                         </div>
                         <div className="card-body chart">
                             <div className="chart-title">

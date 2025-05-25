@@ -15,6 +15,7 @@ import { showResponseErrors } from "../../utils/formatUtils";
 import { ActivityLog } from "../../components/ui/ActivityLog";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
 import { fetchEntityActivities } from "../../controllers/activityControllers";
+import { AxiosError } from "axios";
 
 export function UserProfileView() {
     // Estados Globales
@@ -197,9 +198,10 @@ export function UserProfileView() {
             if (userId && authStore.userId === parseInt(userId)) {
                 authStore.updateRoles(updatedData.roles);
             }
-        } catch (error: any) {
-            if (error.data) {
-                showResponseErrors(error.data); // Now correctly passing the API response
+        } catch (error) {
+            const axiosError = error as AxiosError;
+            if (axiosError.response) {
+                showResponseErrors(axiosError.response?.data);
             } else {
                 showResponseErrors("Hubo un error al actualizar el perfil.");
             };

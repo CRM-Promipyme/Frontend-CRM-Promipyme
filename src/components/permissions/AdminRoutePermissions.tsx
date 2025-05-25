@@ -2,6 +2,7 @@ import { Navigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { RolePermission } from "../../types/authTypes";
 
 interface AdminRoutePermissionsProps {
     children: React.ReactNode;
@@ -32,10 +33,10 @@ export function AdminRoutePermissions({ children, requiredBasePermissions, fallb
                     setAllowed(false);
                 } else {
                     const permissions = await authStore.retrievePermissions();
-                    const hasPermission = permissions.some((perm: any) =>
+                    const hasPermission = permissions.some((perm: RolePermission) =>
                         perm.base_permissions &&
                         requiredBasePermissions.some(
-                            (permName) => perm.base_permissions[permName]
+                            (permName) => perm.base_permissions[permName as keyof typeof perm.base_permissions]
                         )
                     );
                     if (!hasPermission) {
@@ -53,7 +54,7 @@ export function AdminRoutePermissions({ children, requiredBasePermissions, fallb
                 if (isMounted) setLoading(false);
             });
         return () => { isMounted = false; };
-    }, [requiredBasePermissions]);
+    }, [requiredBasePermissions, authStore]);
 
     if (loading) return null;
 
