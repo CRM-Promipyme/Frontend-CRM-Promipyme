@@ -1,12 +1,18 @@
 import { useEffect } from "react";
 
-type Listener = (data: any) => void;
+export interface SocketMessageData {
+    message: string;
+    process_id: number;
+    from_stage_id: number;
+    to_stage_id: number;
+}
+
+type Listener = (data: SocketMessageData) => void;
 
 export class KanbanSocketService {
     private static instance: KanbanSocketService;
     private socket: WebSocket | null = null;
     private listeners: Listener[] = [];
-    private connected = false;
 
     private constructor() {
         this.connect();
@@ -22,19 +28,17 @@ export class KanbanSocketService {
     private connect() {
         this.socket = new WebSocket("ws://localhost:8000/ws/case-notifications/");
         this.socket.onopen = () => {
-            this.connected = true;
             // console.log("WebSocket connected");
         };
         this.socket.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
                 this.listeners.forEach(listener => listener(data));
-            } catch (e) {
+            } catch {
                 // Ignore invalid messages
             }
         };
         this.socket.onclose = () => {
-            this.connected = false;
             // Optionally, implement reconnect logic here
         };
         this.socket.onerror = () => {
@@ -50,7 +54,7 @@ export class KanbanSocketService {
     }
 }
 
-export function useKanbanSocket(onMessage: (data: any) => void) {
+export function useKanbanSocket(onMessage: (data: SocketMessageData) => void) {
     useEffect(() => {
         const service = KanbanSocketService.getInstance();
         const unsubscribe = service.subscribe(onMessage);

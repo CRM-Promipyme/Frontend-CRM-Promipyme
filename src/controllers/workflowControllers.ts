@@ -1,6 +1,7 @@
 import api from "./api";
 import { Proceso, createWorkflowData } from "../types/workflowTypes";
 import { showResponseErrors } from "../utils/formatUtils";
+import { AxiosError } from "axios";
 
 /**
  * Fetches processes from the backend.
@@ -49,9 +50,9 @@ export const createWorkflow = async (workflowData: createWorkflowData): Promise<
         
         return createdWorkflow;
     } catch (error) {
-        console.error("Error creating workflow:", error);
-        
-        showResponseErrors(error.response?.data);
+        const axiosError = error as AxiosError;
+        console.error("Error creating workflow:", axiosError);
+        showResponseErrors(axiosError.response?.data);
         throw error;
     }
 }

@@ -183,7 +183,7 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                     )}
                                     <div className="case-tasks">
                                         {selectedCase && (
-                                            <CaseTasks selectedCase={selectedCase} process={process} />
+                                            <CaseTasks selectedCase={selectedCase}/>
                                         )}
                                     </div>
                                     <div className="case-activities">

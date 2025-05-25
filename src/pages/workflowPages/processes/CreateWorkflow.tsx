@@ -18,17 +18,12 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { toast } from "react-toastify";
+import { Etapa } from "../../../types/workflowTypes";
 import { Spinner } from "../../../components/ui/Spinner";
 import { SortableItem } from "../../../components/ui/SortableItem";
 import { createWorkflow } from "../../../controllers/workflowControllers";
 import { showResponseErrors } from "../../../utils/formatUtils";
 import "../../../styles/workflows/workflowFormStyles.css"
-
-interface Etapa {
-    id: string;
-    nombre_etapa: string;
-    orden_etapa: number;
-}
 
 
 export function CreateWorkflow() {
@@ -121,7 +116,7 @@ export function CreateWorkflow() {
         // Prepare the workflow data for submission
         const workflowData = {
             nombre_proceso: nombreProceso,
-            etapas: etapas.map(({ ...rest }) => rest),
+            etapas: etapas,
             color: color,
         };
 

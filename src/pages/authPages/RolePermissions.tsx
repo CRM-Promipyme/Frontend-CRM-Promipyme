@@ -72,7 +72,7 @@ export function RolePermissions({ selectedRole, onClose }: RolePermissionsProps)
         
         fetchPermissions();
         fetchWorkflows();
-    }, [selectedRole.id_rol]);
+    }, [selectedRole.id_rol, onClose]);
 
     const handleUpdate = async () => {
         if (!basePermissions) return;
@@ -100,7 +100,7 @@ export function RolePermissions({ selectedRole, onClose }: RolePermissionsProps)
             });
             toast.success("Permisos actualizados correctamente.");
             onClose();
-        } catch (error) {
+        } catch {
             toast.error("Error al actualizar los permisos.");
         } finally {
             setLoading(false);

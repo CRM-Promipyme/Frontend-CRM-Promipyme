@@ -299,7 +299,7 @@ export function BaseCaseList() {
                     exit={{ opacity: 0, x: 20 }}
                 >
                     <AnimatePresence mode="wait">
-                        {selectedCase ? (
+                        {selectedCase && process ? (
                             <SelectedCaseDetails
                                 selectedCase={selectedCase}
                                 process={process}

@@ -5,12 +5,11 @@ import { CreateTaskModal } from "./CreateTaskModal";
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Spinner } from "../../../../../components/ui/Spinner";
-import { Caso, Proceso } from '../../../../../types/workflowTypes';
+import { Caso } from '../../../../../types/workflowTypes';
 import { useAuthStore } from "../../../../../stores/authStore";
 
 interface CaseTasksProps {
     selectedCase: Caso;
-    process: Proceso;
 }
 
 interface Task {
@@ -42,7 +41,7 @@ const statusOptions = [
     { value: true, label: "Completado" }
 ];
 
-export function CaseTasks({ selectedCase, process }: CaseTasksProps) {
+export function CaseTasks({ selectedCase }: CaseTasksProps) {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [nextUrl, setNextUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -64,7 +63,7 @@ export function CaseTasks({ selectedCase, process }: CaseTasksProps) {
             const res = await api.get<PaginatedTasks>(endpoint);
             setTasks(prev => url ? [...prev, ...res.data.results] : res.data.results);
             setNextUrl(res.data.next);
-        } catch (err) {
+        } catch {
             toast.error("No se pudieron cargar las tareas.");
         } finally {
             setLoading(false);
@@ -96,7 +95,7 @@ export function CaseTasks({ selectedCase, process }: CaseTasksProps) {
 
         container.addEventListener('scroll', handleScroll);
         return () => container.removeEventListener('scroll', handleScroll);
-    }, [nextUrl, loading]);
+    }, [nextUrl, loading, tasks]);
 
     // Helpers
     const formatDate = (dateStr: string | null) =>
@@ -140,7 +139,7 @@ export function CaseTasks({ selectedCase, process }: CaseTasksProps) {
         });
     };
 
-    const handleEditFieldChange = (field: keyof Task, value: any) => {
+    const handleEditFieldChange = (field: keyof Task, value: boolean | string) => {
         setEditFields(prev => ({ ...prev, [field]: value }));
     };
 
@@ -170,7 +169,7 @@ export function CaseTasks({ selectedCase, process }: CaseTasksProps) {
 
     return (
         <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: '10px' }}>
                 <h4 className="h4-header" style={{ marginBottom: 0 }}>
                     <i className="bi bi-list-task" style={{ marginRight: '10px', fontSize: '1.5rem', filter: 'drop-shadow(0 0 0.5px black)' }}></i>
                     Tareas Asignadas
@@ -282,7 +281,7 @@ export function CaseTasks({ selectedCase, process }: CaseTasksProps) {
                                                     <Select
                                                         options={statusOptions}
                                                         value={statusOptions.find(opt => opt.value === editFields.completado)}
-                                                        onChange={option => handleEditFieldChange("completado", option?.value)}
+                                                        onChange={option => handleEditFieldChange("completado", option?.value ?? false)}
                                                         className="react-select-container"
                                                         classNamePrefix="react-select"
                                                     />
@@ -320,7 +319,7 @@ export function CaseTasks({ selectedCase, process }: CaseTasksProps) {
                                                         isDisabled={!canQuickUpdateStatus(task) && editTaskId !== task.id_tarea_caso}
                                                         onChange={option => {
                                                             if (editTaskId === task.id_tarea_caso) {
-                                                                handleEditFieldChange("completado", option?.value);
+                                                                handleEditFieldChange("completado", option?.value ?? false);
                                                             } else if (canQuickUpdateStatus(task) && option) {
                                                                 handleQuickStatusChange(task, option.value);
                                                             }

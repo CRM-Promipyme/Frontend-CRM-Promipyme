@@ -186,9 +186,11 @@ export function ContactFields() {
                                             value: field.field_type,
                                             label: field.field_type_name
                                         }}
-                                        onChange={(selectedOption) =>
-                                            updateFieldType(field.id!, selectedOption?.value)
-                                        }
+                                        onChange={(selectedOption) => {
+                                            if (typeof selectedOption?.value !== "undefined") {
+                                                updateFieldType(field.id!, Number(selectedOption.value));
+                                            }
+                                        }}
                                         isDisabled={!editMode}
                                         menuPlacement="auto"
                                     />

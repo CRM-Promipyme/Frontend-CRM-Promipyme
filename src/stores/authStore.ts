@@ -1,7 +1,7 @@
 import axios from "axios";
 import { create } from "zustand";
 import api from "../controllers/api";
-import { LoginResponse, Role } from "../types/authTypes";
+import { LoginResponse, Role, RolePermission } from "../types/authTypes";
 
 interface AuthState {
     userId: number | null;
@@ -11,7 +11,7 @@ interface AuthState {
     login: (response: LoginResponse) => Promise<boolean>;
     logout: () => void;
     isAuthenticated: () => Promise<boolean>;
-    retrievePermissions: () => Promise<object[]>;
+    retrievePermissions: () => Promise<RolePermission[]>;
     isAdmin: () => boolean;
     updateRoles: (roles: Role[]) => void;
 }
@@ -80,7 +80,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     },
 
-    retrievePermissions: async (): Promise<object[]> => {
+    retrievePermissions: async (): Promise<RolePermission[]> => {
         try {
             const response = await api.get(`/auth/manage/system-roles/permissions/user/${get().userId}/`);
             const permissions = response.data.role_permissions;

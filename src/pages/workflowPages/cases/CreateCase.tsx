@@ -274,7 +274,7 @@ export function CreateCase() {
                             <label>Fecha Estimada de Cierre </label>
                             <DatePicker
                                 selected={estimatedCloseDate}
-                                onChange={(date: Date) => setEstimatedCloseDate(date)}
+                                onChange={(date: Date | null) => setEstimatedCloseDate(date)}
                                 showTimeSelect
                                 timeFormat="HH:mm"
                                 timeIntervals={15}
@@ -290,7 +290,7 @@ export function CreateCase() {
                             <label>Fecha Real de Cierre</label>
                             <DatePicker
                                 selected={closingDate}
-                                onChange={(date: Date) => setClosingDate(date)}
+                                onChange={(date: Date | null) => setClosingDate(date)}
                                 showTimeSelect
                                 timeFormat="HH:mm"
                                 timeIntervals={15}

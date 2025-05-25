@@ -1,5 +1,6 @@
 import api from "./api";
 import { showResponseErrors } from "../utils/formatUtils";
+import { AxiosError } from "axios";
 
 /**
  * Allows creation of a case
@@ -11,9 +12,9 @@ export const createCase = async (caseData: unknown) => {
         const response = await api.post("/workflows/casos/manage/create/", caseData);
         return response.data;
     } catch (error) {
-        console.error("Error creating case:", error);
-        
-        showResponseErrors(error.response?.data);
+        const axiosError = error as AxiosError;
+        console.error("Error creating case:", axiosError);
+        showResponseErrors(axiosError.response?.data);
         throw error;
     }
 };
@@ -30,8 +31,9 @@ export const updateCase = async (caseId: number, caseData: unknown) => {
         const response = await api.put(`/workflows/casos/manage/update/${caseId}/`, caseData);
         return response.data;
     } catch (error) {
-        console.error("Error updating case:", error);
-        showResponseErrors(error.response?.data);
+        const axiosError = error as AxiosError;
+        console.error("Error updating case:", axiosError);
+        showResponseErrors(axiosError.response?.data);
         throw error;
     }
 };

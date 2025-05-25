@@ -13,6 +13,7 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
 import api from "../../../../../controllers/api";
@@ -121,8 +122,9 @@ export function EditWorkflow({ process, setProcess }: WorkflowSettingsProps) {
             toast.success("Proceso actualizado correctamente.");
             setProcess(response.data?.process);
             setEditMode(false);
-        } catch (error: unknown) {
-            showResponseErrors(error.response?.data);
+        } catch (error) {   
+            const axiosError = error as AxiosError;
+            showResponseErrors(axiosError.response?.data);
         } finally {
             setLoading(false);
         }

@@ -14,7 +14,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
 import { FilterSidebar } from "../../components/ui/forms/FilterSidebar";
 import { AnimatedNumberCounter } from "../../components/ui/AnimatedNumberCounter";
-import { PendingAccount, PendingAccountResponse, Role } from "../../types/authTypes";
+import { PendingAccount, PendingAccountResponse, Role, RolePermission } from "../../types/authTypes";
 
 export function AccountApprovalQueue() {
     // Estados globales
@@ -164,7 +164,7 @@ export function AccountApprovalQueue() {
         }
         
         const permissions = await authStore.retrievePermissions();
-        const hasPermission = permissions.some((perm: any) =>
+        const hasPermission = permissions.some((perm: RolePermission) =>
             perm.base_permissions &&
             perm.base_permissions['approve_accounts'] === true
         );
@@ -230,7 +230,7 @@ export function AccountApprovalQueue() {
         }
         
         const permissions = await authStore.retrievePermissions();
-        const hasPermission = permissions.some((perm: any) =>
+        const hasPermission = permissions.some((perm: RolePermission) =>
             perm.base_permissions &&
             perm.base_permissions['deny_accounts'] === true
         );

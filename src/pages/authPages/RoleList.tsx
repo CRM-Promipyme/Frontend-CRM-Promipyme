@@ -1,5 +1,5 @@
 import { toast } from "react-toastify";
-import { Role } from "../../types/authTypes";
+import { BasePermissions, Role, RolePermission } from "../../types/authTypes";
 import { fetchRoles } from '../../utils/authUtils';
 import { useEffect, useState, useRef } from "react";
 import { RolePermissions } from "./RolePermissions";
@@ -141,7 +141,7 @@ export function RoleList() {
         }
     };
 
-    const handleModalTypeChange = async (requiredPermission: string, modalType: "update" | "delete" | "create") => {
+    const handleModalTypeChange = async (requiredPermission: keyof BasePermissions, modalType: "update" | "delete" | "create") => {
         // Allow admins to always proceed
         if (authStore.isAdmin && authStore.isAdmin()) {
             if (modalType === "update") {
@@ -154,7 +154,7 @@ export function RoleList() {
         }
         
         const permissions = await authStore.retrievePermissions();
-        const hasPermission = permissions.some((perm: any) =>
+        const hasPermission = permissions.some((perm: RolePermission) =>
             perm.base_permissions &&
             perm.base_permissions[requiredPermission] === true
         );

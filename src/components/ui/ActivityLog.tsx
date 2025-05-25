@@ -14,7 +14,7 @@ import {
 
 interface ActivityLogProps {
     activities?: Activity[];
-    setActivities?: (activities: Activity[]) => void;
+    setActivities?: React.Dispatch<React.SetStateAction<Activity[]>>;
     entity_type: string;
     entity_id?: number | string;
 }
@@ -22,7 +22,6 @@ interface ActivityLogProps {
 export function ActivityLog({ activities, setActivities, entity_type, entity_id }: ActivityLogProps) {
     const [localActivities, setLocalActivities] = useState<Activity[]>([]);
     const [loading, setLoading] = useState(false);
-    const [nextUrl, setNextUrl] = useState<string | null>(null);
 
     const nextUrlRef = useRef<string | null>(null); // <- to avoid stale state
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -43,9 +42,8 @@ export function ActivityLog({ activities, setActivities, entity_type, entity_id 
                     setLocalActivities(response.results);
                 }
 
-                setNextUrl(response.next);
                 nextUrlRef.current = response.next;
-            } catch (error) {
+            } catch {
                 toast.error("Ha ocurrido un error al cargar el historial de actividades.");
             } finally {
                 setLoading(false);
@@ -53,7 +51,7 @@ export function ActivityLog({ activities, setActivities, entity_type, entity_id 
         };
 
         fetchInitialActivities();
-    }, [entity_type, entity_id]);
+    }, [entity_type, entity_id, setActivities]);
 
     // Load more
     const fetchMoreActivities = async () => {
@@ -71,12 +69,11 @@ export function ActivityLog({ activities, setActivities, entity_type, entity_id 
             }
     
             if (setActivities) {
-                setActivities((prev) => [...(prev || []), ...data.results]);
+                setActivities((prev: Activity[]) => [...(prev || []), ...data.results]);
             } else {
                 setLocalActivities((prev) => [...prev, ...data.results]);
             }
     
-            setNextUrl(data.next);
             nextUrlRef.current = data.next;
         } catch (error) {
             toast.error("No se pudo cargar más actividades.");

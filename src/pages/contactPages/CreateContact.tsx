@@ -199,7 +199,6 @@ export function CreateContact() {
             navigate(`/contacts/details/${createdContact.contact_id}`);
         } catch (error) {
             console.error("Error creating contact:", error);
-            // The createContact controller already calls showResponseErrors.
         } finally {
             setLoading(false);
         }
@@ -308,7 +307,11 @@ export function CreateContact() {
                                             <input
                                                 type={field.field_type_name === "Número" ? "number" : "text"}
                                                 className="form-control"
-                                                value={additionalFieldValues[field.id!] ?? ""}
+                                                value={
+                                                    typeof additionalFieldValues[field.id!] === "boolean"
+                                                        ? (additionalFieldValues[field.id!] ? "true" : "false")
+                                                        : (additionalFieldValues[field.id!] as string | number | undefined) ?? ""
+                                                }
                                                 onChange={e =>
                                                     setAdditionalFieldValues(prev => ({
                                                         ...prev,

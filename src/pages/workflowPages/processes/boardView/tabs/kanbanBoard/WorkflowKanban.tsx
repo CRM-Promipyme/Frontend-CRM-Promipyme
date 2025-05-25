@@ -18,11 +18,12 @@ import { Caso } from "../../../../../../types/workflowTypes";
 import { useAuthStore } from "../../../../../../stores/authStore";
 import { Spinner } from "../../../../../../components/ui/Spinner";
 import { PopupModal } from "../../../../../../components/ui/PopupModal";
-import { useKanbanSocket } from "../../../../../../hooks/kanbanSocketService";
+import { SocketMessageData, useKanbanSocket } from "../../../../../../hooks/kanbanSocketService";
 import { SortableContext, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Column, WorkflowKanbanProps } from "../../../../../../types/kanbanBoardTypes";
 import { fetchStageCases, updateCaseStage } from "../../../../../../controllers/caseControllers";
 import { toast } from "react-toastify";
+import { RolePermission, WorkflowPermission } from "../../../../../../types/authTypes";
 
 export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     // Local States
@@ -41,7 +42,6 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         fromColumnId: string;
         toColumnId: string;
     } | null>(null);
-    const [canMove, setCanMove] = useState(false);
     const [caseName, setCaseName] = useState<string>("");
     const [changeMotive, setChangeMotive] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -95,8 +95,8 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         } else {
             const permissions = await authStore.retrievePermissions();
             // Check workflow_permissions for this process and stage
-            allowed = permissions.some((rolePerm: any) =>
-                (rolePerm.workflow_permissions || []).some((wp: any) =>
+            allowed = permissions.some((rolePerm: RolePermission) =>
+                (rolePerm.workflow_permissions || []).some((wp: WorkflowPermission) =>
                     wp.proceso === process.id_proceso &&
                     Array.isArray(wp.etapa) &&
                     wp.etapa.includes(Number(pendingMove.fromColumnId)) &&
@@ -104,8 +104,6 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
                 )
             );
         }
-
-        setCanMove(allowed);
 
         if (!allowed) {
             toast.warning("No tienes permisos para mover el caso a esta etapa.");
@@ -213,7 +211,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         }
     };
 
-    const handleSocketMessage = (data: any) => {
+    const handleSocketMessage = (data: SocketMessageData) => {
         console.log("Socket message received:", data);
 
         if (

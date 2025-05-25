@@ -1,6 +1,7 @@
 import api from "./api";
 import { Contact } from "../types/contactTypes";
 import { showResponseErrors } from "../utils/formatUtils";
+import { AxiosError } from "axios";
 
 /**
  * Creates a new contact in the backend.
@@ -14,10 +15,10 @@ export const createContact = async (newContact: Contact): Promise<Contact> => {
         const createdContact = response.data.contact;
         
         return createdContact;
-    } catch (error: unknown) {
-        console.error("Error creating contact:", error);
-        
-        showResponseErrors(error.response?.data);
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        console.error("Error creating contact:", axiosError);
+        showResponseErrors(axiosError.response?.data);
         throw error;
     }
 }
