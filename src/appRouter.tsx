@@ -33,12 +33,12 @@ const AnimatedRoutes = () => {
     return (
         <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
-                <Route
+                {/* <Route
                     path="/"
                     element={
                         <h1>Home</h1>
                     }
-                />
+                /> */}
                 {routes.map((route, index) => (
                     <Route key={index} path={`${route.prefixedPath}/*`} element={route.component} />
                 ))}
