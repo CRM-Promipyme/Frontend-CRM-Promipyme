@@ -33,7 +33,7 @@ export function ContactList() {
 
     // Construct API URL with filters
     const buildQueryUrl = useCallback(() => {
-        let url = `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/contacts/list/?`;
+        let url = `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/contacts/list/?`;
 
         if (searchName) url += `nombre=${searchName}&`;
         if (searchEmail) url += `email=${searchEmail}&`;

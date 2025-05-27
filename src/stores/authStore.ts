@@ -69,7 +69,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         
         try {
             const response = await axios.post(
-                `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/validate-token/${token}/`,
+                `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/validate-token/${token}/`,
                 {}
             );
             

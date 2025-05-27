@@ -236,7 +236,7 @@ export function ContactDetail() {
             };
 
             const response = await fetch(
-                `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/contacts/manage/${contact_id}/`,
+                `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/contacts/manage/${contact_id}/`,
                 {
                     method: "PUT",
                     headers: {

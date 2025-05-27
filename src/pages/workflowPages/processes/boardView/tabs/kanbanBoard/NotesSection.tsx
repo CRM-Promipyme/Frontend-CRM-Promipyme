@@ -8,7 +8,7 @@ import { pageVariants } from "../../../../../../utils/motionVariants";
 import { Link } from "react-router-dom";
 
 
-const BASE_URL = import.meta.env.VITE_REACT_APP_DJANGO_API_URL;
+const BASE_URL = import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL;
 
 interface NotesSectionProps {
     id: number;

@@ -76,7 +76,7 @@ export function RoleList() {
         if (!selectedRole) return;
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/manage/system-roles/${selectedRole.id_rol}/`, {
+            const response = await fetch(`${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/manage/system-roles/${selectedRole.id_rol}/`, {
                 method: "DELETE",
                 headers: {
                     "Authorization": `Bearer ${accessToken}`,
@@ -109,7 +109,7 @@ export function RoleList() {
         if (!selectedRole) return;
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/manage/system-roles/create/`, {
+            const response = await fetch(`${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/manage/system-roles/create/`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${accessToken}`,

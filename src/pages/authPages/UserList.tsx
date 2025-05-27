@@ -35,7 +35,7 @@ export function UserList() {
     const tableRef = useRef<HTMLDivElement | null>(null); // Reference to the table container
 
     const buildQueryUrl = useCallback(() => {
-        let url = `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/users/list/?`;
+        let url = `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/users/list/?`;
 
         if (searchName) url += `name=${searchName}&`;
         if (searchEmail) url += `email=${searchEmail}&`;

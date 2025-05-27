@@ -28,7 +28,7 @@ export function AccountApprovalQueue() {
     const [pendingAccounts, setPendingAccounts] = useState<PendingAccount[]>([]);
     const [totalAccs, setTotalAccs] = useState<number>(0);
     const [nextPage, setNextPage] = useState<string | null>(
-        `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/accounts/approval-queue/`
+        `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/accounts/approval-queue/`
     );
     const [selectedAccount, setSelectedAccount] = useState<PendingAccount | null>(null);
 
@@ -44,7 +44,7 @@ export function AccountApprovalQueue() {
     const tableRef = useRef<HTMLDivElement | null>(null);
 
     const buildQueryUrl = useCallback(() => {
-        let url = `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/accounts/approval-queue/?`;
+        let url = `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/accounts/approval-queue/?`;
 
         if (searchName) url += `name=${searchName}&`;
         if (searchEmail) url += `email=${searchEmail}&`;
@@ -200,7 +200,7 @@ export function AccountApprovalQueue() {
         }
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/accounts/requests/approve/${selectedAccount.id}/`, {
+            const response = await fetch(`${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/accounts/requests/approve/${selectedAccount.id}/`, {
                 method: "PUT",
                 headers: {
                     "Authorization": `Bearer ${accessToken}`,
@@ -249,7 +249,7 @@ export function AccountApprovalQueue() {
         if (!selectedAccount) return;
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/accounts/requests/approve/${selectedAccount.id}/`, {
+            const response = await fetch(`${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/accounts/requests/approve/${selectedAccount.id}/`, {
                 method: "PUT",
                 headers: { "Authorization": `Bearer ${accessToken}` },
             });

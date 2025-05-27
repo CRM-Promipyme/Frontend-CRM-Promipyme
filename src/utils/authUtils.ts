@@ -1,5 +1,5 @@
 
-const BASE_URL = import.meta.env.VITE_REACT_APP_DJANGO_API_URL;
+const BASE_URL = import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL;
 
 export function fetchRoles(accessToken: string) {
     return fetch(`${BASE_URL}/auth/dropdown-opts/?roles=true`, {

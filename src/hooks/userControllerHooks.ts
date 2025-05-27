@@ -20,7 +20,7 @@ export function useDropdownOptions(accessToken: string | null) {
         const fetchDropdownOptions = async () => {
             try {
                 const response = await fetch(
-                    `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/contacts/dropdown-opts/?provincias=true&tipos_telefono=true`,
+                    `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/contacts/dropdown-opts/?provincias=true&tipos_telefono=true`,
                     {
                         headers: {
                             Authorization: `Bearer ${accessToken}`,
@@ -59,7 +59,7 @@ export function useContactData(
         const fetchContactData = async () => {
             try {
                 const response = await fetch(
-                    `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/contacts/list/?contact_id=${contact_id}`,
+                    `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/contacts/list/?contact_id=${contact_id}`,
                     {
                         method: "GET",
                         headers: {

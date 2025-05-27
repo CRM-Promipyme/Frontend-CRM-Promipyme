@@ -6,7 +6,7 @@ import { Spinner } from "../../components/ui/Spinner";
 import { PasswordField } from "../../components/ui/forms/PasswordField";
 import { AuthLayout } from "../../components/layouts/authLayouts/authLayout";
 
-const BASE_URL = import.meta.env.VITE_REACT_APP_DJANGO_API_URL;
+const BASE_URL = import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL;
 
 export function RequestAccount() {
     // Inicializar el estado local

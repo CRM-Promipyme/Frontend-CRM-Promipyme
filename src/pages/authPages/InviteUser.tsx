@@ -23,7 +23,7 @@ export function InviteUser() {
         last_name: "",
         email: "",
     });
-    const BASE_URL = import.meta.env.VITE_REACT_APP_DJANGO_API_URL;
+    const BASE_URL = import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL;
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         setFormData({ ...formData, [e.target.name]: e.target.value });

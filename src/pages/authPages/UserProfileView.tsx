@@ -69,7 +69,7 @@ export function UserProfileView() {
         const fetchUserData = async () => {
             try {
                 const response = await fetch(
-                    `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/users/detail/${userId}`,
+                    `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/users/detail/${userId}`,
                     {
                         method: "GET",
                         headers: {
@@ -165,7 +165,7 @@ export function UserProfileView() {
             console.log(updatedFormData);
 
             const response = await fetch(
-                `${import.meta.env.VITE_REACT_APP_DJANGO_API_URL}/auth/users/detail/${userId}/`,
+                `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/users/detail/${userId}/`,
                 {
                     method: "PUT",
                     headers: {
