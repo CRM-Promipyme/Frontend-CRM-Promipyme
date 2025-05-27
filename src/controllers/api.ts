@@ -3,6 +3,7 @@ import { useAuthStore } from "../stores/authStore";
 
 // Get base URL from environment variable
 const API_BASE_URL = import.meta.env.VITE_REACT_APP_DJANGO_API_URL;
+console.log("API Base URL:", API_BASE_URL);
 
 // Create an Axios instance
 const api = axios.create({
