@@ -141,60 +141,78 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     // Component mount
     useEffect(() => {
         setColor(process.color);
-        
-        if (process.etapas) {
-            if (debounceTimer.current) {
-                clearTimeout(debounceTimer.current);
+
+        const fetchAllowedStagesAndColumns = async () => {
+            const isAdmin = authStore.isAdmin();
+            const permissions = await authStore.retrievePermissions();
+            
+            if (process.etapas) {
+                if (debounceTimer.current) {
+                    clearTimeout(debounceTimer.current);
+                }
+                
+                debounceTimer.current = setTimeout(() => {
+                    setColor(process.color);
+                    
+                    // Only include allowed etapas
+                    const allowedEtapas = isAdmin
+                        ? process.etapas
+                        : process.etapas.filter(etapa => {
+                            const allowedStageIds: number[] = permissions
+                                .flatMap((rolePerm: RolePermission) => rolePerm.workflow_permissions || [])
+                                .filter((wp: WorkflowPermission) => wp.proceso === process.id_proceso)
+                                .flatMap((wp: WorkflowPermission) => wp.etapa);
+                            return allowedStageIds.includes(etapa.id_etapa);
+                        });
+                    
+                    const initialColumns = allowedEtapas.map((etapa) => ({
+                        id: etapa.id_etapa.toString(),
+                        title: etapa.nombre_etapa,
+                        cases: [],
+                        nextPageUrl: null,
+                    }));
+                    
+                    setColumns(initialColumns);
+                    
+                    // Fetch all allowed stages in parallel
+                    Promise.all(
+                        allowedEtapas.map((etapa) =>
+                            fetchStageCases(process.id_proceso, etapa.id_etapa, caseName).then((result) => ({
+                                etapaId: etapa.id_etapa.toString(),
+                                data: result,
+                            }))
+                        )
+                    ).then((results) => {
+                        setColumns((prev) =>
+                            prev.map((col) => {
+                                const res = results.find((r) => r.etapaId === col.id);
+                                return res && res.data
+                                    ? { ...col, cases: res.data.results, nextPageUrl: res.data.next }
+                                    : col;
+                            })
+                        );
+                    }).finally(() => {
+                        setLoading(false);
+                    });
+                }, 500);
+                
+                return () => {
+                    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+                };
             }
-
-            debounceTimer.current = setTimeout(() => {
-                setColor(process.color);
+        };
         
-                const initialColumns = process.etapas.map((etapa) => ({
-                    id: etapa.id_etapa.toString(),
-                    title: etapa.nombre_etapa,
-                    cases: [],
-                    nextPageUrl: null,
-                }));
-        
-                setColumns(initialColumns);
-        
-                // Fetch all stages in parallel
-                Promise.all(
-                    process.etapas.map((etapa) =>
-                        fetchStageCases(process.id_proceso, etapa.id_etapa, caseName).then((result) => ({
-                            etapaId: etapa.id_etapa.toString(),
-                            data: result,
-                        }))
-                    )
-                ).then((results) => {
-                    setColumns((prev) =>
-                        prev.map((col) => {
-                            const res = results.find((r) => r.etapaId === col.id);
-                            return res && res.data
-                                ? { ...col, cases: res.data.results, nextPageUrl: res.data.next }
-                                : col;
-                        })
-                    );
-                }).finally(() => {
-                    setLoading(false);
-                });
-            }, 500); // <-- 500ms delay
-        
-            return () => {
-                if (debounceTimer.current) clearTimeout(debounceTimer.current);
-            };
-        }
-    }, [process, caseName]);
-
+        fetchAllowedStagesAndColumns();
+    }, [process, caseName, authStore]);
+    
     const onLoadMore = async (columnId: string) => {
         const col = columns.find(c => c.id === columnId);
         if (!col?.nextPageUrl) return;
-    
+        
         try {
             const res = await api.get(col.nextPageUrl);
             const data = await res.data;
-    
+            
             setColumns(prev =>
                 prev.map(c =>
                     c.id === columnId
