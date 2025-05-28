@@ -17,6 +17,13 @@ import { updateCase } from "../../../controllers/caseControllers";
 import { formatDatetimeForInput } from "../../../utils/formatUtils";
 import { AnimatedSelectMenu } from "../../../components/ui/forms/AnimatedSelectMenu";
 
+const formatNumber = (num: string) => {
+    // Remove any existing commas first
+    const value = num.replace(/,/g, '');
+    // Format with commas
+    return value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+
 type ContactOption = { label: string; value: number };
 
 export function UpdateCase() {
@@ -89,7 +96,7 @@ export function UpdateCase() {
         const payload = {
             case_name: caseName,
             case_description: caseDescription,
-            case_value: caseValue,
+            case_value: caseValue.replace(/,/g, ''), // Remove commas before sending
             case_estimated_close_date: estimatedCloseDate,
             closing_date: closingDate,
             open,
@@ -164,11 +171,20 @@ export function UpdateCase() {
                         <div className="mb-3">
                             <label>Valor del Caso (RD$)</label>
                             <input
-                                type="number"
-                                className={`form-control ${parseFloat(caseValue) < 0 ? 'is-invalid' : ''}`}
-                                value={caseValue}
-                                onChange={(e) => setCaseValue(e.target.value)}
+                                type="text"
+                                className={`form-control ${parseFloat(caseValue.replace(/,/g, '')) < 0 ? 'is-invalid' : ''}`}
+                                value={caseValue ? formatNumber(caseValue) : ''}
+                                onChange={(e) => {
+                                    // Solo permitir números y punto decimal
+                                    const value = e.target.value.replace(/[^\d.]/g, '');
+                                    setCaseValue(value);
+                                }}
                             />
+                            {parseFloat(caseValue.replace(/,/g, '')) < 0 && (
+                                <div className="text-danger mt-1" style={{ fontSize: "0.9rem" }}>
+                                    El valor no puede ser negativo.
+                                </div>
+                            )}
                         </div>
 
                         <div className="mb-3">
