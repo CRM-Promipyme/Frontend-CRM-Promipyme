@@ -267,7 +267,7 @@ export function DepartmentReport({ dateStart, dateEnd }: DepartmentReportProps) 
                             <div className="charts-container" style={{ marginBottom: 32, width: "100%", display: "flex", gap: 24, flexWrap: "wrap" }}>
                                 <div className="card-body chart" style={{ flex: 1, minWidth: 320 }}>
                                     <div className="chart-title">
-                                        <h5 className="h4-header">Promedio de Tiempo de Tarea (min)</h5>
+                                        <h5 className="h4-header">Tiempo promedio para realizar tarea (min)</h5>
                                     </div>
                                     <Bar data={avgTimeData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
                                 </div>
