@@ -1,11 +1,13 @@
 import { useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { CustomReport } from './CustomReport';
+// import { CustomReport } from './CustomReport';
 import "../../styles/components/dashboard.css";
 import { useSidebarStore } from "../../stores/sidebarStore";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
 import { AnimatePresence, motion } from "framer-motion";
 import { Dashboard } from "./Dashboard";
+import { DepartmentReport } from "./DepartmentReport";
+import { IndividualUserReport } from "./IndividualUserReport";
 
 export function ReportScreen() {
     const sidebarWidthPx = useSidebarStore((state) => state.sidebarWidthPx);
@@ -21,7 +23,9 @@ export function ReportScreen() {
 
     const tabs = [
         { id: "general", label: "General", icon: "bi bi-file-bar-graph", component: <Dashboard dateStart={dateStart} dateEnd={dateEnd} /> },
-        { id: "Reportes", label: "Reportes", icon: "bi bi-file-earmark-bar-graph", component: <CustomReport dateStart={dateStart} dateEnd={dateEnd} /> },
+        // { id: "Reportes", label: "Reportes", icon: "bi bi-file-earmark-bar-graph", component: <CustomReport dateStart={dateStart} dateEnd={dateEnd} /> },
+        { id: "reporte-departamento", label: "Reporte por Departamento", icon: "bi bi-building", component: <DepartmentReport dateStart={dateStart} dateEnd={dateEnd} />},
+        { id: "reporte-usuario", label: "Reporte de Usuario", icon: "bi bi-person-badge", component: <IndividualUserReport dateStart={dateStart} dateEnd={dateEnd} />}
     ];
     const tabVariants = {
         hidden: { opacity: 0, x: -20 },
