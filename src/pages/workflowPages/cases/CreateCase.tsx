@@ -57,7 +57,7 @@ export function CreateCase() {
     }, [workflowId]);
 
     const selectedProcess = processes.find(p => p.id_proceso === selectedProcessId);
-
+    
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -66,7 +66,7 @@ export function CreateCase() {
             return;
         }
 
-        if (parseFloat(caseValue) < 0) {
+        if (parseFloat(caseValue.replace(/,/g, '')) < 0) {
             toast.error("El valor del caso no puede ser negativo.");
             return;
         }
@@ -74,7 +74,7 @@ export function CreateCase() {
         const caseData = {
             case_name: caseName,
             case_description: caseDescription,
-            case_value: caseValue,
+            case_value: caseValue.replace(/,/g, ''),
             case_estimated_close_date: estimatedCloseDate?.toISOString(),
             closing_date: closingDate?.toISOString(),
             open,
@@ -130,6 +130,13 @@ export function CreateCase() {
         });
     };
 
+    const formatNumber = (num: string) => {
+        // Remove any existing commas first
+        const value = num.replace(/,/g, '');
+        // Format with commas
+        return value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    };
+
     return (
         <SidebarLayout sidebarWidthPx={sidebarWidthPx}>
             <h1 className="page-title">Crear Nuevo Caso</h1>
@@ -163,12 +170,16 @@ export function CreateCase() {
                         <div className="mb-3">
                             <label>Valor del Caso (RD$) </label>
                             <input
-                                type="number"
-                                className={`form-control ${parseFloat(caseValue) < 0 ? 'is-invalid' : ''}`}
-                                value={caseValue}
-                                onChange={(e) => setCaseValue(e.target.value)}
+                                type="text"
+                                className={`form-control ${parseFloat(caseValue.replace(/,/g, '')) < 0 ? 'is-invalid' : ''}`}
+                                value={caseValue ? formatNumber(caseValue) : ''}
+                                onChange={(e) => {
+                                    // Solo permitir números y punto decimal
+                                    const value = e.target.value.replace(/[^\d.]/g, '');
+                                    setCaseValue(value);
+                                }}
                             />
-                            {parseFloat(caseValue) < 0 && (
+                            {parseFloat(caseValue.replace(/,/g, '')) < 0 && (
                                 <div className="text-danger mt-1" style={{ fontSize: "0.9rem" }}>
                                     El valor no puede ser negativo.
                                 </div>
