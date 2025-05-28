@@ -420,7 +420,7 @@ export function CustomReport({ dateStart, dateEnd }: CustomReportProps) {
                                 </div>
                                 <div className="card-body chart" style={{ flex: 1, minWidth: 320 }}>
                                     <div className="chart-title">
-                                        <h5 className="h4-header">Casos Creados</h5>
+                                        <h5 className="h4-header">Casos Trabajados</h5>
                                     </div>
                                     <Bar data={casesCreatedData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
                                 </div>
