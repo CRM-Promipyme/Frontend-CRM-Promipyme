@@ -9,6 +9,8 @@ export interface SocketMessageData {
 
 type Listener = (data: SocketMessageData) => void;
 
+const API_SOCKET_URL = import.meta.env.VITE_REACT_APP_DJANGO_SOCKET_URL;
+
 export class KanbanSocketService {
     private static instance: KanbanSocketService;
     private socket: WebSocket | null = null;
@@ -26,9 +28,9 @@ export class KanbanSocketService {
     }
 
     private connect() {
-        this.socket = new WebSocket("ws://localhost:8000/ws/case-notifications/");
+        this.socket = new WebSocket(`${API_SOCKET_URL}/ws/case-notifications/`);
         this.socket.onopen = () => {
-            // console.log("WebSocket connected");
+            console.log("WebSocket connected");
         };
         this.socket.onmessage = (event) => {
             try {

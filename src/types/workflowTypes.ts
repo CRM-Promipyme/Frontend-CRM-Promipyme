@@ -55,3 +55,28 @@ export interface DashboardCase {
     abierto: boolean;
     exitoso: boolean;
 }
+
+
+export interface Task {
+    id_tarea_caso: number;
+    caso: number;
+    creador_tarea: number;
+    creador_tarea_first_name: string;
+    creador_tarea_last_name: string;
+    usuario_asignado: number;
+    usuario_asignado_first_name: string;
+    usuario_asignado_last_name: string;
+    nombre_tarea: string;
+    descripcion_tarea: string;
+    fecha_creacion: string;
+    completado: boolean;
+    fecha_completado: string | null;
+    fecha_completado_estimada: string | null;
+}
+
+export interface PaginatedTasks {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: Task[];
+}

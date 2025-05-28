@@ -1,7 +1,10 @@
 import Select from "react-select";
+import { AxiosError } from "axios";
 import { toast } from "react-toastify";
+import { UserTasks } from "./UserTasks";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { UserCaseList } from "./UserCaseList";
 import '../../styles/auth/profileViewStyles.css';
 import { fetchRoles } from '../../utils/authUtils';
 import { formatKey } from "../../utils/formatUtils";
@@ -15,7 +18,6 @@ import { showResponseErrors } from "../../utils/formatUtils";
 import { ActivityLog } from "../../components/ui/ActivityLog";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
 import { fetchEntityActivities } from "../../controllers/activityControllers";
-import { AxiosError } from "axios";
 
 export function UserProfileView() {
     // Estados Globales
@@ -419,6 +421,17 @@ export function UserProfileView() {
                                         </motion.div>
                                     )}
                                 </motion.div>
+                                <motion.div
+                                    initial={{ opacity: 0 }} 
+                                    animate={{ opacity: 1 }} 
+                                    transition={{ duration: 0.5 }} 
+                                    className="card-body shadow-sm"
+                                >
+                                    <div className="user-profile-header">
+                                        <h4 className="h4-header">Tareas Asignadas</h4>
+                                    </div>
+                                    <UserTasks userId={userId || ""} />
+                                </motion.div>
                             </div>
 
                             <div className="user-profile-form-col" style={{ width: "30%", height: "fit-content" }}>
@@ -460,6 +473,18 @@ export function UserProfileView() {
                                 <div className="card-body shadow-sm">
                                     <ActivityLog activities={userActivities} setActivities={setUserActivities} entity_type="user" entity_id={userId}/>
                                 </div>
+
+                                <motion.div
+                                    initial={{ opacity: 0 }} 
+                                    animate={{ opacity: 1 }} 
+                                    transition={{ duration: 0.5 }} 
+                                    className="card-body shadow-sm"
+                                >
+                                    <div className="user-profile-header">
+                                        <h4 className="h4-header">Casos Relacionados</h4>
+                                    </div>
+                                    <UserCaseList userId={userId || ""} />
+                                </motion.div>
                             </div>
                         </motion.form>
                     )
