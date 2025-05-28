@@ -204,7 +204,9 @@ export function RoleList() {
             ) : (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", marginTop: "24px", marginLeft: "30px" }}>
                     {filteredRoles.length > 0 ? (
-                        filteredRoles.map((role) => (
+                        filteredRoles.map((role) => {
+                            const isAdminRole = role.nombre_rol === "Administrador";
+                            return (
                             <div
                                 key={role.id_rol}
                                 style={{
@@ -235,6 +237,8 @@ export function RoleList() {
                                                 setShowPermissionsModal(true);
                                             }
                                         }}
+                                        disabled={isAdminRole}
+                                        title={isAdminRole ? "No se puede editar el rol Administrador" : ""}
                                     >
                                         <i className="bi bi-pencil"></i> Editar
                                     </button>
@@ -245,12 +249,14 @@ export function RoleList() {
                                             handleModalTypeChange("delete_roles", "delete");
                                             setSelectedRole(role);
                                         }}
+                                        disabled={isAdminRole}
+                                        title={isAdminRole ? "No se puede eliminar el rol Administrador" : ""}
                                     >
                                         <i className="bi bi-trash"></i> Eliminar
                                     </button>
                                 </div>
                             </div>
-                        ))
+                        )})
                     ) : (
                         <div className="text-center w-100">No hay roles actualmente.</div>
                     )}

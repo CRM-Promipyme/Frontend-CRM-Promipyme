@@ -4,36 +4,14 @@ import api from '../../../../../controllers/api';
 import { CreateTaskModal } from "./CreateTaskModal";
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Spinner } from "../../../../../components/ui/Spinner";
 import { Caso } from '../../../../../types/workflowTypes';
+import { Task } from "../../../../../types/workflowTypes";
 import { useAuthStore } from "../../../../../stores/authStore";
+import { Spinner } from "../../../../../components/ui/Spinner";
+import { PaginatedTasks } from "../../../../../types/workflowTypes";
 
 interface CaseTasksProps {
     selectedCase: Caso;
-}
-
-interface Task {
-    id_tarea_caso: number;
-    caso: number;
-    creador_tarea: number;
-    creador_tarea_first_name: string;
-    creador_tarea_last_name: string;
-    usuario_asignado: number;
-    usuario_asignado_first_name: string;
-    usuario_asignado_last_name: string;
-    nombre_tarea: string;
-    descripcion_tarea: string;
-    fecha_creacion: string;
-    completado: boolean;
-    fecha_completado: string | null;
-    fecha_completado_estimada: string | null;
-}
-
-interface PaginatedTasks {
-    count: number;
-    next: string | null;
-    previous: string | null;
-    results: Task[];
 }
 
 const statusOptions = [
