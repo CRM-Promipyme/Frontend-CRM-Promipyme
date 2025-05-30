@@ -1,5 +1,4 @@
 import Select from "react-select";
-import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import { UserTasks } from "./UserTasks";
 import { useEffect, useState } from "react";
@@ -164,8 +163,6 @@ export function UserProfileView() {
                 role_ids: newRoleIds,
             };
 
-            console.log(updatedFormData);
-
             const response = await fetch(
                 `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/users/detail/${userId}/`,
                 {
@@ -201,12 +198,8 @@ export function UserProfileView() {
                 authStore.updateRoles(updatedData.roles);
             }
         } catch (error) {
-            const axiosError = error as AxiosError;
-            if (axiosError.response) {
-                showResponseErrors(axiosError.response?.data);
-            } else {
-                showResponseErrors("Hubo un error al actualizar el perfil.");
-            };
+            const axiosError = error as object & { data?: object };
+            showResponseErrors(axiosError.data, "Hubo un error al actualizar el perfil.");
         } finally {
             setLoading(false);
         }
@@ -338,7 +331,10 @@ export function UserProfileView() {
                                                         className="form-control"
                                                         id="username"
                                                         value={formData.username as string}
-                                                        onChange={handleChange}
+                                                        onChange={e => {
+                                                            const sanitized = e.target.value.replace(/[ ,./\\]/g, "");
+                                                            setFormData(prev => ({ ...prev, username: sanitized }));
+                                                        }}
                                                         disabled={!editMode}
                                                     />
                                                 </div>
