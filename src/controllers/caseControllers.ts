@@ -100,7 +100,7 @@ export const fetchContactCases = async (contactId: number) => {
  */
 export const fetchUserCases = async (userId: number) => {
     try {
-        const response = await api.get(`/workflows/casos/list/?contact_id=${userId}`);
+        const response = await api.get(`/workflows/casos/list/?user_id=${userId}`);
         return response.data;
     }
     catch (error) {

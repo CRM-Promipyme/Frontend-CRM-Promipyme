@@ -303,10 +303,27 @@ export function CreateContact() {
                                                 classNamePrefix="react-select"
                                                 isClearable
                                             />
+                                        ) : field.field_type_name?.toLowerCase() === "fecha" ? (
+                                            <input
+                                                type="datetime-local"
+                                                className="form-control"
+                                                value={
+                                                    typeof additionalFieldValues[field.id!] === "boolean"
+                                                        ? additionalFieldValues[field.id!] ? "true" : "false"
+                                                        : (additionalFieldValues[field.id!] as string | number | undefined) ?? ""
+                                                }
+                                                onChange={e =>
+                                                    setAdditionalFieldValues(prev => ({
+                                                        ...prev,
+                                                        [field.id!]: e.target.value
+                                                    }))
+                                                }
+                                            />
                                         ) : (
                                             <input
                                                 type={field.field_type_name === "Número" ? "number" : "text"}
                                                 className="form-control"
+                                                placeholder="Ingresa el valor aquí..."
                                                 value={
                                                     typeof additionalFieldValues[field.id!] === "boolean"
                                                         ? (additionalFieldValues[field.id!] ? "true" : "false")

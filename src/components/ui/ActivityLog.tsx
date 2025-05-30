@@ -76,7 +76,7 @@ export function ActivityLog({ activities, setActivities, entity_type, entity_id 
     
             nextUrlRef.current = data.next;
         } catch (error) {
-            toast.error("No se pudo cargar más actividades.");
+            // toast.error("No se pudo cargar más actividades.");
             console.error(error);
         } finally {
             setLoading(false);
