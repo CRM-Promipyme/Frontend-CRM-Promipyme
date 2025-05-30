@@ -428,11 +428,27 @@ export function ContactDetail() {
                                                                     isClearable
                                                                     isDisabled={!editMode}
                                                                 />
+                                                            ) : field.field_type === "Fecha"? (
+                                                                <input
+                                                                    type="datetime-local"
+                                                                    className="form-control"
+                                                                    value={field.field_value}
+                                                                    placeholder="Seleccione una fecha"
+                                                                    onChange={e =>
+                                                                        setAdditionalFields(prev =>
+                                                                            prev.map((f, i) =>
+                                                                                i === idx ? { ...f, field_value: e.target.value } : f
+                                                                            )
+                                                                        )
+                                                                    }
+                                                                    disabled={!editMode}
+                                                                />
                                                             ) : (
                                                                 <input
                                                                     type={field.field_type === "Número" ? "number" : "text"}
                                                                     className="form-control"
                                                                     value={field.field_value ?? ""}
+                                                                    placeholder="Ingrese un valor..."
                                                                     onChange={e =>
                                                                         setAdditionalFields(prev =>
                                                                             prev.map((f, i) =>
@@ -501,6 +517,21 @@ export function ContactDetail() {
                                                                         classNamePrefix="react-select"
                                                                         isClearable
                                                                         isDisabled={!editMode}
+                                                                    />
+                                                                ) : field.field_type === "Fecha"? (
+                                                                    <input
+                                                                        type="datetime-local"
+                                                                        className="form-control"
+                                                                        value={field.field_value ?? ""}
+                                                                        placeholder="Seleccione una fecha"
+                                                                        onChange={e =>
+                                                                            setAdditionalFields(prev =>
+                                                                                prev.map((f, i) =>
+                                                                                    i === realIdx ? { ...f, field_value: e.target.value } : f
+                                                                                )
+                                                                            )
+                                                                        }
+                                                                        disabled={!editMode}
                                                                     />
                                                                 ) : (
                                                                     <input
