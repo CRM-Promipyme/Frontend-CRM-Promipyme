@@ -307,7 +307,11 @@ export function CreateContact() {
                                             <input
                                                 type="datetime-local"
                                                 className="form-control"
-                                                value={additionalFieldValues[field.id!] ?? ""}
+                                                value={
+                                                    typeof additionalFieldValues[field.id!] === "boolean"
+                                                        ? additionalFieldValues[field.id!] ? "true" : "false"
+                                                        : (additionalFieldValues[field.id!] as string | number | undefined) ?? ""
+                                                }
                                                 onChange={e =>
                                                     setAdditionalFieldValues(prev => ({
                                                         ...prev,
