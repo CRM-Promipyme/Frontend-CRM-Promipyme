@@ -29,6 +29,7 @@ export function ContactList() {
     const [searchEmail, setSearchEmail] = useState("");
     const [searchPhone, setSearchPhone] = useState("");
     const [searchAddress, setSearchAddress] = useState("");
+    const [searchCedula, setSearchCedula] = useState("");
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     // Construct API URL with filters
@@ -39,9 +40,10 @@ export function ContactList() {
         if (searchEmail) url += `email=${searchEmail}&`;
         if (searchPhone) url += `numero_telefonico=${searchPhone}&`;
         if (searchAddress) url += `direccion=${searchAddress}&`;
+        if (searchCedula) url += `cedula=${searchCedula}&`;
 
         return url;
-    }, [searchName, searchEmail, searchPhone, searchAddress]);
+    }, [searchName, searchEmail, searchPhone, searchAddress, searchCedula]);
 
     // Fetch Contacts
     const fetchContacts = useCallback(async (url: string) => {
@@ -109,15 +111,16 @@ export function ContactList() {
                         setSearchEmail("");
                         setSearchPhone("");
                         setSearchAddress("");
+                        setSearchCedula("");
                     }}>
                         <i className="bi bi-x-circle"></i> Limpiar Filtros
                     </button>
                     <input
                         type="text"
                         className="form-control text-search"
-                        placeholder="Filtrar por nombre..."
-                        value={searchName}
-                        onChange={(e) => setSearchName(e.target.value)}
+                        placeholder="Filtrar por cédula..."
+                        value={searchCedula}
+                        onChange={(e) => setSearchCedula(e.target.value)}
                     />
                 </div>
                 <div>
@@ -130,6 +133,15 @@ export function ContactList() {
                 </div>
             </div>
             <FilterSidebar show={showFilters} onClose={() => setShowFilters(false)}>
+                <div className="mb-3">
+                    <input
+                        type="text"
+                        className="form-control text-search"
+                        placeholder="Filtrar por nombre..."
+                        value={searchName}
+                        onChange={(e) => setSearchName(e.target.value)}
+                    />
+                </div>
                 <div className="mb-3">
                     <input
                         type="text"
@@ -204,7 +216,7 @@ export function ContactList() {
                                         </tr>
                                     ))
                                 ) : (
-                                    <tr><td colSpan={4} className="text-center">No hay contactos actualmente.</td></tr>
+                                    <tr><td colSpan={6} className="text-center" style={{ width: '100%' }}>No hay contactos actualmente.</td></tr>
                                 )}
                             </tbody>
                         </table>
