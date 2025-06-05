@@ -174,38 +174,96 @@ export function BulkInviteUsers() {
                 </form>
 
                 {users.length > 0 && (
-                    <div style={{ marginTop: "2rem" }}>
-                        <h5>Usuarios a Invitar:</h5>
-                        <table className="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Nombres</th>
-                                    <th>Apellidos</th>
-                                    <th>Email</th>
-                                    <th>Roles</th>
-                                    <th>Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {users.map((user, idx) => (
-                                    <tr key={idx}>
-                                        <td>{user.first_name}</td>
-                                        <td>{user.last_name}</td>
-                                        <td>{user.email}</td>
-                                        <td>{user.roles.map((r: Role) => r.nombre_rol).join(", ")}</td>
-                                        <td>
-                                            <button
-                                                className="btn btn-sm btn-danger"
-                                                onClick={() => setUsers(users.filter((_, i) => i !== idx))}
-                                                disabled={loading}
-                                            >
-                                                Quitar
-                                            </button>
-                                        </td>
+                    <div
+                        style={{
+                            marginTop: "2rem",
+                            background: "#fff",
+                            borderRadius: "12px",
+                            boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+                            padding: "2rem",
+                            border: "1px solid #e5e7eb"
+                        }}
+                    >
+                        <div style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "10px" }}>
+                            <i className="bi bi-people" style={{ fontSize: "1.5rem", color: "#0d6efd" }}></i>
+                            <div>
+                                <h5 style={{ margin: 0, fontWeight: 600 }}>Usuarios a Invitar</h5>
+                                <span style={{ color: "#6c757d", fontSize: "0.95rem" }}>
+                                    {users.length} usuario{users.length > 1 ? "s" : ""} listo{users.length > 1 ? "s" : ""} para invitar
+                                </span>
+                            </div>
+                        </div>
+                        <div style={{ overflowX: "auto" }}>
+                            <table className="table" style={{ minWidth: 600 }}>
+                                <thead>
+                                    <tr style={{ background: "#f8fafc" }}>
+                                        <th style={{ fontWeight: 700, fontSize: "1rem" }}>Nombres</th>
+                                        <th style={{ fontWeight: 700, fontSize: "1rem" }}>Apellidos</th>
+                                        <th style={{ fontWeight: 700, fontSize: "1rem" }}>Email</th>
+                                        <th style={{ fontWeight: 700, fontSize: "1rem" }}>Roles</th>
+                                        <th style={{ fontWeight: 700, fontSize: "1rem" }}>Acción</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {users.map((user, idx) => (
+                                        <tr
+                                            key={idx}
+                                            style={{
+                                                background: idx % 2 === 0 ? "#f9fafb" : "#fff",
+                                                verticalAlign: "middle"
+                                            }}
+                                        >
+                                            <td style={{ fontWeight: 500 }}>{user.first_name}</td>
+                                            <td style={{ fontWeight: 500 }}>{user.last_name}</td>
+                                            <td>
+                                                <span
+                                                    style={{
+                                                        background: "#f1f5f9",
+                                                        borderRadius: "6px",
+                                                        padding: "2px 8px",
+                                                        fontFamily: "monospace",
+                                                        fontSize: "0.97em"
+                                                    }}
+                                                >
+                                                    {user.email}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span
+                                                    style={{
+                                                        background: "#f3e8ff",
+                                                        color: "#a21caf",
+                                                        borderRadius: "6px",
+                                                        padding: "2px 10px",
+                                                        fontWeight: 600,
+                                                        fontSize: "0.97em"
+                                                    }}
+                                                >
+                                                    {user.roles.map((r: Role) => r.nombre_rol).join(", ")}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button
+                                                    className="btn btn-sm"
+                                                    style={{
+                                                        background: "#fee2e2",
+                                                        color: "#b91c1c",
+                                                        borderRadius: "6px",
+                                                        fontWeight: 600,
+                                                        fontSize: "0.97em",
+                                                        padding: "4px 12px"
+                                                    }}
+                                                    onClick={() => setUsers(users.filter((_, i) => i !== idx))}
+                                                    disabled={loading}
+                                                >
+                                                    Quitar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                         <button
                             className="btn btn-primary"
                             style={{ width: "100%", marginTop: "1rem" }}
