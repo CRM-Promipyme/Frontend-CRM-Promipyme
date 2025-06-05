@@ -13,6 +13,7 @@ import { AdminRoutePermissions } from '../components/permissions/AdminRoutePermi
 import { PasswordResetConfirmation } from '../pages/authPages/PasswordResetConfirmation';
 import { AuthenticatedRoutePermissions } from '../components/permissions/AuthenticatedRoutePermissions';
 import { BulkInviteUsers } from '../pages/authPages/BulkInviteUsers';
+import { MassInviteUsers } from '../pages/authPages/MassInviteUsers';
 
 export function AuthRoutes() {
     const publicAuthRoutes = [
@@ -38,6 +39,11 @@ export function AuthRoutes() {
         {
             path: "/bulk-invite-users",
             comp: BulkInviteUsers,
+            requiredBasePermissions: ["invite_users"]
+        },
+        {
+            path: "upload-user-list",
+            comp: MassInviteUsers,
             requiredBasePermissions: ["invite_users"]
         },
         {
