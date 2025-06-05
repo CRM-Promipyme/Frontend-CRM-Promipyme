@@ -26,6 +26,18 @@ export function AdminMenu() {
             url: "/auth/invite-user"
         },
         {
+            title: "Invitar Usuarios en Masa",
+            description: "Invitar múltiples usuarios a la plataforma de una sola vez.",
+            icon: "bi bi-person-plus-fill",
+            url: "/auth/bulk-invite-users"
+        },
+        {
+            title: "Carga Masiva de Usuarios",
+            description: "Subir una lista de usuarios desde un archivo Excel.",
+            icon: "bi bi-file-earmark-spreadsheet",
+            url: "/auth/upload-user-list"
+        },
+        {
             title: "Administrar Roles",
             description: "Crear, editar y eliminar roles de usuario.",
             icon: "bi bi-clipboard-minus",
