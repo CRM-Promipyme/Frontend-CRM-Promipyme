@@ -26,7 +26,6 @@ export function CaseAttatchments({ caseId }: CaseAttatchmentsProps) {
     const [attachments, setAttachments] = useState<Attachment[]>([]);
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
-    const [fileSizes, setFileSizes] = useState<{ [id: number]: string }>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Fetch attachments
@@ -81,38 +80,6 @@ export function CaseAttatchments({ caseId }: CaseAttatchmentsProps) {
     function getFileExtension(filename: string) {
         return filename.split('.').pop()?.toUpperCase() || '';
     }
-
-    // Helper: get file size (fetches HEAD, returns string in MB/KB)
-    async function fetchFileSize(url: string): Promise<string> {
-        try {
-            const res = await fetch(url, { method: 'HEAD' });
-            const size = res.headers.get('content-length');
-            if (!size) return '';
-            const bytes = parseInt(size, 10);
-            if (bytes > 1024 * 1024)
-                return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-            if (bytes > 1024)
-                return (bytes / 1024).toFixed(1) + ' KB';
-            return bytes + ' B';
-        } catch {
-            return '';
-        }
-    }
-
-    useEffect(() => {
-        // Fetch file sizes for all attachments
-        async function loadSizes() {
-            const sizes: { [id: number]: string } = {};
-            await Promise.all(
-                attachments.map(async (att) => {
-                    const url = att.archivo_url || att.archivo;
-                    sizes[att.id_adjunto] = await fetchFileSize(url);
-                })
-            );
-            setFileSizes(sizes);
-        }
-        if (attachments.length > 0) loadSizes();
-    }, [attachments]);
 
     return (
         <div
@@ -180,7 +147,8 @@ export function CaseAttatchments({ caseId }: CaseAttatchmentsProps) {
                         </thead>
                         <tbody>
                             {attachments.map((att) => {
-                                const fileName = att.archivo.split("/").pop() || "archivo";
+                                const fileUrl = att.archivo_url || "";
+                                const fileName = att.archivo || "archivo";
                                 const ext = getFileExtension(fileName);
                                 const isPdf = ext === "PDF";
                                 return (
@@ -190,7 +158,7 @@ export function CaseAttatchments({ caseId }: CaseAttatchmentsProps) {
                                                 <i className={`bi ${isPdf ? "bi-file-earmark-pdf" : "bi-file-earmark"} text-danger`} style={{ fontSize: 24 }} />
                                                 <div>
                                                     <a
-                                                        href={att.archivo_url || att.archivo}
+                                                        href={fileUrl}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         style={{ textDecoration: "none", color: "#0d6efd", fontWeight: 500 }}
@@ -208,15 +176,6 @@ export function CaseAttatchments({ caseId }: CaseAttatchmentsProps) {
                                                         }}>
                                                             {ext}
                                                         </span>
-                                                        {fileSizes[att.id_adjunto] && (
-                                                            <span style={{
-                                                                color: "#64748b",
-                                                                fontSize: "0.8em",
-                                                                fontWeight: 500
-                                                            }}>
-                                                                {fileSizes[att.id_adjunto]}
-                                                            </span>
-                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -242,7 +201,7 @@ export function CaseAttatchments({ caseId }: CaseAttatchmentsProps) {
                                         </td>
                                         <td>
                                             <a
-                                                href={att.archivo_url || att.archivo}
+                                                href={fileUrl}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="btn btn-primary"
