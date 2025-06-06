@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Link } from "react-router-dom";
 import { CaseTasks } from "./CaseTasks";
+import { CaseAttatchments } from "./CaseAttatchments";
 import { motion, AnimatePresence } from "framer-motion";
 import { NotesSection } from "./kanbanBoard/NotesSection";
 import { daysLeft } from "../../../../../utils/formatUtils";
@@ -105,6 +106,11 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                                 <p className="status-description">N/A</p>
                                             )}
                                         </div>
+                                    </div>
+                                    <div className="case-attachments">
+                                        {selectedCase && (
+                                            <CaseAttatchments caseId={selectedCase.id_caso}/>
+                                        )}
                                     </div>
                                     <div className="case-notes-container">
                                         <NotesSection
