@@ -80,3 +80,27 @@ export interface PaginatedTasks {
     previous: string | null;
     results: Task[];
 }
+
+export interface CampoFormulario {
+    id_campo_formulario?: number;
+    nombre_campo: string;
+    tipo_campo: number;
+    field_type_name?: string;
+    requerido: boolean;
+}
+
+export interface WorkflowForm {
+    id_formulario?: number;
+    proceso: number;
+    nombre_formulario: string;
+    descripcion_formulario: string;
+    fecha_creacion?: string;
+    ultima_actualizacion?: string;
+    campos: CampoFormulario[];
+}
+
+export interface WorkflowFormsResponse {
+    process_id: number;
+    process_name: string;
+    forms: WorkflowForm[];
+}
