@@ -56,3 +56,15 @@ export const createWorkflow = async (workflowData: createWorkflowData): Promise<
         throw error;
     }
 }
+
+
+export const fetchWorkflowForms = async (processId: number) => {
+    try {
+        const response = await api.get(`/workflows/procesos/${processId}/formularios/`);
+        return response.data.forms;
+    } catch (error) {
+        console.error("Error fetching workflow forms:", error);
+        showResponseErrors(error);
+        throw error;
+    }
+}

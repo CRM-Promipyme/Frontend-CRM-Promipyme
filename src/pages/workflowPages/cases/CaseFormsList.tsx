@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { Spinner } from "../../../components/ui/Spinner";
 import { simpleFetchCaseForms } from "../../../controllers/caseControllers";
 import { CaseFormDetail } from "./CaseFormDetail";
+import { CreateCaseForm } from "./CreateCaseForm";
 
 interface CompletedForm {
     formulario_id: number;
@@ -17,10 +18,11 @@ interface CaseFormsResponse {
     completed_forms: CompletedForm[];
 }
 
-export function CaseFormsList({ caseId }: { caseId: number }) {
+export function CaseFormsList({ caseId, workflowId }: { caseId: number, workflowId?: number }) {
     const [formsData, setFormsData] = useState<CaseFormsResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [selectedFormId, setSelectedFormId] = useState<number | null>(null);
+    const [showCreateForm, setShowCreateForm] = useState(false);
 
     useEffect(() => {
         if (caseId) {
@@ -47,6 +49,16 @@ export function CaseFormsList({ caseId }: { caseId: number }) {
 
     const handleBackToList = () => {
         setSelectedFormId(null);
+        setShowCreateForm(false);
+    };
+
+    const handleCreateForm = () => {
+        setShowCreateForm(true);
+    };
+
+    const handleFormCreated = () => {
+        setShowCreateForm(false);
+        fetchCaseForms(); // Refresh the forms list
     };
 
     if (loading) {
@@ -54,6 +66,21 @@ export function CaseFormsList({ caseId }: { caseId: number }) {
             <div className="d-flex justify-content-center py-4">
                 <Spinner />
             </div>
+        );
+    }
+
+    // Show form creation view
+    if (showCreateForm && formsData) {
+        return (
+            <CreateCaseForm
+                caseId={caseId}
+                workflowId={workflowId}
+                caseName={formsData.case_name}
+                processName={formsData.process_name}
+                completedFormIds={formsData.completed_forms.map(form => form.formulario_id)}
+                onBack={handleBackToList}
+                onFormCreated={handleFormCreated}
+            />
         );
     }
 
@@ -75,14 +102,41 @@ export function CaseFormsList({ caseId }: { caseId: number }) {
             borderRadius: "12px",
         }}>
             {/* Header */}
-            <div style={{ marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "10px" }}>
-                <i className="bi bi-file-earmark-check" style={{ fontSize: "1.5rem", color: "#0d6efd" }}></i>
-                <div>
-                    <h5 style={{ margin: 0, fontWeight: 600 }}>Formularios Completados</h5>
-                    <span style={{ color: "#6c757d", fontSize: "0.95rem" }}>
-                        Formularios que han sido completados para este caso.
-                    </span>
+            <div style={{ 
+                marginBottom: "1.5rem", 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "space-between"
+            }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <i className="bi bi-file-earmark-check" style={{ fontSize: "1.5rem", color: "#0d6efd" }}></i>
+                    <div>
+                        <h5 style={{ margin: 0, fontWeight: 600 }}>Formularios Completados</h5>
+                        <span style={{ color: "#6c757d", fontSize: "0.95rem" }}>
+                            Formularios que han sido completados para este caso.
+                        </span>
+                    </div>
                 </div>
+                
+                {/* Create Form Button */}
+                <motion.button
+                    className="btn btn-primary"
+                    style={{
+                        borderRadius: "8px",
+                        padding: "8px 16px",
+                        fontSize: "0.875rem",
+                        fontWeight: 500,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px"
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleCreateForm}
+                >
+                    <i className="bi bi-plus-circle"></i>
+                    Crear Formulario
+                </motion.button>
             </div>
 
             {/* Forms Content */}

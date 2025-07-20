@@ -191,3 +191,15 @@ export const caseFormDetail = async (caseId: number, formId: number) => {
         return null;
     }
 }
+
+export const createCaseForm = async (caseId: number, formData: unknown) => {
+    try {
+        const response = await api.post(`/workflows/casos/${caseId}/formularios/`, formData);
+        return response.data;
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        console.error("Error creating case form:", axiosError);
+        showResponseErrors(axiosError.response?.data);
+        throw error;
+    }
+}

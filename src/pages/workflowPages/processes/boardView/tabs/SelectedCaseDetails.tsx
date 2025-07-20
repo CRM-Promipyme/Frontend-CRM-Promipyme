@@ -115,7 +115,7 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                     </div>
                                     <div className="case-forms">
                                         {selectedCase && (
-                                            <CaseFormsList caseId={selectedCase.id_caso}/>
+                                            <CaseFormsList caseId={selectedCase.id_caso} workflowId={process.id_proceso}/>
                                         )}
                                     </div>
                                     <div className="case-notes-container">
