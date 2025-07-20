@@ -192,6 +192,12 @@ export const caseFormDetail = async (caseId: number, formId: number) => {
     }
 }
 
+/**
+ * Creates a new form for a case
+ * @param caseId The ID of the case
+ * @param formData The data for the new form
+ * @returns the created form data
+ */
 export const createCaseForm = async (caseId: number, formData: unknown) => {
     try {
         const response = await api.post(`/workflows/casos/${caseId}/formularios/`, formData);
@@ -199,6 +205,42 @@ export const createCaseForm = async (caseId: number, formData: unknown) => {
     } catch (error) {
         const axiosError = error as AxiosError;
         console.error("Error creating case form:", axiosError);
+        showResponseErrors(axiosError.response?.data);
+        throw error;
+    }
+}
+
+/** * Updates a case form
+ * @param caseId The ID of the case
+ * @param formId The ID of the form to update
+ * @param formData The updated form data
+ * @returns the updated form data
+ */
+export const updateCaseForm = async (caseId: number, formId: number, formData: unknown) => {
+    try {
+        const response = await api.put(`/workflows/casos/${caseId}/formularios/${formId}/`, formData);
+        return response.data;
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        console.error("Error updating case form:", axiosError);
+        showResponseErrors(axiosError.response?.data);
+        throw error;
+    }
+}
+
+/**
+ * Deletes a case form
+ * @param caseId The ID of the case
+ * @param formId The ID of the form to delete
+ * @returns the response data from the deletion
+ */
+export const deleteCaseForm = async (caseId: number, formId: number) => {
+    try {
+        const response = await api.delete(`/workflows/casos/${caseId}/formularios/${formId}/`);
+        return response.data;
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        console.error("Error deleting case form:", axiosError);
         showResponseErrors(axiosError.response?.data);
         throw error;
     }
