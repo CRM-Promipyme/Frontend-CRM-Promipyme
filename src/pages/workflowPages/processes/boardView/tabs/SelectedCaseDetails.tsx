@@ -6,6 +6,7 @@ import { CaseAttatchments } from "./CaseAttatchments";
 import { motion, AnimatePresence } from "framer-motion";
 import { NotesSection } from "./kanbanBoard/NotesSection";
 import { daysLeft } from "../../../../../utils/formatUtils";
+import { CaseFormsList } from "../../../cases/CaseFormsList";
 import { Activity } from "../../../../../types/activityTypes";
 import { formatNumber } from "../../../../../utils/formatUtils";
 import { Caso, Proceso } from "../../../../../types/workflowTypes";
@@ -110,6 +111,11 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                     <div className="case-attachments">
                                         {selectedCase && (
                                             <CaseAttatchments caseId={selectedCase.id_caso}/>
+                                        )}
+                                    </div>
+                                    <div className="case-forms">
+                                        {selectedCase && (
+                                            <CaseFormsList caseId={selectedCase.id_caso} workflowId={process.id_proceso}/>
                                         )}
                                     </div>
                                     <div className="case-notes-container">

@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { useSidebarStore } from '../../stores/sidebarStore';
 import { MenuItemCard } from '../../components/ui/MenuItemCard';
+import { updateLocalStorageRoles } from '../../utils/authUtils';
 import { SidebarLayout } from '../../components/layouts/SidebarLayout';
 
 export function AdminMenu() {
@@ -44,6 +46,12 @@ export function AdminMenu() {
             url: "/auth/manage/system-roles/list"
         }
     ]
+
+    useEffect(() => {
+        // Actualizar roles en localStorage al cargar el componente
+        updateLocalStorageRoles();
+    }, []);
+
 
     return (
         <SidebarLayout sidebarWidthPx={sidebarWidthPx}>

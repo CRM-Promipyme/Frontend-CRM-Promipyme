@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { useSidebarStore } from '../../stores/sidebarStore';
 import { MenuItemCard } from '../../components/ui/MenuItemCard';
+import { updateLocalStorageRoles } from '../../utils/authUtils';
 import { SidebarLayout } from '../../components/layouts/SidebarLayout';
 
 export function ContactsMenu() {
@@ -26,6 +28,11 @@ export function ContactsMenu() {
             url: "/contacts/customize-fields"
         }
     ]
+
+    useEffect(() => {
+        // Actualizar roles en localStorage al cargar el componente
+        updateLocalStorageRoles();
+    }, []);
 
     return (
         <SidebarLayout sidebarWidthPx={sidebarWidthPx}>

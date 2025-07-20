@@ -6,6 +6,7 @@ import { Proceso } from "../../../types/workflowTypes";
 import { Spinner } from "../../../components/ui/Spinner";
 import { lowerColorOpacity } from "../../../utils/formatUtils";
 import { useSidebarStore } from "../../../stores/sidebarStore";
+import { updateLocalStorageRoles } from "../../../utils/authUtils";
 import { SidebarLayout } from "../../../components/layouts/SidebarLayout";
 import { fetchProcesses } from "../../../controllers/workflowControllers";
 import { AnimatedNumberCounter } from "../../../components/ui/AnimatedNumberCounter";
@@ -52,7 +53,8 @@ export function WorkflowSelectionMenu() {
                 setLoading(false);
             }
         };
-
+        
+        updateLocalStorageRoles();
         loadProcesses();
 
         // Clean up the timer when component unmounts
