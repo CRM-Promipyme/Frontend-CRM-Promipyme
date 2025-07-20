@@ -575,7 +575,7 @@ export function CaseFormDetail({ caseId, formId, onBack, onFormUpdated, onFormDe
                         ) : (
                             <>
                                 <motion.button
-                                    className="btn btn-outline-danger"
+                                    className="btn btn-outline-warning"
                                     style={{
                                         borderRadius: "8px",
                                         padding: "8px 16px",
