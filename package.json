@@ -24,6 +24,8 @@
     "date-fns": "^4.1.0",
     "font-awesome": "^4.7.0",
     "framer-motion": "^12.1.0",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
     "lodash.debounce": "^4.0.8",
     "multiselect-react-dropdown": "^2.0.25",
     "react": "^18.3.1",

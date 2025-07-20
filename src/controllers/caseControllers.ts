@@ -144,3 +144,50 @@ export const fetchCase = async (caseId: number) => {
         return null;
     }
 };
+
+
+/**
+ * Fetches the forms associated with a case
+ * @param caseId The ID of the case
+ * @returns a list of forms associated with the case
+ */
+export const fetchCaseForms = async (caseId: number) => {
+    try { 
+        const response = await api.get(`/workflows/casos/${caseId}/formularios`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching case forms:", error);
+        return null;
+    }
+}
+
+/**
+ * Fetches the forms associated with a case (without extra data)
+ * @param caseId The ID of the case
+ * @returns a list of forms associated with the case
+ */
+export const simpleFetchCaseForms = async (caseId: number) => {
+    try { 
+        const response = await api.get(`/workflows/casos/${caseId}/formularios/?fetch_values=false`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching case forms:", error);
+        return null;
+    }
+}
+
+/**
+ * Fetches the details of a specific form in a case
+ * @param caseId The ID of the case
+ * @param formId The ID of the form
+ * @returns the details of the form in the case
+ */
+export const caseFormDetail = async (caseId: number, formId: number) => {
+    try {
+        const response = await api.get(`/workflows/casos/${caseId}/formularios/${formId}/detalle`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching case form detail:", error);
+        return null;
+    }
+}
