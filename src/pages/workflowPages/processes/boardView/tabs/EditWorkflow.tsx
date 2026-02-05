@@ -199,6 +199,7 @@ export function EditWorkflow({ process, setProcess }: WorkflowSettingsProps) {
                                 etapa={etapa}
                                 updateEtapaName={updateEtapaName}
                                 removeEtapa={removeEtapa}
+                                editMode={editMode}
                             />
                         ))}
                     </SortableContext>
