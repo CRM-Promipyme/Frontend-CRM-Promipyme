@@ -6,10 +6,11 @@ interface SortableItemProps {
     etapa: { id: string; nombre_etapa: string; orden_etapa: number };
     updateEtapaName: (id: string, name: string) => void;
     removeEtapa: (id: string) => void;
+    editMode?: boolean;
 }
 
 
-export function SortableItem({ etapa, updateEtapaName, removeEtapa }: SortableItemProps) {
+export function SortableItem({ etapa, updateEtapaName, removeEtapa, editMode = false }: SortableItemProps) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: etapa.id });
 
     const style = {
@@ -38,13 +39,15 @@ export function SortableItem({ etapa, updateEtapaName, removeEtapa }: SortableIt
             <span className="badge bg-primary">{etapa.orden_etapa}</span>
 
             {/* Delete Button */}
-            <button
-                type="button"
-                className="btn btn-danger btn-sm"
-                onClick={() => removeEtapa(etapa.id)}
-            >
-                <i className="bi bi-trash"></i>
-            </button>
+            {editMode && (
+                <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={() => removeEtapa(etapa.id)}
+                >
+                    <i className="bi bi-trash"></i>
+                </button>
+            )}
         </div>
     );
 }
