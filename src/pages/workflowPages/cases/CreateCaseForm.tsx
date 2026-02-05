@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
+import { AxiosError } from "axios";
 import { Spinner } from "../../../components/ui/Spinner";
 import { fetchWorkflowForms } from "../../../controllers/workflowControllers";
 import { createCaseForm } from "../../../controllers/caseControllers";
@@ -21,12 +22,6 @@ interface WorkflowForm {
     fecha_creacion: string;
     ultima_actualizacion: string;
     campos: FormField[];
-}
-
-interface WorkflowFormsResponse {
-    process_id: number;
-    process_name: string;
-    forms: WorkflowForm[];
 }
 
 interface CreateCaseFormProps {
@@ -65,6 +60,10 @@ export function CreateCaseForm({
     const fetchAvailableForms = async () => {
         try {
             setLoading(true);
+            if (!workflowId) {
+                toast.error("ID del flujo de trabajo no disponible");
+                return;
+            }
             const response = await fetchWorkflowForms(workflowId);
             
             // Filter out completed forms and store only the available ones
@@ -142,7 +141,7 @@ export function CreateCaseForm({
             const formData = {
                 formulario_id: selectedForm.id_formulario,
                 valores_campos: Object.entries(formValues)
-                    .filter(([fieldId, value]) => value.trim() !== '') // Only include non-empty values
+                    .filter(([_, value]) => value.trim() !== '') // Only include non-empty values
                     .map(([fieldId, value]) => {
                         const field = selectedForm.campos.find(f => f.id_campo_formulario === parseInt(fieldId));
                         const convertedValue = convertFieldValue(value, field?.field_type_name || 'texto');
@@ -171,12 +170,14 @@ export function CreateCaseForm({
             
         } catch (error) {
             console.error("Error creating form:", error);
+            const axiosError = error as AxiosError;
             
             // More specific error handling
-            if (error.response?.data?.message) {
-                toast.error(`Error: ${error.response.data.message}`);
-            } else if (error.message) {
-                toast.error(`Error al crear el formulario: ${error.message}`);
+            if (axiosError.response?.data) {
+                const errorData = axiosError.response.data as any;
+                toast.error(`Error: ${errorData.message}`);
+            } else if (axiosError.message) {
+                toast.error(`Error al crear el formulario: ${axiosError.message}`);
             } else {
                 toast.error("Error al crear el formulario");
             }
@@ -571,7 +572,7 @@ export function CreateCaseForm({
                         >
                             {submitting ? (
                                 <>
-                                    <Spinner size="sm" />
+                                    <Spinner className="spinner-border-sm" />
                                     Creando...
                                 </>
                             ) : (

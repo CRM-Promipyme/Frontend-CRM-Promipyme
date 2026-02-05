@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
+import { AxiosError } from "axios";
 import { Spinner } from "../../../components/ui/Spinner";
 import { caseFormDetail, updateCaseForm, deleteCaseForm } from "../../../controllers/caseControllers";
 import jsPDF from 'jspdf';
@@ -120,7 +121,7 @@ export function CaseFormDetail({ caseId, formId, onBack, onFormUpdated, onFormDe
             // Prepare update payload
             const updateData = {
                 valores_campos: Object.entries(formValues)
-                    .filter(([fieldId, value]) => value.trim() !== '') // Only include non-empty values
+                    .filter(([_, value]) => value.trim() !== '') // Only include non-empty values
                     .map(([fieldId, value]) => {
                         const field = formData.field_values.find(f => f.campo_formulario === parseInt(fieldId));
                         const convertedValue = convertFieldValue(value, field?.campo_tipo || 'texto');
@@ -152,12 +153,14 @@ export function CaseFormDetail({ caseId, formId, onBack, onFormUpdated, onFormDe
 
         } catch (error) {
             console.error("Error updating form:", error);
+            const axiosError = error as AxiosError;
             
             // More specific error handling
-            if (error.response?.data?.message) {
-                toast.error(`Error: ${error.response.data.message}`);
-            } else if (error.message) {
-                toast.error(`Error al actualizar el formulario: ${error.message}`);
+            if (axiosError.response?.data) {
+                const errorData = axiosError.response.data as any;
+                toast.error(`Error: ${errorData.message}`);
+            } else if (axiosError.message) {
+                toast.error(`Error al actualizar el formulario: ${axiosError.message}`);
             } else {
                 toast.error("Error al actualizar el formulario");
             }
@@ -184,11 +187,13 @@ export function CaseFormDetail({ caseId, formId, onBack, onFormUpdated, onFormDe
             
         } catch (error) {
             console.error("Error deleting form:", error);
+            const axiosError = error as AxiosError;
             
-            if (error.response?.data?.message) {
-                toast.error(`Error: ${error.response.data.message}`);
-            } else if (error.message) {
-                toast.error(`Error al eliminar el formulario: ${error.message}`);
+            if (axiosError.response?.data) {
+                const errorData = axiosError.response.data as any;
+                toast.error(`Error: ${errorData.message}`);
+            } else if (axiosError.message) {
+                toast.error(`Error al eliminar el formulario: ${axiosError.message}`);
             } else {
                 toast.error("Error al eliminar el formulario");
             }
@@ -561,7 +566,7 @@ export function CaseFormDetail({ caseId, formId, onBack, onFormUpdated, onFormDe
                                 >
                                     {saving ? (
                                         <>
-                                            <Spinner size="sm" />
+                                            <Spinner className="spinner-border-sm" />
                                             Guardando...
                                         </>
                                     ) : (
@@ -592,7 +597,7 @@ export function CaseFormDetail({ caseId, formId, onBack, onFormUpdated, onFormDe
                                 >
                                     {exporting ? (
                                         <>
-                                            <Spinner size="sm" />
+                                            <Spinner className="spinner-border-sm" />
                                             Exportando...
                                         </>
                                     ) : (
@@ -831,7 +836,7 @@ export function CaseFormDetail({ caseId, formId, onBack, onFormUpdated, onFormDe
                                 >
                                     {deleting ? (
                                         <>
-                                            <Spinner size="sm" />
+                                            <Spinner className="spinner-border-sm" />
                                             Eliminando...
                                         </>
                                     ) : (
