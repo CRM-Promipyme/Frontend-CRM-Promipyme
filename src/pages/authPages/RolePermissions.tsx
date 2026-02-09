@@ -26,6 +26,9 @@ interface BasePermissions {
     create_roles: boolean;
     update_roles: boolean;
     delete_roles: boolean;
+    create_branches: boolean;
+    update_branches: boolean;
+    delete_branches: boolean;
 }
 
 interface WorkflowPermission {
@@ -92,6 +95,9 @@ export function RolePermissions({ selectedRole, onClose }: RolePermissionsProps)
                     create_roles: basePermissions.create_roles,
                     update_roles: basePermissions.update_roles,
                     delete_roles: basePermissions.delete_roles,
+                    create_branches: basePermissions.create_branches,
+                    update_branches: basePermissions.update_branches,
+                    delete_branches: basePermissions.delete_branches,
                 },
                 workflow_permissions: workflowPermissions.map(wp => ({
                     proceso: wp.proceso,
@@ -157,7 +163,7 @@ export function RolePermissions({ selectedRole, onClose }: RolePermissionsProps)
                             animate={{ opacity: 1 }} 
                             transition={{ duration: 0.5 }} 
                         >
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", marginTop: "24px" }}>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", marginTop: "24px", maxWidth: "800px" }}>
                                 {/* Reportes */}
                                 <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "18px", minWidth: "220px" }}>
                                     <div style={{ fontWeight: 500, marginBottom: 8 }}>
@@ -334,6 +340,51 @@ export function RolePermissions({ selectedRole, onClose }: RolePermissionsProps)
                                                 }
                                             />{" "}
                                             <span>Eliminar roles</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Gestión de sucursales */}
+                                <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "18px", minWidth: "220px" }}>
+                                    <div style={{ fontWeight: 500, marginBottom: 8 }}>
+                                        <i className="bi bi-building" style={{ marginRight: 6 }} /> Gestión de sucursales
+                                    </div>
+                                    <div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.create_branches}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, create_branches: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Crear sucursales</span>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.update_branches}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, update_branches: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Actualizar sucursales</span>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.delete_branches}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, delete_branches: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Eliminar sucursales</span>
                                         </div>
                                     </div>
                                 </div>

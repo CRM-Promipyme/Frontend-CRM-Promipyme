@@ -14,6 +14,7 @@ import { PasswordResetConfirmation } from '../pages/authPages/PasswordResetConfi
 import { AuthenticatedRoutePermissions } from '../components/permissions/AuthenticatedRoutePermissions';
 import { BulkInviteUsers } from '../pages/authPages/BulkInviteUsers';
 import { MassInviteUsers } from '../pages/authPages/MassInviteUsers';
+import { ManageBranches } from '../pages/authPages/ManageBranches';
 
 export function AuthRoutes() {
     const publicAuthRoutes = [
@@ -60,6 +61,11 @@ export function AuthRoutes() {
             path: "/manage/system-roles/list",
             comp: RoleList,
             requiredBasePermissions: ["create_roles", "update_roles", "delete_roles"]
+        },
+        {
+            path: "/manage/branches/list",
+            comp: ManageBranches,
+            requiredBasePermissions: ["create_branches", "update_branches", "delete_branches"]
         }
     ]
 
