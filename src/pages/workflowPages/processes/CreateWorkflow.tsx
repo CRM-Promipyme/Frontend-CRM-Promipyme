@@ -20,7 +20,7 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { toast } from "react-toastify";
-import { Etapa } from "../../../types/workflowTypes";
+import { Etapa, createWorkflowData } from "../../../types/workflowTypes";
 import { Branch } from "../../../types/branchTypes";
 import { Spinner } from "../../../components/ui/Spinner";
 import { SortableItem } from "../../../components/ui/SortableItem";
@@ -136,7 +136,7 @@ export function CreateWorkflow() {
         }
 
         // Prepare the workflow data for submission
-        const workflowData: Record<string, unknown> = {
+        const workflowData: createWorkflowData = {
             nombre_proceso: nombreProceso,
             etapas: etapas,
             color: color,
