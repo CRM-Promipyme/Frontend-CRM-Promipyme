@@ -6,12 +6,16 @@ import { AxiosError } from "axios";
 /**
  * Fetches processes from the backend.
  * @param processName Optional query filter for process name.
+ * @param sucursalId Optional query filter for branch/sucursal.
  * @returns An array of Procesos.
  */
-export const fetchProcesses = async (processName?: string): Promise<Proceso[]> => {
+export const fetchProcesses = async (processName?: string, sucursalId?: number): Promise<Proceso[]> => {
     try {
-        // Build query parameters if a filter is provided
-        const params = processName ? { process_name: processName } : {};
+        // Build query parameters if filters are provided
+        const params: Record<string, string | number> = {};
+        if (processName) params.process_name = processName;
+        if (sucursalId !== undefined) params.sucursal_id = sucursalId;
+        
         const response = await api.get("/workflows/procesos/list/", { params });
 
         return response.data.processes;

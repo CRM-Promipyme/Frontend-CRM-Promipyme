@@ -9,6 +9,7 @@ import { fetchRoles } from '../../utils/authUtils';
 import { formatKey } from "../../utils/formatUtils";
 import { Activity } from "../../types/activityTypes";
 import { useAuthStore } from "../../stores/authStore";
+import { Branch } from "../../types/branchTypes";
 import { Spinner } from "../../components/ui/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Role, UserProfile } from "../../types/authTypes";
@@ -16,6 +17,7 @@ import { useSidebarStore } from "../../stores/sidebarStore";
 import { showResponseErrors } from "../../utils/formatUtils";
 import { ActivityLog } from "../../components/ui/ActivityLog";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
+import { fetchBranches } from "../../controllers/branchControllers";
 import { fetchEntityActivities } from "../../controllers/activityControllers";
 
 export function UserProfileView() {
@@ -35,6 +37,8 @@ export function UserProfileView() {
     const [profilePicture, setProfilePicture] = useState<string | null>(null);
     const [roles, setRoles] = useState<Role[]>([]);
     const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
     const [userActivities, setUserActivities] = useState<Activity[]>([]);
     const [activeTab, setActiveTab] = useState<string>("cuenta");
 
@@ -60,6 +64,32 @@ export function UserProfileView() {
 
         loadRoles();
     }, [accessToken, roles.length, userId]);
+
+    // Fetch branches al cargar el componente
+    useEffect(() => {
+        if (!accessToken || branches.length > 0) return;
+
+        const loadBranches = async () => {
+            try {
+                const branchesData = await fetchBranches(100, 0); // Fetch up to 100 branches
+                setBranches(branchesData.results);
+            } catch {
+                toast.error("No se pudieron obtener las sucursales.");
+            }
+        };
+
+        loadBranches();
+    }, [accessToken, branches.length]);
+
+    // Set selectedBranch once branches are loaded and userData is available
+    useEffect(() => {
+        if (userData?.profile_data?.sucursal_id && branches.length > 0) {
+            const branch = branches.find(b => b.id === userData.profile_data.sucursal_id);
+            if (branch) {
+                setSelectedBranch(branch);
+            }
+        }
+    }, [branches, userData]);
 
     // Show edit functionality only if the user is the same as the logged in user, or if the user is an admin
     const canEdit = userId && (authStore.userId === parseInt(userId) || authStore.isAdmin());
@@ -157,9 +187,17 @@ export function UserProfileView() {
 
         try {
             const newRoleIds = selectedRoles.map((role) => role.id_rol);
+            
+            // Update profile_data with sucursal if a branch is selected
+            const profileDataUpdate = { ...formData.profile_data_update as Record<string, unknown> };
+            if (selectedBranch) {
+                profileDataUpdate.sucursal = selectedBranch.id;
+            }
+            
             // Create a separate object to send in the request
             const updatedFormData = {
                 ...formData,
+                profile_data_update: profileDataUpdate,
                 role_ids: newRoleIds,
             };
 
@@ -399,7 +437,7 @@ export function UserProfileView() {
                                             {/* Información del Perfil */}
                                             <div className="user-profile-info">
                                                 {Object.entries(formData.profile_data_update as Record<string, unknown> || {}).map(([key, value]) =>
-                                                    key !== "foto_perfil" ? (
+                                                    key !== "foto_perfil" && key !== "sucursal" && key !== "sucursal_id" && key !== "sucursal_nombre" ? (
                                                         <div key={key}>
                                                             <label htmlFor={key}>{formatKey(key)}</label>
                                                             <input
@@ -413,6 +451,23 @@ export function UserProfileView() {
                                                         </div>
                                                     ) : null
                                                 )}
+                                                
+                                                {/* Branch selector */}
+                                                <div style={{ marginTop: "15px" }}>
+                                                    <label htmlFor="sucursal">Sucursal</label>
+                                                    <Select
+                                                        isClearable
+                                                        options={branches}
+                                                        value={selectedBranch}
+                                                        onChange={(selected) => setSelectedBranch(selected as Branch | null)}
+                                                        getOptionLabel={(option: Branch) => option.nombre_sucursal}
+                                                        getOptionValue={(option: Branch) => String(option.id)}
+                                                        placeholder="Selecciona una sucursal"
+                                                        isDisabled={!editMode}
+                                                        className="react-select-container"
+                                                        classNamePrefix="react-select"
+                                                    />
+                                                </div>
                                             </div>
                                         </motion.div>
                                     )}

@@ -6,6 +6,8 @@ export interface Proceso {
     fecha_creacion: string;
     ultima_actualizacion: string;
     etapas: EtapaProceso[];
+    sucursal_id?: number;
+    sucursal_nombre?: string;
 }
 
 export interface EtapaProceso {
@@ -24,6 +26,7 @@ export interface createWorkflowData {
     nombre_proceso: string;
     etapas: Etapa[];
     color: string;
+    sucursal_id?: number;
 }
 
 export interface Caso {
@@ -44,6 +47,8 @@ export interface Caso {
     etapa_actual: number;
     creador_caso: number;
     tags: number[];
+    sucursal?: number;
+    sucursal_nombre?: string;
 }
 
 export interface DashboardCase {

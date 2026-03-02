@@ -3,7 +3,9 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
 import { Role } from '../../types/authTypes';
+import { Branch } from '../../types/branchTypes';
 import { fetchRoles } from '../../utils/authUtils';
+import { fetchBranches } from '../../controllers/branchControllers';
 import { useAuthStore } from '../../stores/authStore';
 import { Spinner } from '../../components/ui/Spinner';
 import { useSidebarStore } from '../../stores/sidebarStore';
@@ -18,6 +20,8 @@ export function InviteUser() {
     const [loading, setLoading] = useState(false);
     const [roles, setRoles] = useState<Role[]>([]);
     const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
     const [formData, setFormData] = useState({
         first_name: "",
         last_name: "",
@@ -52,16 +56,46 @@ export function InviteUser() {
         loadRoles();
     }, [accessToken, roles.length]);
 
+    // Fetch branches al cargar el componente
+    useEffect(() => {
+        if (!accessToken) return;
+    
+        // No hacer nada si ya se cargaron las sucursales
+        if (branches.length > 0) return;
+    
+        const loadBranches = async () => {
+            try {
+                const branchesData = await fetchBranches(100, 0); // Fetch up to 100 branches
+                setBranches(branchesData.results);
+            } catch {
+                toast.error("No se pudieron obtener las sucursales.");
+            }
+        };
+    
+        loadBranches();
+    }, [accessToken, branches.length]);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
         // Map an array of role IDs from the selected roles
         const rol_ids = selectedRoles.map((role) => role.id_rol);
+        
+        // Build the request payload
+        const payload: Record<string, unknown> = {
+            ...formData,
+            rol_ids: rol_ids
+        };
+        
+        // Add sucursal_id if a branch is selected
+        if (selectedBranch) {
+            payload.sucursal_id = selectedBranch.id;
+        }
 
         axios.post(
             `${BASE_URL}/auth/accounts/invite/`,
-            { ...formData, rol_ids: rol_ids },
+            payload,
             { headers: { "Authorization": `Bearer ${accessToken}` } }
         )
             .then(() => {
@@ -74,6 +108,7 @@ export function InviteUser() {
                     email: "",
                 });
                 setSelectedRoles([]);
+                setSelectedBranch(null);
             })
             .catch((error) => {
                 // Mostrar mensajes de error
@@ -159,6 +194,19 @@ export function InviteUser() {
                         getOptionLabel={(option: Role) => option.nombre_rol}
                         getOptionValue={(option: Role) => String(option.id_rol)}
                         placeholder="Selecciona sus roles"
+                        className="react-select-container"
+                        classNamePrefix="react-select"
+                    />
+                    
+                    <label htmlFor="branch" style={{ marginTop: '15px' }}>Sucursal (Opcional)</label>
+                    <Select
+                        isClearable
+                        options={branches}
+                        value={selectedBranch}
+                        onChange={(selected) => setSelectedBranch(selected as Branch | null)}
+                        getOptionLabel={(option: Branch) => option.nombre_sucursal}
+                        getOptionValue={(option: Branch) => String(option.id)}
+                        placeholder="Selecciona una sucursal (opcional)"
                         className="react-select-container"
                         classNamePrefix="react-select"
                     />

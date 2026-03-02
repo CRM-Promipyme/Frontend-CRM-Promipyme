@@ -1,19 +1,24 @@
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
+import Select from "react-select";
 import { useEffect, useState, useRef } from "react";
 import "../../../styles/workflows/workflowStyles.css";
 import { Proceso } from "../../../types/workflowTypes";
+import { Branch } from "../../../types/branchTypes";
 import { Spinner } from "../../../components/ui/Spinner";
 import { lowerColorOpacity } from "../../../utils/formatUtils";
 import { useSidebarStore } from "../../../stores/sidebarStore";
+import { useAuthStore } from "../../../stores/authStore";
 import { updateLocalStorageRoles } from "../../../utils/authUtils";
 import { SidebarLayout } from "../../../components/layouts/SidebarLayout";
 import { fetchProcesses } from "../../../controllers/workflowControllers";
+import { fetchBranches } from "../../../controllers/branchControllers";
 import { AnimatedNumberCounter } from "../../../components/ui/AnimatedNumberCounter";
 
 export function WorkflowSelectionMenu() {
     // Global States
     const sidebarWidthPx = useSidebarStore((state) => state.sidebarWidthPx);
+    const accessToken = useAuthStore((state) => state.accessToken);
 
     // Local States
     const [processes, setProcesses] = useState<Proceso[]>([]);
@@ -22,6 +27,8 @@ export function WorkflowSelectionMenu() {
     // Filter controls
     const [processNameFilter, setProcessNameFilter] = useState<string>("");
     const [debouncedFilter, setDebouncedFilter] = useState<string>("");
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     const handleFilterChange = (value: string) => {
@@ -40,7 +47,7 @@ export function WorkflowSelectionMenu() {
     useEffect(() => {
         const loadProcesses = async () => {
             try {
-                const data = await fetchProcesses(debouncedFilter);
+                const data = await fetchProcesses(debouncedFilter, selectedBranch?.id);
 
                 // Sort by most stages to least stages
                 data.sort((a, b) => b.etapas.length - a.etapas.length);
@@ -63,7 +70,22 @@ export function WorkflowSelectionMenu() {
                 clearTimeout(debounceTimer.current);
             }
         };
-    }, [debouncedFilter]);
+    }, [debouncedFilter, selectedBranch]);
+
+    // Fetch Branches on component mount
+    useEffect(() => {
+        if (!accessToken || branches.length > 0) return;
+
+        const loadBranches = async () => {
+            try {
+                const branchesData = await fetchBranches(100, 0); // Fetch up to 100 branches
+                setBranches(branchesData.results);
+            } catch {
+                toast.error("No se pudieron obtener las sucursales.");
+            }
+        };
+        loadBranches();
+    }, [accessToken, branches]);
 
     // Render different UI states
     if (loading) {
@@ -87,6 +109,7 @@ export function WorkflowSelectionMenu() {
                 <div className="d-flex align-items-center" style={{ gap: "20px" }}>
                     <button className="filter-btn btn btn-outline-danger" onClick={() => {
                         setProcessNameFilter("");
+                        setSelectedBranch(null);
                     }}>
                         <i className="bi bi-x-circle"></i> Limpiar Filtros
                     </button>
@@ -97,6 +120,17 @@ export function WorkflowSelectionMenu() {
                         value={processNameFilter}
                         onChange={(e) => handleFilterChange(e.target.value)}
                     />
+                    <div style={{ minWidth: "250px" }}>
+                        <Select
+                            isClearable
+                            options={branches}
+                            value={selectedBranch}
+                            onChange={(selected) => setSelectedBranch(selected as Branch | null)}
+                            getOptionLabel={(option: Branch) => option.nombre_sucursal}
+                            getOptionValue={(option: Branch) => String(option.id)}
+                            placeholder="Filtrar por sucursal..."
+                        />
+                    </div>
                     <Link to="/workflows/processes/create">
                         <button className="filter-btn btn btn-outline-primary">
                             <i className="bi bi-plus-lg" style={{ marginRight: '5px' }}></i>

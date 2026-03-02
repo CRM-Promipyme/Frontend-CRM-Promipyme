@@ -43,14 +43,26 @@ export const updateCase = async (caseId: number, caseData: unknown) => {
  * Fetch cases from a specific process and stage
  * @param processId The process ID
  * @param stageId The stage ID
+ * @param caseName The case name filter (optional)
+ * @param sucursalId The branch/sucursal ID filter (optional)
  * @returns a list of cases (paginated, comes in the form of {'count': number, 'next': string, 'previous': string, 'results': Case[]})
  */
-export const fetchStageCases = async (processId: number, stageId: number, caseName: string) => {
+export const fetchStageCases = async (processId: number, stageId: number, caseName: string, sucursalId?: number) => {
     try {
         let endpoint = `/workflows/casos/board-view/${processId}/${stageId}/`;
+        const params = [];
+        
         if (caseName) {
-            endpoint += `?case_name=${caseName}`;
+            params.push(`case_name=${caseName}`);
         }
+        if (sucursalId !== undefined) {
+            params.push(`sucursal_id=${sucursalId}`);
+        }
+        
+        if (params.length > 0) {
+            endpoint += `?${params.join('&')}`;
+        }
+        
         const response = await api.get(endpoint);
         return response.data;
     } catch (error) {

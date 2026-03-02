@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import api from "../../../../../../controllers/api";
 import { useState, useMemo, useEffect, useRef } from "react";
+import Select from "react-select";
 import {
     DndContext,
     KeyboardSensor,
@@ -15,6 +16,7 @@ import {
 import { KanbanTask } from "./KanbanTask";
 import { KanbanColumn } from "./KanbanColumn";
 import { Caso } from "../../../../../../types/workflowTypes";
+import { Branch } from "../../../../../../types/branchTypes";
 import { useAuthStore } from "../../../../../../stores/authStore";
 import { Spinner } from "../../../../../../components/ui/Spinner";
 import { PopupModal } from "../../../../../../components/ui/PopupModal";
@@ -22,6 +24,7 @@ import { SocketMessageData, useKanbanSocket } from "../../../../../../hooks/kanb
 import { SortableContext, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Column, WorkflowKanbanProps } from "../../../../../../types/kanbanBoardTypes";
 import { fetchStageCases, updateCaseStage } from "../../../../../../controllers/caseControllers";
+import { fetchBranches } from "../../../../../../controllers/branchControllers";
 import { toast } from "react-toastify";
 import { RolePermission, WorkflowPermission } from "../../../../../../types/authTypes";
 
@@ -45,9 +48,27 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     const [caseName, setCaseName] = useState<string>("");
     const [changeMotive, setChangeMotive] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     const columnIds = useMemo(() => columns.map(col => col.id), [columns]);
+
+    // Fetch branches on component mount
+    useEffect(() => {
+        const accessToken = authStore.accessToken;
+        if (!accessToken || branches.length > 0) return;
+
+        const loadBranches = async () => {
+            try {
+                const branchesData = await fetchBranches(100, 0); // Fetch up to 100 branches
+                setBranches(branchesData.results);
+            } catch {
+                toast.error("No se pudieron obtener las sucursales.");
+            }
+        };
+        loadBranches();
+    }, [authStore.accessToken, branches]);
 
     const handleDragStart = (event: DragStartEvent) => {
         const { active } = event;
@@ -177,7 +198,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
                     // Fetch all allowed stages in parallel
                     Promise.all(
                         allowedEtapas.map((etapa) =>
-                            fetchStageCases(process.id_proceso, etapa.id_etapa, caseName).then((result) => ({
+                            fetchStageCases(process.id_proceso, etapa.id_etapa, caseName, selectedBranch?.id).then((result) => ({
                                 etapaId: etapa.id_etapa.toString(),
                                 data: result,
                             }))
@@ -203,7 +224,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         };
         
         fetchAllowedStagesAndColumns();
-    }, [process, caseName, authStore]);
+    }, [process, caseName, selectedBranch, authStore]);
     
     const onLoadMore = async (columnId: string) => {
         const col = columns.find(c => c.id === columnId);
@@ -240,8 +261,8 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         ) {
             // Fetch both the source and target columns
             Promise.all([
-                fetchStageCases(process.id_proceso, data.from_stage_id, caseName),
-                fetchStageCases(process.id_proceso, data.to_stage_id, caseName)
+                fetchStageCases(process.id_proceso, data.from_stage_id, caseName, selectedBranch?.id),
+                fetchStageCases(process.id_proceso, data.to_stage_id, caseName, selectedBranch?.id)
             ]).then(([fromResult, toResult]) => {
                 setColumns(prev =>
                     prev.map(col => {
@@ -264,6 +285,17 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         <>
             <div className="kanban-board-controls">
                 <input type="text" className="form-control" placeholder="Nombre del Caso" value={caseName} onChange={(e) => setCaseName(e.target.value)} style={{ maxWidth: '400px' }}/>
+                <div style={{ minWidth: "250px" }}>
+                    <Select
+                        isClearable
+                        options={branches}
+                        value={selectedBranch}
+                        onChange={(selected) => setSelectedBranch(selected as Branch | null)}
+                        getOptionLabel={(option: Branch) => option.nombre_sucursal}
+                        getOptionValue={(option: Branch) => String(option.id)}
+                        placeholder="Filtrar por sucursal..."
+                    />
+                </div>
                 {process && (
                     <Link to={`/workflows/cases/create/${process.id_proceso}`}>
                         <button className="btn btn-primary">

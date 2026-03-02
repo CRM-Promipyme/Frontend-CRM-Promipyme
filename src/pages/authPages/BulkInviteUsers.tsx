@@ -3,7 +3,9 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
 import { Role } from '../../types/authTypes';
+import { Branch } from '../../types/branchTypes';
 import { fetchRoles } from '../../utils/authUtils';
+import { fetchBranches } from '../../controllers/branchControllers';
 import { useAuthStore } from '../../stores/authStore';
 import { Spinner } from '../../components/ui/Spinner';
 import { useSidebarStore } from '../../stores/sidebarStore';
@@ -15,6 +17,8 @@ export function BulkInviteUsers() {
 
     const [loading, setLoading] = useState(false);
     const [roles, setRoles] = useState<Role[]>([]);
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
     const [formData, setFormData] = useState({
         first_name: "",
         last_name: "",
@@ -41,6 +45,22 @@ export function BulkInviteUsers() {
         loadRoles();
     }, [accessToken, roles.length]);
 
+    // Fetch branches al cargar el componente
+    useEffect(() => {
+        if (!accessToken || branches.length > 0) return;
+
+        const loadBranches = async () => {
+            try {
+                const branchesData = await fetchBranches(100, 0);
+                setBranches(branchesData.results);
+            } catch {
+                toast.error("No se pudieron obtener las sucursales.");
+            }
+        };
+
+        loadBranches();
+    }, [accessToken, branches.length]);
+
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     }
@@ -51,7 +71,7 @@ export function BulkInviteUsers() {
             toast.error("Completa todos los campos y selecciona al menos un rol.");
             return;
         }
-        setUsers([...users, { ...formData }]);
+        setUsers([...users, { ...formData, branch: selectedBranch }]);
         setFormData({ first_name: "", last_name: "", email: "", roles: [] });
     }
 
@@ -60,14 +80,21 @@ export function BulkInviteUsers() {
         let successCount = 0;
         for (const user of users) {
             try {
+                const payload: any = {
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    email: user.email,
+                    rol_ids: user.roles.map((role: Role) => role.id_rol),
+                };
+                
+                // Add sucursal_id if a branch was selected for this user
+                if (user.branch) {
+                    payload.sucursal_id = user.branch.id;
+                }
+                
                 await axios.post(
                     `${BASE_URL}/auth/accounts/invite/`,
-                    {
-                        first_name: user.first_name,
-                        last_name: user.last_name,
-                        email: user.email,
-                        rol_ids: user.roles.map((role: Role) => role.id_rol),
-                    },
+                    payload,
                     { headers: { "Authorization": `Bearer ${accessToken}` } }
                 );
                 successCount++;
@@ -155,6 +182,19 @@ export function BulkInviteUsers() {
                         className="react-select-container"
                         classNamePrefix="react-select"
                     />
+
+                    <label htmlFor="sucursal" style={{ marginTop: "15px" }}>Sucursal (Opcional)</label>
+                    <Select
+                        isClearable
+                        options={branches}
+                        value={selectedBranch}
+                        onChange={(selected) => setSelectedBranch(selected as Branch | null)}
+                        getOptionLabel={(option: Branch) => option.nombre_sucursal}
+                        getOptionValue={(option: Branch) => String(option.id)}
+                        placeholder="Selecciona una sucursal"
+                        className="react-select-container"
+                        classNamePrefix="react-select"
+                    />
                     <button
                         style={{
                             width: '100%',
@@ -201,6 +241,7 @@ export function BulkInviteUsers() {
                                         <th style={{ fontWeight: 700, fontSize: "1rem" }}>Apellidos</th>
                                         <th style={{ fontWeight: 700, fontSize: "1rem" }}>Email</th>
                                         <th style={{ fontWeight: 700, fontSize: "1rem" }}>Roles</th>
+                                        <th style={{ fontWeight: 700, fontSize: "1rem" }}>Sucursal</th>
                                         <th style={{ fontWeight: 700, fontSize: "1rem" }}>Acción</th>
                                     </tr>
                                 </thead>
@@ -240,6 +281,20 @@ export function BulkInviteUsers() {
                                                     }}
                                                 >
                                                     {user.roles.map((r: Role) => r.nombre_rol).join(", ")}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span
+                                                    style={{
+                                                        background: user.branch ? "#dbeafe" : "#f3f4f6",
+                                                        color: user.branch ? "#0369a1" : "#6b7280",
+                                                        borderRadius: "6px",
+                                                        padding: "2px 10px",
+                                                        fontWeight: 500,
+                                                        fontSize: "0.97em"
+                                                    }}
+                                                >
+                                                    {user.branch ? user.branch.nombre_sucursal : "Sin sucursal"}
                                                 </span>
                                             </td>
                                             <td>
