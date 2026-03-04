@@ -1,21 +1,33 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { NavbarFooterLayout } from "../components/layouts/NavbarFooterLayout";
 
 export function Error404() {
     const navigate = useNavigate();
-    const { accessToken } = useAuthStore();
+    const { isAuthenticated } = useAuthStore();
+    const [isAuth, setIsAuth] = useState<boolean | null>(null);
 
     useEffect(() => {
-        // Redirect to login if user is not authenticated
-        if (!accessToken) {
-            navigate("/auth/login", { replace: true });
-        }
-    }, [accessToken, navigate]);
+        const checkAuth = async () => {
+            const authenticated = await isAuthenticated();
+            setIsAuth(authenticated);
+            
+            if (!authenticated) {
+                navigate("/auth/login", { replace: true });
+            }
+        };
+
+        checkAuth();
+    }, [isAuthenticated, navigate]);
+
+    // Show loading state while authentication is being verified
+    if (isAuth === null) {
+        return null;
+    }
 
     // Show 404 page only if user is authenticated
-    if (!accessToken) {
+    if (!isAuth) {
         return null;
     }
 
