@@ -1,6 +1,6 @@
 import api from "../../controllers/api";
 import { toast } from "react-toastify";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Role } from "../../types/authTypes";
 import { Proceso } from "../../types/workflowTypes";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,6 +44,7 @@ export function RolePermissions({ selectedRole, onClose }: RolePermissionsProps)
     const [processes, setProcesses] = useState<Proceso[]>([]);
     const [basePermissions, setBasePermissions] = useState<BasePermissions | null>(null);
     const [workflowPermissions, setWorkflowPermissions] = useState<WorkflowPermission[]>([]);
+    const checkboxRefs = useRef<Map<number, HTMLInputElement>>(new Map());
 
     useEffect(() => {
         const fetchPermissions = async () => {
@@ -76,6 +77,18 @@ export function RolePermissions({ selectedRole, onClose }: RolePermissionsProps)
         fetchPermissions();
         fetchWorkflows();
     }, [selectedRole.id_rol, onClose]);
+
+    // Update indeterminate state for all checkboxes
+    useEffect(() => {
+        workflowPermissions.forEach((perm, idx) => {
+            const checkbox = checkboxRefs.current.get(idx);
+            if (checkbox) {
+                const process = processes.find(p => p.id_proceso === perm.proceso);
+                const isIndeterminate = process && perm.etapa.length > 0 && perm.etapa.length < process.etapas.length;
+                checkbox.indeterminate = !!isIndeterminate;
+            }
+        });
+    }, [workflowPermissions, processes]);
 
     const handleUpdate = async () => {
         if (!basePermissions) return;
@@ -443,6 +456,8 @@ export function RolePermissions({ selectedRole, onClose }: RolePermissionsProps)
                                 <div style={{ display: "flex", flexWrap: "wrap", gap: "24px" }}>
                                     {workflowPermissions.map((perm, idx) => {
                                         const process = processes.find(p => p.id_proceso === perm.proceso);
+                                        const isAllSelected = perm.etapa.length === process?.etapas.length && (process?.etapas.length ?? 0) > 0;
+
                                         if (!process) return null;
                                         return (
                                             <div
@@ -462,6 +477,32 @@ export function RolePermissions({ selectedRole, onClose }: RolePermissionsProps)
                                                 </div>
                                                 <div style={{ marginBottom: 8, fontSize: 13, color: "#888" }}>
                                                     Selecciona las etapas permitidas:
+                                                </div>
+                                                <div style={{ marginBottom: 12, padding: "8px", backgroundColor: "#f0f0f0", borderRadius: "6px" }}>
+                                                    <input
+                                                        ref={(el) => {
+                                                            if (el) {
+                                                                checkboxRefs.current.set(idx, el);
+                                                            }
+                                                        }}
+                                                        type="checkbox"
+                                                        checked={isAllSelected}
+                                                        onChange={e => {
+                                                            setWorkflowPermissions(prev =>
+                                                                prev.map((wp, i) =>
+                                                                    i === idx
+                                                                        ? {
+                                                                            ...wp,
+                                                                            etapa: e.target.checked
+                                                                                ? process.etapas.map(etapa => etapa.id_etapa)
+                                                                                : []
+                                                                        }
+                                                                        : wp
+                                                                )
+                                                            );
+                                                        }}
+                                                    />{" "}
+                                                    <span style={{ fontWeight: 500 }}>Seleccionar todas</span>
                                                 </div>
                                                 <div style={{ marginBottom: 8 }}>
                                                     {process.etapas.map(etapa => (
