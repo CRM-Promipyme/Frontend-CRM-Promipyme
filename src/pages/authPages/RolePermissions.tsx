@@ -415,7 +415,7 @@ export function RolePermissions({ selectedRole, onClose }: RolePermissionsProps)
                         >
                             <div style={{ marginTop: 24 }}>
                                 {/* Add Process Dropdown */}
-                                <div style={{ marginBottom: 24 }}>
+                                <div style={{ marginBottom: 24, maxWidth: "1500px", maxHeight: "700px", overflowY: "scroll" }}>
                                     <label style={{ fontWeight: 500, marginRight: 12 }}>Agregar proceso:</label>
                                     <select
                                         style={{ minWidth: 220, marginRight: 12 }}
