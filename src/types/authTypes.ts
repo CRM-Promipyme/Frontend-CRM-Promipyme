@@ -70,6 +70,9 @@ export interface BasePermissions {
     create_roles: boolean;
     update_roles: boolean;
     delete_roles: boolean;
+    create_branches: boolean;
+    update_branches: boolean;
+    delete_branches: boolean;
 }
 
 export interface WorkflowPermission {

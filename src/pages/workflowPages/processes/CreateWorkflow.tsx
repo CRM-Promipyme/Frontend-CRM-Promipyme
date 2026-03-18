@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Select from "react-select";
 import { SidebarLayout } from "../../../components/layouts/SidebarLayout";
 import { useSidebarStore } from "../../../stores/sidebarStore";
+import { useAuthStore } from "../../../stores/authStore";
 import {
     DndContext,
     closestCenter,
@@ -18,10 +20,12 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { toast } from "react-toastify";
-import { Etapa } from "../../../types/workflowTypes";
+import { Etapa, createWorkflowData } from "../../../types/workflowTypes";
+import { Branch } from "../../../types/branchTypes";
 import { Spinner } from "../../../components/ui/Spinner";
 import { SortableItem } from "../../../components/ui/SortableItem";
 import { createWorkflow } from "../../../controllers/workflowControllers";
+import { fetchBranches } from "../../../controllers/branchControllers";
 import { showResponseErrors } from "../../../utils/formatUtils";
 import "../../../styles/workflows/workflowFormStyles.css"
 
@@ -29,13 +33,31 @@ import "../../../styles/workflows/workflowFormStyles.css"
 export function CreateWorkflow() {
     // Global States
     const sidebarWidthPx = useSidebarStore((state) => state.sidebarWidthPx);
+    const accessToken = useAuthStore((state) => state.accessToken);
 
     // Local States
     const [loading, setLoading] = useState<boolean>(false);
     const [nombreProceso, setNombreProceso] = useState<string>("");
     const [etapas, setEtapas] = useState<Etapa[]>([]);
     const [color, setColor] = useState<string>("#8A355E");
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
     const navigate = useNavigate();
+
+    // Fetch Branches on component mount
+    useEffect(() => {
+        if (!accessToken || branches.length > 0) return;
+
+        const loadBranches = async () => {
+            try {
+                const branchesData = await fetchBranches(100, 0); // Fetch up to 100 branches
+                setBranches(branchesData.results);
+            } catch {
+                toast.error("No se pudieron obtener las sucursales.");
+            }
+        };
+        loadBranches();
+    }, [accessToken, branches]);
 
     // DND Sensors (used for drag-and-drop)
     const sensors = useSensors(
@@ -114,11 +136,16 @@ export function CreateWorkflow() {
         }
 
         // Prepare the workflow data for submission
-        const workflowData = {
+        const workflowData: createWorkflowData = {
             nombre_proceso: nombreProceso,
             etapas: etapas,
             color: color,
         };
+        
+        // Add sucursal_id if a branch is selected
+        if (selectedBranch) {
+            workflowData.sucursal_id = selectedBranch.id;
+        }
 
         // Submit the workflow data to the backend
         setLoading(true);
@@ -170,6 +197,22 @@ export function CreateWorkflow() {
                             value={color}
                             onChange={(e) => setColor(e.target.value)}
                             className="form-control form-control-color"
+                        />
+                    </div>
+
+                    {/* Branch Selector */}
+                    <div className="mb-3">
+                        <label htmlFor="branch">Sucursal (Opcional)</label>
+                        <Select
+                            isClearable
+                            options={branches}
+                            value={selectedBranch}
+                            onChange={(selected) => setSelectedBranch(selected as Branch | null)}
+                            getOptionLabel={(option: Branch) => option.nombre_sucursal}
+                            getOptionValue={(option: Branch) => String(option.id)}
+                            placeholder="Selecciona una sucursal (opcional)"
+                            className="react-select-container"
+                            classNamePrefix="react-select"
                         />
                     </div>
 

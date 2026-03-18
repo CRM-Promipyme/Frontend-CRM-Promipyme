@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import api from "../../../controllers/api";
 import { useSearchParams } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import { useAuthStore } from "../../../stores/authStore";
 import { daysLeft } from "../../../utils/formatUtils";
 import "../../../styles/workflows/workflowStyles.css";
 import { Activity } from "../../../types/activityTypes";
@@ -12,15 +13,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Spinner } from "../../../components/ui/Spinner";
 import { formatNumber } from "../../../utils/formatUtils";
 import { Caso, Proceso } from "../../../types/workflowTypes";
+import { Branch } from "../../../types/branchTypes";
 import { useSidebarStore } from "../../../stores/sidebarStore";
 import { SidebarLayout } from "../../../components/layouts/SidebarLayout";
 import { SelectedCaseDetails } from "./boardView/tabs/SelectedCaseDetails";
 import { AnimatedSelectMenu } from "../../../components/ui/forms/AnimatedSelectMenu";
 import { AnimatedNumberCounter } from "../../../components/ui/AnimatedNumberCounter";
+import { fetchBranches } from "../../../controllers/branchControllers";
 
 export function BaseCaseList() {
     // Global States
     const sidebarWidthPx = useSidebarStore((state) => state.sidebarWidthPx);
+    const accessToken = useAuthStore((state) => state.accessToken);
     
     // Local States
     const [process, setProcess] = useState<Proceso | null>(null);
@@ -35,7 +39,24 @@ export function BaseCaseList() {
     const casesContainerRef = useRef<HTMLDivElement>(null);
     const [caseStatusFilter, setCaseStatusFilter] = useState<string>("");
     const [caseNameFilter, setCaseNameFilter] = useState<string>("");
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+    
+    // Fetch Branches on component mount
+    useEffect(() => {
+        if (!accessToken || branches.length > 0) return;
+
+        const loadBranches = async () => {
+            try {
+                const branchesData = await fetchBranches(100, 0); // Fetch up to 100 branches
+                setBranches(branchesData.results);
+            } catch {
+                toast.error("No se pudieron obtener las sucursales.");
+            }
+        };
+        loadBranches();
+    }, [accessToken, branches]);
     
     // collect active case from URL search params
     useEffect(() => {
@@ -77,6 +98,8 @@ export function BaseCaseList() {
                 const params: Record<string, string> = {};
                 if (caseStatusFilter) params.case_status = caseStatusFilter;
                 if (caseNameFilter) params.case_name = caseNameFilter;
+                if (selectedBranch) params.sucursal_id = String(selectedBranch.id);
+                
                 const queryString = new URLSearchParams(params).toString();
                 const response = await api.get(`/workflows/casos/list/?${queryString}`);
                 
@@ -94,7 +117,7 @@ export function BaseCaseList() {
         return () => {
             if (debounceTimer.current) clearTimeout(debounceTimer.current);
         };
-    }, [caseStatusFilter, caseNameFilter]);
+    }, [caseStatusFilter, caseNameFilter, selectedBranch]);
     
     // Infinite scroll observer
     useEffect(() => {
@@ -213,6 +236,22 @@ export function BaseCaseList() {
                                 menuPortalTarget={document.body}
                                 styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                                 placeholder="Filtrar por estado..."
+                            />
+                        </div>
+                        
+                        {/* Branch filter dropdown */}
+                        <div style={{ marginBottom: "15px" }}>
+                            <Select
+                                isClearable
+                                options={branches}
+                                value={selectedBranch}
+                                onChange={(selected) => setSelectedBranch(selected as Branch | null)}
+                                getOptionLabel={(option: Branch) => option.nombre_sucursal}
+                                getOptionValue={(option: Branch) => String(option.id)}
+                                placeholder="Filtrar por sucursal..."
+                                components={{ Menu: AnimatedSelectMenu }}
+                                menuPortalTarget={document.body}
+                                styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                             />
                         </div>
                     </div>

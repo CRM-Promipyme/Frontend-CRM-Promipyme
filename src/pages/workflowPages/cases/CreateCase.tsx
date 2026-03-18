@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import AsyncSelect from "react-select/async";
 import { useNavigate, useParams } from "react-router-dom";
 import { Contact } from "../../../types/contactTypes";
+import { Branch } from "../../../types/branchTypes";
 import { AnimatePresence, motion } from "framer-motion";
 import { Spinner } from "../../../components/ui/Spinner";
 import { useAuthStore } from "../../../stores/authStore";
@@ -13,6 +14,7 @@ import { useSidebarStore } from "../../../stores/sidebarStore";
 import { createCase } from "../../../controllers/caseControllers";
 import { Proceso, EtapaProceso } from "../../../types/workflowTypes";
 import { fetchContacts } from "../../../controllers/contactControllers";
+import { fetchBranches } from "../../../controllers/branchControllers";
 import { SidebarLayout } from "../../../components/layouts/SidebarLayout";
 import { fetchProcesses } from "../../../controllers/workflowControllers";
 import { AnimatedSelectMenu } from "../../../components/ui/forms/AnimatedSelectMenu";
@@ -45,6 +47,8 @@ export function CreateCase() {
     const [selectedProcessId, setSelectedProcessId] = useState<number | null>(null);
     const [selectedStageId, setSelectedStageId] = useState<number | null>(null);
     const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
 
     // Load processes and contacts on mount
     useEffect(() => {
@@ -55,6 +59,22 @@ export function CreateCase() {
             setSelectedProcessId(parseInt(workflowId));
         }
     }, [workflowId]);
+
+    // Load branches on mount
+    useEffect(() => {
+        const accessToken = authStore.accessToken;
+        if (!accessToken || branches.length > 0) return;
+
+        const loadBranches = async () => {
+            try {
+                const branchesData = await fetchBranches(100, 0); // Fetch up to 100 branches
+                setBranches(branchesData.results);
+            } catch {
+                toast.error("No se pudieron obtener las sucursales.");
+            }
+        };
+        loadBranches();
+    }, [authStore.accessToken, branches]);
 
     const selectedProcess = processes.find(p => p.id_proceso === selectedProcessId);
     
@@ -71,7 +91,7 @@ export function CreateCase() {
             return;
         }
 
-        const caseData = {
+        const caseData: Record<string, unknown> = {
             case_name: caseName,
             case_description: caseDescription,
             case_value: caseValue.replace(/,/g, ''),
@@ -84,6 +104,11 @@ export function CreateCase() {
             contact_id: selectedContactId,
             creator_id: userId,
         };
+        
+        // Add sucursal_id if a branch is selected
+        if (selectedBranch) {
+            caseData.sucursal_id = selectedBranch.id;
+        }
 
         setLoading(true);
         try {
@@ -270,6 +295,27 @@ export function CreateCase() {
                                 onChange={(option) => setSelectedContactId(option?.value ?? null)}
                                 placeholder="Busca un contacto (por cédula, nombre o email)"
                                 isClearable
+                                components={{
+                                    Menu: AnimatedSelectMenu,
+                                }}
+                                menuPortalTarget={document.body}
+                                styles={{
+                                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                                }}
+                            />
+                        </div>
+
+                        {/* Branch selector (optional) */}
+                        <div className="mb-3">
+                            <label>Sucursal (Opcional)</label>
+                            <Select<Branch, false>
+                                isClearable
+                                options={branches}
+                                value={selectedBranch}
+                                onChange={(option) => setSelectedBranch(option as Branch | null)}
+                                getOptionLabel={(option: Branch) => option.nombre_sucursal}
+                                getOptionValue={(option: Branch) => String(option.id)}
+                                placeholder="Selecciona una sucursal (opcional)"
                                 components={{
                                     Menu: AnimatedSelectMenu,
                                 }}

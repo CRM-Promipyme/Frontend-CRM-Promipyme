@@ -44,6 +44,12 @@ export function AdminMenu() {
             description: "Crear, editar y eliminar roles de usuario.",
             icon: "bi bi-clipboard-minus",
             url: "/auth/manage/system-roles/list"
+        },
+        {
+            title: "Administrar Sucursales",
+            description: "Crear, editar y eliminar sucursales de la empresa.",
+            icon: "bi bi-building",
+            url: "/auth/manage/branches/list"
         }
     ]
 

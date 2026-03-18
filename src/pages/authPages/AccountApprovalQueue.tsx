@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import '../../styles/tableStyling.css';
 import '../../styles/auth/authStyles.css';
 import { Link } from "react-router-dom";
+import Select from "react-select";
 import { fetchRoles } from '../../utils/authUtils';
 import { useAuthStore } from "../../stores/authStore";
 import { Spinner } from "../../components/ui/Spinner";
@@ -15,6 +16,8 @@ import { SidebarLayout } from "../../components/layouts/SidebarLayout";
 import { FilterSidebar } from "../../components/ui/forms/FilterSidebar";
 import { AnimatedNumberCounter } from "../../components/ui/AnimatedNumberCounter";
 import { PendingAccount, PendingAccountResponse, Role, RolePermission } from "../../types/authTypes";
+import { Branch } from "../../types/branchTypes";
+import { fetchBranches } from "../../controllers/branchControllers";
 
 export function AccountApprovalQueue() {
     // Estados globales
@@ -38,6 +41,8 @@ export function AccountApprovalQueue() {
     const [modalType, setModalType] = useState<"approve" | "reject">("approve");
     const [roles, setRoles] = useState<Role[]>([]);
     const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
     const [searchName, setSearchName] = useState<string>("");
     const [searchEmail, setSearchEmail] = useState<string>("");
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -116,6 +121,21 @@ export function AccountApprovalQueue() {
         loadRoles();
     }, [accessToken, roles]);
 
+    // Fetch Branches only once
+    useEffect(() => {
+        if (!accessToken || branches.length > 0) return;
+
+        const loadBranches = async () => {
+            try {
+                const branchesData = await fetchBranches(100, 0); // Fetch up to 100 branches
+                setBranches(branchesData.results);
+            } catch {
+                toast.error("No se pudieron obtener las sucursales.");
+            }
+        };
+        loadBranches();
+    }, [accessToken, branches]);
+
     // Infinite Scroll Effect
     useEffect(() => {
         const handleScroll = () => {
@@ -145,6 +165,7 @@ export function AccountApprovalQueue() {
         if (authStore.isAdmin && authStore.isAdmin()) {
             setModalType("approve");
             setSelectedAccount(account);
+            setSelectedBranch(null);
             
             if (!accessToken) {
                 toast.error("Tu sesión ha caducado. Por favor, inicia sesión nuevamente para continuar.");
@@ -174,6 +195,7 @@ export function AccountApprovalQueue() {
         } else {
             setModalType("approve");
             setSelectedAccount(account);
+            setSelectedBranch(null);
             
             if (!accessToken) {
                 toast.error("Tu sesión ha caducado. Por favor, inicia sesión nuevamente para continuar.");
@@ -200,13 +222,23 @@ export function AccountApprovalQueue() {
         }
 
         try {
+            const payload: Record<string, unknown> = {
+                approved: true,
+                role_ids: selectedRoles
+            };
+            
+            // Add sucursal_id if a branch is selected
+            if (selectedBranch) {
+                payload.sucursal_id = selectedBranch.id;
+            }
+
             const response = await fetch(`${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/accounts/requests/approve/${selectedAccount.id}/`, {
                 method: "PUT",
                 headers: {
                     "Authorization": `Bearer ${accessToken}`,
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ approved: true, role_ids: selectedRoles }),
+                body: JSON.stringify(payload),
             });
 
             if (!response.ok) throw new Error();
@@ -214,6 +246,7 @@ export function AccountApprovalQueue() {
             toast.success("Cuenta aprobada exitosamente.");
             fetchPendingAccounts(buildQueryUrl());
             setShowModal(false);
+            setSelectedBranch(null);
         } catch {
             toast.error("Error al aprobar la cuenta.");
         }
@@ -380,6 +413,20 @@ export function AccountApprovalQueue() {
                                 closeOnSelect={false}
                                 className="multi-select-dropdown"
                             />
+                            <div className="mb-3" style={{ marginTop: "15px" }}>
+                                <label className="form-label">Sucursal (Opcional)</label>
+                                <Select
+                                    isClearable
+                                    options={branches}
+                                    value={selectedBranch}
+                                    onChange={(selected) => setSelectedBranch(selected as Branch | null)}
+                                    getOptionLabel={(option: Branch) => option.nombre_sucursal}
+                                    getOptionValue={(option: Branch) => String(option.id)}
+                                    placeholder="Selecciona una sucursal (opcional)"
+                                    className="react-select-container"
+                                    classNamePrefix="react-select"
+                                />
+                            </div>
                             <div className="modal-actions" style={{ marginTop: "20px", display: 'flex', justifyContent: 'space-around' }}>
                                 <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
                                 <button className="btn btn-primary" onClick={handleApprove}>Aprobar</button>

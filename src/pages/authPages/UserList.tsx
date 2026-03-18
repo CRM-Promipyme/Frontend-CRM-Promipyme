@@ -11,6 +11,8 @@ import { User, UserListResponse, Role } from "../../types/authTypes";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
 import { FilterSidebar } from "../../components/ui/forms/FilterSidebar";
 import { AnimatedNumberCounter } from "../../components/ui/AnimatedNumberCounter";
+import { Branch } from "../../types/branchTypes";
+import { fetchBranches } from "../../controllers/branchControllers";
 
 export function UserList() {
     // Global States
@@ -28,6 +30,8 @@ export function UserList() {
     const [showFilters, setShowFilters] = useState<boolean>(false);
     const [roles, setRoles] = useState<Role[]>([]);
     const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
     const [searchName, setSearchName] = useState<string>("");
     const [searchEmail, setSearchEmail] = useState<string>("");
     const [activeStatus, setActiveStatus] = useState<string>("");
@@ -44,9 +48,10 @@ export function UserList() {
             url += `rol_ids=${roleIds}&`;
         }
         if (activeStatus !== "") url += `is_active=${activeStatus}&`;
+        if (selectedBranch) url += `sucursal_id=${selectedBranch.id}&`;
 
         return url;
-    }, [searchName, searchEmail, selectedRoles, activeStatus]);
+    }, [searchName, searchEmail, selectedRoles, activeStatus, selectedBranch]);
 
     // Fetch User Data
     const fetchAccounts = useCallback(async (url: string, isLoadMore: boolean = false) => {
@@ -112,6 +117,21 @@ export function UserList() {
         loadRoles();
     }, [accessToken, roles]);
 
+    // Fetch Branches only once
+    useEffect(() => {
+        if (!accessToken || branches.length > 0) return;
+
+        const loadBranches = async () => {
+            try {
+                const branchesData = await fetchBranches(100, 0); // Fetch up to 100 branches
+                setBranches(branchesData.results);
+            } catch {
+                toast.error("No se pudieron obtener las sucursales.");
+            }
+        };
+        loadBranches();
+    }, [accessToken, branches]);
+
     // Infinite Scroll Effect
     useEffect(() => {
         const handleScroll = () => {
@@ -155,6 +175,7 @@ export function UserList() {
                     setSearchEmail("");
                     setSelectedRoles([]);
                     setActiveStatus("");
+                    setSelectedBranch(null);
                 }}>
                     <i className="bi bi-x-circle"></i> Limpiar Filtros
                 </button>
@@ -174,6 +195,20 @@ export function UserList() {
                         placeholder="Filtrar por email..."
                         value={searchEmail}
                         onChange={(e) => setSearchEmail(e.target.value)}
+                    />
+                </div>
+                <div className="mb-3">
+                    <label className="form-label">Sucursal</label>
+                    <Select
+                        isClearable
+                        options={branches}
+                        value={selectedBranch}
+                        onChange={(selected) => setSelectedBranch(selected as Branch | null)}
+                        getOptionLabel={(option: Branch) => option.nombre_sucursal}
+                        getOptionValue={(option: Branch) => String(option.id)}
+                        placeholder="Selecciona una sucursal"
+                        className="react-select-container"
+                        classNamePrefix="react-select"
                     />
                 </div>
                 <div className="mb-3">

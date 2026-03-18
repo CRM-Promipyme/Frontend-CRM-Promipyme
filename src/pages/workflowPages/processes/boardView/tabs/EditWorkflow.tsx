@@ -13,15 +13,18 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import Select from "react-select";
 import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
 import api from "../../../../../controllers/api";
+import { Branch } from "../../../../../types/branchTypes";
 import { AnimatePresence, motion } from "framer-motion";
 import { Spinner } from "../../../../../components/ui/Spinner";
 import { showResponseErrors } from "../../../../../utils/formatUtils";
 import { SortableItem } from "../../../../../components/ui/SortableItem";
 import { WorkflowSettingsProps } from "../../../../../types/kanbanBoardTypes";
+import { fetchBranches } from "../../../../../controllers/branchControllers";
 
 interface Etapa {
     id: string;
@@ -36,6 +39,8 @@ export function EditWorkflow({ process, setProcess }: WorkflowSettingsProps) {
     const [nombreProceso, setNombreProceso] = useState<string>("");
     const [etapas, setEtapas] = useState<Etapa[]>([]);
     const [color, setColor] = useState<string>("#8A355E");
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -43,6 +48,22 @@ export function EditWorkflow({ process, setProcess }: WorkflowSettingsProps) {
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
+
+    // Fetch branches al cargar el componente
+    useEffect(() => {
+        if (branches.length > 0) return;
+
+        const loadBranches = async () => {
+            try {
+                const branchesData = await fetchBranches(100, 0);
+                setBranches(branchesData.results);
+            } catch {
+                toast.error("No se pudieron obtener las sucursales.");
+            }
+        };
+
+        loadBranches();
+    }, [branches.length]);
 
     useEffect(() => {
         if (process) {
@@ -56,8 +77,16 @@ export function EditWorkflow({ process, setProcess }: WorkflowSettingsProps) {
                     orden_etapa: etapa.orden_etapa || index + 1,
                 }))
             );
+            
+            // Set selected branch if available in process data and branches are loaded
+            if (process.sucursal_id && branches.length > 0) {
+                const branch = branches.find(b => b.id === process.sucursal_id);
+                if (branch) {
+                    setSelectedBranch(branch);
+                }
+            }
         }
-    }, [process]);
+    }, [process, branches]);
 
     const addEtapa = () => {
         setEtapas((prev) => [
@@ -110,11 +139,16 @@ export function EditWorkflow({ process, setProcess }: WorkflowSettingsProps) {
             return;
         }
 
-        const payload = {
+        const payload: any = {
             nombre_proceso: nombreProceso,
             etapas: etapas.map(({ id, ...rest }) => rest),
             color: color,
         };
+
+        // Add sucursal_id if a branch is selected
+        if (selectedBranch) {
+            payload.sucursal_id = selectedBranch.id;
+        }
 
         try {
             setLoading(true);
@@ -187,6 +221,22 @@ export function EditWorkflow({ process, setProcess }: WorkflowSettingsProps) {
                         onChange={(e) => setColor(e.target.value)}
                         className="form-control form-control-color"
                         disabled={!editMode}
+                    />
+                </div>
+
+                <div className="mb-3">
+                    <label htmlFor="sucursal">Sucursal (Opcional)</label>
+                    <Select
+                        isClearable
+                        options={branches}
+                        value={selectedBranch}
+                        onChange={(selected) => setSelectedBranch(selected as Branch | null)}
+                        getOptionLabel={(option: Branch) => option.nombre_sucursal}
+                        getOptionValue={(option: Branch) => String(option.id)}
+                        placeholder="Selecciona una sucursal"
+                        isDisabled={!editMode}
+                        className="react-select-container"
+                        classNamePrefix="react-select"
                     />
                 </div>
 
