@@ -71,7 +71,7 @@ export function RequestPasswordReset() {
                             type="submit" 
                             className="btn btn-primary"
                         >
-                            {loading ? <Spinner /> : "Solictar Restablecimiento de Contraseña"}
+                            {loading ? <Spinner /> : "Solicitar Restablecimiento de Contraseña"}
                         </button>
                     </form>
                     <div className="auth-actions" style={{ lineHeight: '0.5' }}>
