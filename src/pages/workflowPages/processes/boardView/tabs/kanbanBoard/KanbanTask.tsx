@@ -21,6 +21,9 @@ export function KanbanTask({ case: kanbanCase, columnId, isOverlay = false }: Ka
 
     return (
         <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="kanban-task">
+            <p className="case-number" style={{ fontSize: "0.85rem", color: "#6c757d", marginBottom: "5px" }}>
+                Caso #{String(kanbanCase.id_caso).padStart(7, '0')}
+            </p>
             <h4 className="case-title">{kanbanCase.nombre_caso}</h4>
             
             <div className="case-contact-information">

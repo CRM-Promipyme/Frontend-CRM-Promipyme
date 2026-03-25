@@ -329,7 +329,7 @@ export function CaseFormDetail({ caseId, formId, onBack, onFormUpdated, onFormDe
             // Form Information
             doc.setFontSize(12);
             doc.setFont("helvetica", "normal");
-            let yPosition = 50;
+            let yPosition = 40;
             
             doc.text(`Formulario: ${formData.form_name}`, margin, yPosition);
             yPosition += 10;
@@ -339,11 +339,14 @@ export function CaseFormDetail({ caseId, formId, onBack, onFormUpdated, onFormDe
                 yPosition += 10;
             }
             
+            doc.text(`# de Caso: ${String(formData.case_id).padStart(7, '0')}`, margin, yPosition);
+            yPosition += 10;
+            
             doc.text(`Caso: ${formData.case_name}`, margin, yPosition);
             yPosition += 10;
             
             doc.text(`Fecha de exportación: ${new Date().toLocaleDateString('es-ES')}`, margin, yPosition);
-            yPosition += 20;
+            yPosition += 10;
             
             // Fields Table
             if (formData.field_values.length > 0) {
@@ -507,7 +510,7 @@ export function CaseFormDetail({ caseId, formId, onBack, onFormUpdated, onFormDe
                         <div style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "0.875rem", color: "#6c757d" }}>
                             <span>
                                 <i className="bi bi-file-text me-1"></i>
-                                Caso: {formData.case_name}
+                                Caso #{String(formData.case_id).padStart(7, '0')} - {formData.case_name}
                             </span>
                             <span>
                                 <i className="bi bi-list-ul me-1"></i>

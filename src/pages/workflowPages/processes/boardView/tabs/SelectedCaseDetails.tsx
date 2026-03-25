@@ -1,6 +1,10 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { toast } from "react-toastify";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { CaseTasks } from "./CaseTasks";
 import { CaseAttatchments } from "./CaseAttatchments";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +16,7 @@ import { formatNumber } from "../../../../../utils/formatUtils";
 import { Caso, Proceso } from "../../../../../types/workflowTypes";
 import { lowerColorOpacity } from "../../../../../utils/formatUtils";
 import { ActivityLog } from "../../../../../components/ui/ActivityLog";
+import { Spinner } from "../../../../../components/ui/Spinner";
 
 interface SelectedCaseDetailsProps {
     selectedCase: Caso;
@@ -21,6 +26,154 @@ interface SelectedCaseDetailsProps {
 }
 
 export function SelectedCaseDetails({ selectedCase, process, caseActivities, setCaseActivities }: SelectedCaseDetailsProps) {
+    const [exporting, setExporting] = useState(false);
+
+    const exportCaseToPDF = async () => {
+        if (!selectedCase) return;
+        
+        try {
+            setExporting(true);
+            
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.width;
+            const pageHeight = doc.internal.pageSize.height;
+            const margin = 20;
+            
+            // Header
+            doc.setFontSize(20);
+            doc.setFont("helvetica", "bold");
+            doc.text("Detalles del Caso", margin, 30);
+            
+            // Case Information
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            let yPosition = 50;
+            
+            doc.text(`# de Caso: ${String(selectedCase.id_caso).padStart(7, '0')}`, margin, yPosition);
+            yPosition += 10;
+            
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.text(`${selectedCase.nombre_caso}`, margin, yPosition);
+            yPosition += 12;
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(11);
+            
+            // Description
+            if (selectedCase.descripcion_caso) {
+                doc.text("Descripción:", margin, yPosition);
+                yPosition += 6;
+                const splitDescription = doc.splitTextToSize(selectedCase.descripcion_caso, pageWidth - 2 * margin);
+                doc.setFontSize(10);
+                doc.text(splitDescription, margin, yPosition);
+                yPosition += splitDescription.length * 5 + 5;
+                doc.setFontSize(11);
+            }
+            
+            // Case Details Table
+            const caseDetailsData = [
+                ['Valor del Caso', `RD$ ${formatNumber(parseFloat(selectedCase.valor_caso))}`],
+                ['Contacto', `${selectedCase.contact_first_name} ${selectedCase.contact_last_name}`],
+                ['Etapa Actual', selectedCase.etapa_actual && process.etapas.find((step) => step.id_etapa === selectedCase.etapa_actual) 
+                    ? process.etapas.find((step) => step.id_etapa === selectedCase.etapa_actual)?.nombre_etapa || 'N/A'
+                    : 'N/A'],
+                ['Estado', selectedCase.abierto ? 'Abierto' : 'Cerrado'],
+            ];
+            
+            autoTable(doc, {
+                head: [['Campo', 'Valor']],
+                body: caseDetailsData,
+                startY: yPosition,
+                margin: { left: margin, right: margin },
+                styles: {
+                    fontSize: 10,
+                    cellPadding: 5
+                },
+                headStyles: {
+                    fillColor: [66, 139, 202],
+                    textColor: 255,
+                    fontStyle: 'bold'
+                }
+            });
+            
+            yPosition = (doc as any).lastAutoTable.finalY + 15;
+            
+            // Important Dates
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(11);
+            doc.text("Fechas Importantes:", margin, yPosition);
+            yPosition += 8;
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            const datesData = [
+                ['Creado', format(new Date(selectedCase.fecha_creacion), "d 'de' MMMM 'de' yyyy", { locale: es })],
+                ['Cierre Estimado', format(new Date(selectedCase.fecha_cierre_estimada), "d 'de' MMMM 'de' yyyy", { locale: es })],
+                ['Última Actualización', format(new Date(selectedCase.ultima_actualizacion), "d 'de' MMMM 'de' yyyy", { locale: es })],
+            ];
+            
+            autoTable(doc, {
+                head: [['Campo', 'Fecha']],
+                body: datesData,
+                startY: yPosition,
+                margin: { left: margin, right: margin },
+                styles: {
+                    fontSize: 10,
+                    cellPadding: 5
+                },
+                headStyles: {
+                    fillColor: [66, 139, 202],
+                    textColor: 255,
+                    fontStyle: 'bold'
+                }
+            });
+            
+            // Signature Section
+            const signatureSectionY = Math.min(pageHeight - 80, (doc as any).lastAutoTable.finalY + 30);
+            
+            doc.setDrawColor(100);
+            doc.setLineWidth(0.5);
+            
+            // Signature line
+            doc.line(margin, signatureSectionY + 40, margin + 60, signatureSectionY + 40);
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
+            doc.text("Firma del Cliente", margin, signatureSectionY + 45);
+            
+            // Date line
+            doc.line(margin + 80, signatureSectionY + 40, margin + 140, signatureSectionY + 40);
+            doc.text("Fecha", margin + 80, signatureSectionY + 45);
+            
+            // Footer
+            const totalPages = doc.internal.pages.length - 1;
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(128);
+                doc.text(
+                    `Página ${i} de ${totalPages} - CRM Promipyme`,
+                    pageWidth - margin,
+                    pageHeight - 10,
+                    { align: 'right' }
+                );
+            }
+            
+            // Save the PDF
+            const fileName = `caso_${String(selectedCase.id_caso).padStart(7, '0')}_${selectedCase.nombre_caso.replace(/[^a-z0-9]/gi, '_')}_${new Date().getTime()}.pdf`;
+            doc.save(fileName);
+            
+            toast.success("PDF exportado correctamente");
+            
+        } catch (error) {
+            console.error("Error exporting PDF:", error);
+            toast.error("Error al exportar el PDF");
+        } finally {
+            setExporting(false);
+        }
+    };
+
     return (
         <motion.div 
             key={selectedCase.id_caso}
@@ -40,6 +193,10 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.3 }}
                         >
+                            <p className="case-number" style={{ fontSize: "0.85rem", color: "#6c757d", marginBottom: "5px" }}>
+                                Caso #{String(selectedCase.id_caso).padStart(7, '0')}
+                            </p>
+
                             <div className="case-title">
                                 <h3 style={{ fontWeight: 700 }}>{selectedCase.nombre_caso}</h3>
                                 {selectedCase.abierto ? (
@@ -59,14 +216,41 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                             
                             <div className="column-container">
                                 <div className="column">
-                                    <Link to={`/workflows/cases/update/${selectedCase.id_caso}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                        <button
-                                            className="btn btn-primary"
-                                            style={{ marginBottom: '20px', marginTop: '0px' }}
+                                    <div style={{ display: "flex", gap: "10px", marginBottom: '20px', marginTop: '0px' }}>
+                                        <Link to={`/workflows/cases/update/${selectedCase.id_caso}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                            <button className="btn btn-primary">
+                                                Editar
+                                            </button>
+                                        </Link>
+                                        <motion.button
+                                            className="btn btn-outline-warning"
+                                            style={{
+                                                borderRadius: "8px",
+                                                padding: "8px 16px",
+                                                fontSize: "0.875rem",
+                                                fontWeight: 500,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "8px"
+                                            }}
+                                            whileHover={{ scale: exporting ? 1 : 1.02 }}
+                                            whileTap={{ scale: exporting ? 1 : 0.98 }}
+                                            onClick={exportCaseToPDF}
+                                            disabled={exporting}
                                         >
-                                            Editar
-                                        </button>
-                                    </Link>
+                                            {exporting ? (
+                                                <>
+                                                    <Spinner className="spinner-border-sm" />
+                                                    Exportando...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="bi bi-file-earmark-pdf"></i>
+                                                    Exportar PDF
+                                                </>
+                                            )}
+                                        </motion.button>
+                                    </div>
                                     <div className="case-item-container">
                                         <div className="case-item-header">
                                             <i className="bi bi-file-earmark-text"></i>
