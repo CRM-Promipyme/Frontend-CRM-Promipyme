@@ -221,6 +221,9 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                                     setSearchParams(searchParams);
                                 }}
                             >
+                                <p className="case-number" style={{ fontSize: "0.85rem", color: "#6c757d", marginBottom: "5px" }}>
+                                    Caso #{String(caseObj.id_caso).padStart(7, '0')}
+                                </p>
                                 <h4 className="case-title">{caseObj.nombre_caso}</h4>
 
                                 <div className="case-contact-information">
