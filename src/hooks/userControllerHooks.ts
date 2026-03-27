@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import api from "../controllers/api";
 import {
     Provincia,
     TipoTelefono,
@@ -19,17 +20,10 @@ export function useDropdownOptions(accessToken: string | null) {
     useEffect(() => {
         const fetchDropdownOptions = async () => {
             try {
-                const response = await fetch(
-                    `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/contacts/dropdown-opts/?provincias=true&tipos_telefono=true`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                        },
-                    }
+                const response = await api.get(
+                    `/contacts/dropdown-opts/?provincias=true&tipos_telefono=true`
                 );
-                if (!response.ok) throw new Error("Failed to fetch dropdown options");
-                const data = await response.json();
-                setDropdownOptions(data);
+                setDropdownOptions(response.data);
             } catch (error) {
                 console.error("Error fetching dropdown options:", error);
                 toast.error("Error fetching dropdown options");
@@ -58,20 +52,11 @@ export function useContactData(
 
         const fetchContactData = async () => {
             try {
-                const response = await fetch(
-                    `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/contacts/list/?contact_id=${contact_id}`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                            "Content-Type": "application/json",
-                        },
-                    }
+                const response = await api.get(
+                    `/contacts/list/?contact_id=${contact_id}`
                 );
 
-                if (!response.ok) throw new Error("Failed to fetch contact data");
-
-                const data: UpdateContact = await response.json();
+                const data: UpdateContact = response.data;
                 setContactData(data);
                 setFormData(data); // Initialize form state with fetched data
 

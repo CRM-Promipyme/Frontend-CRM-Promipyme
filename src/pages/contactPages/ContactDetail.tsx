@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import Select from "react-select";
 import { es } from "date-fns/locale";
 import { toast } from "react-toastify";
+import api from "../../controllers/api";
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import "../../styles/auth/profileViewStyles.css";
@@ -235,33 +236,10 @@ export function ContactDetail() {
                 campos_adicionales: additionalFields,
             };
 
-            const response = await fetch(
-                `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/contacts/manage/${contact_id}/`,
-                {
-                    method: "PUT",
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(updatedFormData),
-                }
+            await api.put(
+                `/contacts/manage/${contact_id}/`,
+                updatedFormData
             );
-
-            if (!response.ok) {
-                const data = await response.json();
-                // Check for specific errors in the response data
-                if (data?.errors) {
-                    const errorMap = data.errors as Record<string, string[]>;
-                    Object.values(errorMap).forEach((errorArray) => {
-                        errorArray.forEach((errMsg) => toast.error(errMsg));
-                    });
-                } else if (data?.message) {
-                    toast.error(data.message);
-                } else {
-                    toast.error("Hubo un error al actualizar el contacto.");
-                }
-                return;
-            }
 
             // Refetch activities to show the updated activity
             const updatedActivitiesResponse = await fetchEntityActivities('contact', contact_id as string);
@@ -270,8 +248,19 @@ export function ContactDetail() {
             toast.success("Contacto actualizado correctamente.");
             setEditMode(false);
         } catch (error) {
-            console.error("Error updating contact data:", error);
-            toast.error("Hubo un error al actualizar el contacto.");
+            const axiosError = error as any;
+            const data = axiosError.response?.data;
+            // Check for specific errors in the response data
+            if (data?.errors) {
+                const errorMap = data.errors as Record<string, string[]>;
+                Object.values(errorMap).forEach((errorArray) => {
+                    errorArray.forEach((err) => toast.error(err));
+                });
+            } else if (data?.message) {
+                toast.error(data.message);
+            } else {
+                toast.error("Hubo un error al actualizar el contacto.");
+            }
         }
     };
 

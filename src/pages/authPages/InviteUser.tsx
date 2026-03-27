@@ -45,7 +45,7 @@ export function InviteUser() {
     
         const loadRoles = async () => {
             try {
-                const rolesData = await fetchRoles(accessToken);
+                const rolesData = await fetchRoles();
                 setRoles(rolesData);
                 setSelectedRoles([]);
             } catch {

@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "react-toastify";
+import api from "../../controllers/api";
 import '../../styles/tableStyling.css';
 import '../../styles/auth/authStyles.css';
 import { Link } from "react-router-dom";
@@ -67,17 +68,10 @@ export function AccountApprovalQueue() {
         }
 
         try {
-            const response = await fetch(url, {
-                method: "GET",
-                headers: {
-                    "Authorization": `Bearer ${accessToken}`,
-                    "Content-Type": "application/json",
-                },
-            });
-
-            if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
-
-            const data: PendingAccountResponse = await response.json();
+            const urlObj = new URL(url);
+            const pathWithQuery = urlObj.pathname + urlObj.search;
+            const response = await api.get(pathWithQuery);
+            const data: PendingAccountResponse = response.data;
             setTotalAccs(data.count);
             setPendingAccounts(prevAccs => isLoadMore ? [...prevAccs, ...data.results] : data.results);
             setNextPage(data.next);
@@ -111,7 +105,7 @@ export function AccountApprovalQueue() {
 
         const loadRoles = async () => {
             try {
-                const rolesData = await fetchRoles(accessToken);
+                const rolesData = await fetchRoles();
                 setRoles(rolesData);
                 setSelectedRoles([]);
             } catch {
@@ -173,7 +167,7 @@ export function AccountApprovalQueue() {
             };
 
             try {
-                const roles = await fetchRoles(accessToken);
+                const roles = await fetchRoles();
                 setRoles(roles);
                 setSelectedRoles([]);
                 setShowModal(true);
@@ -203,7 +197,7 @@ export function AccountApprovalQueue() {
             };
             
             try {
-                const roles = await fetchRoles(accessToken);
+                const roles = await fetchRoles();
                 setRoles(roles);
                 setSelectedRoles([]);
                 setShowModal(true);
@@ -232,16 +226,7 @@ export function AccountApprovalQueue() {
                 payload.sucursal_id = selectedBranch.id;
             }
 
-            const response = await fetch(`${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/accounts/requests/approve/${selectedAccount.id}/`, {
-                method: "PUT",
-                headers: {
-                    "Authorization": `Bearer ${accessToken}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) throw new Error();
+            await api.put(`/auth/accounts/requests/approve/${selectedAccount.id}/`, payload);
 
             toast.success("Cuenta aprobada exitosamente.");
             fetchPendingAccounts(buildQueryUrl());
@@ -282,12 +267,7 @@ export function AccountApprovalQueue() {
         if (!selectedAccount) return;
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/accounts/requests/approve/${selectedAccount.id}/`, {
-                method: "PUT",
-                headers: { "Authorization": `Bearer ${accessToken}` },
-            });
-
-            if (!response.ok) throw new Error();
+            await api.put(`/auth/accounts/requests/approve/${selectedAccount.id}/`, {});
 
             toast.success("Cuenta rechazada exitosamente.");
             fetchPendingAccounts(buildQueryUrl());

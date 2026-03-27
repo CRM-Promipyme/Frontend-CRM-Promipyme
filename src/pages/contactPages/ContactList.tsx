@@ -9,6 +9,7 @@ import { SidebarLayout } from "../../components/layouts/SidebarLayout";
 import { FilterSidebar } from "../../components/ui/forms/FilterSidebar";
 import { Contact, ContactListResponse } from "../../types/contactTypes";
 import { AnimatedNumberCounter } from "../../components/ui/AnimatedNumberCounter";
+import api from "../../controllers/api";
 
 export function ContactList() {
     // Global States
@@ -56,17 +57,10 @@ export function ContactList() {
         setLoading(true);
 
         try {
-            const response = await fetch(url, {
-                method: "GET",
-                headers: {
-                    "Authorization": `Bearer ${accessToken}`,
-                    "Content-Type": "application/json",
-                },
-            });
-
-            if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
-
-            const data: ContactListResponse = await response.json();
+            const urlObj = new URL(url);
+            const pathWithQuery = urlObj.pathname + urlObj.search;
+            const response = await api.get(pathWithQuery);
+            const data: ContactListResponse = response.data;
             setTotalContacts(data.count);
             setContacts(data.results);
             setNextPage(data.next);

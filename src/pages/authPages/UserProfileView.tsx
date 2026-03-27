@@ -1,5 +1,6 @@
 import Select from "react-select";
 import { toast } from "react-toastify";
+import api from "../../controllers/api";
 import { UserTasks } from "./UserTasks";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -54,7 +55,7 @@ export function UserProfileView() {
     
         const loadRoles = async () => {
             try {
-                const rolesData = await fetchRoles(accessToken);
+                const rolesData = await fetchRoles();
                 setRoles(rolesData);
                 setSelectedRoles([]);
             } catch {
@@ -99,20 +100,8 @@ export function UserProfileView() {
     
         const fetchUserData = async () => {
             try {
-                const response = await fetch(
-                    `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/users/detail/${userId}`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                            "Content-Type": "application/json",
-                        },
-                    }
-                );
-    
-                if (!response.ok) throw new Error("Failed to fetch user data");
-    
-                const data: UserProfile = await response.json();
+                const response = await api.get(`/auth/users/detail/${userId}`);
+                const data: UserProfile = response.data;
                 setUserData(data);
     
                 setFormData({
@@ -201,25 +190,8 @@ export function UserProfileView() {
                 role_ids: newRoleIds,
             };
 
-            const response = await fetch(
-                `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/users/detail/${userId}/`,
-                {
-                    method: "PUT",
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(updatedFormData),
-                }
-            );
-
-            if (!response.ok) {
-                // Try extracting error response
-                const errorData = await response.json().catch(() => null);
-                throw { status: response.status, data: errorData };
-            }
-
-            const updatedData = await response.json();
+            const response = await api.put(`/auth/users/detail/${userId}/`, updatedFormData);
+            const updatedData = response.data;
             setUserData(updatedData);
             
             // Re-fetch user activities to update the log
@@ -236,8 +208,8 @@ export function UserProfileView() {
                 authStore.updateRoles(updatedData.roles);
             }
         } catch (error) {
-            const axiosError = error as object & { data?: object };
-            showResponseErrors(axiosError.data, "Hubo un error al actualizar el perfil.");
+            const axiosError = error as any;
+            showResponseErrors(axiosError.response?.data, "Hubo un error al actualizar el perfil.");
         } finally {
             setLoading(false);
         }

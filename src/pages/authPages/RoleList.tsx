@@ -1,4 +1,5 @@
 import { toast } from "react-toastify";
+import api from "../../controllers/api";
 import { BasePermissions, Role, RolePermission } from "../../types/authTypes";
 import { fetchRoles } from '../../utils/authUtils';
 import { useEffect, useState, useRef } from "react";
@@ -35,7 +36,7 @@ export function RoleList() {
 
         const loadRoles = async () => {
             try {
-                const rolesData = await fetchRoles(accessToken);
+                const rolesData = await fetchRoles();
                 setRoles(rolesData);
                 setFilteredRoles(rolesData);
             } catch {
@@ -64,7 +65,7 @@ export function RoleList() {
 
     const loadRoles = async () => {
         try {
-            const rolesData = await fetchRoles(accessToken || '');
+            const rolesData = await fetchRoles();
             setRoles(rolesData);
             setFilteredRoles(rolesData);
         } catch {
@@ -76,18 +77,7 @@ export function RoleList() {
         if (!selectedRole) return;
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/manage/system-roles/${selectedRole.id_rol}/`, {
-                method: "DELETE",
-                headers: {
-                    "Authorization": `Bearer ${accessToken}`,
-                    "Content-Type": "application/json",
-                },
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message);
-            }
+            await api.delete(`/auth/manage/system-roles/${selectedRole.id_rol}/`);
 
             toast.warning("Rol eliminado.");
             setShowModal(false);
@@ -97,8 +87,10 @@ export function RoleList() {
             await loadRoles();
             setLoading(false);
         } catch (error) {
-            if (error instanceof Error) {
-                toast.error(`${error.message}`);
+            const axiosError = error as any;
+            const errorMessage = axiosError.response?.data?.message;
+            if (errorMessage) {
+                toast.error(`${errorMessage}`);
             } else {
                 toast.error("Ha ocurrido un error al eliminar el rol, por favor, intente más tarde...");
             }
@@ -109,21 +101,9 @@ export function RoleList() {
         if (!selectedRole) return;
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/manage/system-roles/create/`, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${accessToken}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ 
-                    nombre_rol: selectedRole.nombre_rol
-                }),
+            await api.post(`/auth/manage/system-roles/create/`, { 
+                nombre_rol: selectedRole.nombre_rol
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message);
-            }
 
             toast.success("Nuevo rol creado exitosamente.");
             setShowModal(false);
@@ -133,8 +113,10 @@ export function RoleList() {
             await loadRoles();
             setLoading(false);
         } catch (error) {
-            if (error instanceof Error) {
-                toast.error(`${error.message}`);
+            const axiosError = error as any;
+            const errorMessage = axiosError.response?.data?.message;
+            if (errorMessage) {
+                toast.error(`${errorMessage}`);
             } else {
                 toast.error("Ha ocurrido un error al crear el rol, por favor, intente más tarde...");
             }

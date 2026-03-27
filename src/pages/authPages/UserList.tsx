@@ -8,11 +8,12 @@ import { Spinner } from "../../components/ui/Spinner";
 import { useSidebarStore } from "../../stores/sidebarStore";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { User, UserListResponse, Role } from "../../types/authTypes";
-import { SidebarLayout } from "../../components/layouts/SidebarLayout";
+import api from "../../controllers/api";
 import { FilterSidebar } from "../../components/ui/forms/FilterSidebar";
 import { AnimatedNumberCounter } from "../../components/ui/AnimatedNumberCounter";
 import { Branch } from "../../types/branchTypes";
 import { fetchBranches } from "../../controllers/branchControllers";
+import { SidebarLayout } from "../../components/layouts/SidebarLayout";
 
 export function UserList() {
     // Global States
@@ -63,17 +64,10 @@ export function UserList() {
         }
 
         try {
-            const response = await fetch(url, {
-                method: "GET",
-                headers: {
-                    "Authorization": `Bearer ${accessToken}`,
-                    "Content-Type": "application/json",
-                },
-            });
-
-            if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
-
-            const data: UserListResponse = await response.json();
+            const urlObj = new URL(url);
+            const pathWithQuery = urlObj.pathname + urlObj.search;
+            const response = await api.get(pathWithQuery);
+            const data: UserListResponse = response.data;
             setTotalUsers(data.count);
             setUsers(prevUsers => isLoadMore ? [...prevUsers, ...data.results] : data.results);
             setNextPage(data.next);
@@ -107,7 +101,7 @@ export function UserList() {
 
         const loadRoles = async () => {
             try {
-                const rolesData = await fetchRoles(accessToken);
+                const rolesData = await fetchRoles();
                 setRoles(rolesData);
                 setSelectedRoles([]);
             } catch {

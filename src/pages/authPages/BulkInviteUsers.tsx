@@ -36,7 +36,7 @@ export function BulkInviteUsers() {
         if (roles.length > 0) return;
         const loadRoles = async () => {
             try {
-                const rolesData = await fetchRoles(accessToken);
+                const rolesData = await fetchRoles();
                 setRoles(rolesData);
             } catch {
                 toast.error("No se pudieron obtener los roles.");
