@@ -64,9 +64,7 @@ export function UserList() {
         }
 
         try {
-            const urlObj = new URL(url);
-            const pathWithQuery = urlObj.pathname + urlObj.search;
-            const response = await api.get(pathWithQuery);
+            const response = await api.get(url);
             const data: UserListResponse = response.data;
             setTotalUsers(data.count);
             setUsers(prevUsers => isLoadMore ? [...prevUsers, ...data.results] : data.results);
