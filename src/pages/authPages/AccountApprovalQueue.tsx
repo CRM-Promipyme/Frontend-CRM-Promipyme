@@ -50,7 +50,7 @@ export function AccountApprovalQueue() {
     const tableRef = useRef<HTMLDivElement | null>(null);
 
     const buildQueryUrl = useCallback(() => {
-        let url = `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/auth/accounts/approval-queue/?`;
+        let url = `/auth/accounts/approval-queue/?`;
 
         if (searchName) url += `name=${searchName}&`;
         if (searchEmail) url += `email=${searchEmail}&`;
@@ -68,9 +68,7 @@ export function AccountApprovalQueue() {
         }
 
         try {
-            const urlObj = new URL(url);
-            const pathWithQuery = urlObj.pathname + urlObj.search;
-            const response = await api.get(pathWithQuery);
+            const response = await api.get(url);
             const data: PendingAccountResponse = response.data;
             setTotalAccs(data.count);
             setPendingAccounts(prevAccs => isLoadMore ? [...prevAccs, ...data.results] : data.results);

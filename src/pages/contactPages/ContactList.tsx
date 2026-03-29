@@ -35,7 +35,7 @@ export function ContactList() {
 
     // Construct API URL with filters
     const buildQueryUrl = useCallback(() => {
-        let url = `${import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL}/contacts/list/?`;
+        let url = `/contacts/list/?`;
 
         if (searchName) url += `nombre=${searchName}&`;
         if (searchEmail) url += `email=${searchEmail}&`;
@@ -57,9 +57,7 @@ export function ContactList() {
         setLoading(true);
 
         try {
-            const urlObj = new URL(url);
-            const pathWithQuery = urlObj.pathname + urlObj.search;
-            const response = await api.get(pathWithQuery);
+            const response = await api.get(url);
             const data: ContactListResponse = response.data;
             setTotalContacts(data.count);
             setContacts(data.results);
