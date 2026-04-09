@@ -13,7 +13,7 @@ import { useAuthStore } from "../../stores/authStore";
 import { Branch } from "../../types/branchTypes";
 import { Spinner } from "../../components/ui/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Role, UserProfile } from "../../types/authTypes";
+import { Role, UserProfile, RolePermission } from "../../types/authTypes";
 import { useSidebarStore } from "../../stores/sidebarStore";
 import { showResponseErrors } from "../../utils/formatUtils";
 import { ActivityLog } from "../../components/ui/ActivityLog";
@@ -42,6 +42,7 @@ export function UserProfileView() {
     const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
     const [userActivities, setUserActivities] = useState<Activity[]>([]);
     const [activeTab, setActiveTab] = useState<string>("cuenta");
+    const [userPermissions, setUserPermissions] = useState<RolePermission[]>([]);
 
     // Fetch roles al cargar el componente
     useEffect(() => {
@@ -65,6 +66,42 @@ export function UserProfileView() {
 
         loadRoles();
     }, [accessToken, roles.length, userId]);
+
+    // Fetch user activities on component mount
+    useEffect(() => {
+        if (!userId) return;
+
+        const loadActivities = async () => {
+            try {
+                const activitiesResponse = await fetchEntityActivities("user", userId);
+                if (activitiesResponse && activitiesResponse.results) {
+                    setUserActivities(activitiesResponse.results);
+                }
+            } catch (error) {
+                console.error("Error fetching user activities:", error);
+            }
+        };
+
+        loadActivities();
+    }, [userId]);
+
+    // Fetch user permissions
+    useEffect(() => {
+        if (!userId) return;
+
+        const loadPermissions = async () => {
+            try {
+                const response = await api.get(`/auth/manage/system-roles/permissions/user/${userId}/`);
+                const permissions = response.data.role_permissions;
+                setUserPermissions(permissions);
+                console.log("User permissions:", permissions);
+            } catch (error) {
+                console.error("Error fetching user permissions:", error);
+            }
+        };
+
+        loadPermissions();
+    }, [userId]);
 
     // Fetch branches al cargar el componente
     useEffect(() => {
@@ -438,6 +475,8 @@ export function UserProfileView() {
                                                         isDisabled={!editMode}
                                                         className="react-select-container"
                                                         classNamePrefix="react-select"
+                                                        menuPortalTarget={typeof document !== 'undefined' ? document.body : undefined}
+                                                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                                                     />
                                                 </div>
                                             </div>
@@ -454,6 +493,176 @@ export function UserProfileView() {
                                         <h4 className="h4-header">Tareas Asignadas</h4>
                                     </div>
                                     <UserTasks userId={userId || ""} />
+                                </motion.div>
+
+                                <motion.div
+                                    initial={{ opacity: 0 }} 
+                                    animate={{ opacity: 1 }} 
+                                    transition={{ duration: 0.5 }} 
+                                    className="card-body shadow-sm"
+                                >
+                                    <div className="user-profile-header">
+                                        <h4 className="h4-header">Permisos Asignados</h4>
+                                    </div>
+                                    {userPermissions.length > 0 && (
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ duration: 0.5 }}
+                                        >
+                                            <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", marginTop: "16px" }}>
+                                                {/* Reportes */}
+                                                <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "14px", minWidth: "180px" }}>
+                                                    <div style={{ fontWeight: 500, marginBottom: 8, fontSize: "13px" }}>
+                                                        <i className="bi bi-file-earmark-bar-graph" style={{ marginRight: 6 }} /> Reportes
+                                                    </div>
+                                                    <div style={{ fontSize: "12px" }}>
+                                                        {userPermissions.some(rp => rp.base_permissions.visualize_reports) && (
+                                                            <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                                                                <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "2px", backgroundColor: "#198754", marginRight: "6px" }}></span>
+                                                                Ver Reportes
+                                                            </div>
+                                                        )}
+                                                        {userPermissions.some(rp => rp.base_permissions.export_reports) && (
+                                                            <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                                                                <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "2px", backgroundColor: "#198754", marginRight: "6px" }}></span>
+                                                                Exportar Reportes
+                                                            </div>
+                                                        )}
+                                                        {!userPermissions.some(rp => rp.base_permissions.visualize_reports || rp.base_permissions.export_reports) && (
+                                                            <div style={{ color: "#999", fontSize: "11px" }}>Sin permisos</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Contactos */}
+                                                <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "14px", minWidth: "180px" }}>
+                                                    <div style={{ fontWeight: 500, marginBottom: 8, fontSize: "13px" }}>
+                                                        <i className="bi bi-people" style={{ marginRight: 6 }} /> Contactos
+                                                    </div>
+                                                    <div style={{ fontSize: "12px" }}>
+                                                        {userPermissions.some(rp => rp.base_permissions.modify_contact_fields) && (
+                                                            <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                                                                <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "2px", backgroundColor: "#198754", marginRight: "6px" }}></span>
+                                                                Modificar Campos
+                                                            </div>
+                                                        )}
+                                                        {userPermissions.some(rp => rp.base_permissions.create_contacts) && (
+                                                            <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                                                                <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "2px", backgroundColor: "#198754", marginRight: "6px" }}></span>
+                                                                Crear Contactos
+                                                            </div>
+                                                        )}
+                                                        {userPermissions.some(rp => rp.base_permissions.delete_contacts) && (
+                                                            <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                                                                <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "2px", backgroundColor: "#198754", marginRight: "6px" }}></span>
+                                                                Eliminar Contactos
+                                                            </div>
+                                                        )}
+                                                        {!userPermissions.some(rp => rp.base_permissions.modify_contact_fields || rp.base_permissions.create_contacts || rp.base_permissions.delete_contacts) && (
+                                                            <div style={{ color: "#999", fontSize: "11px" }}>Sin permisos</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Usuarios */}
+                                                <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "14px", minWidth: "180px" }}>
+                                                    <div style={{ fontWeight: 500, marginBottom: 8, fontSize: "13px" }}>
+                                                        <i className="bi bi-person-gear" style={{ marginRight: 6 }} /> Usuarios
+                                                    </div>
+                                                    <div style={{ fontSize: "12px" }}>
+                                                        {userPermissions.some(rp => rp.base_permissions.invite_users) && (
+                                                            <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                                                                <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "2px", backgroundColor: "#198754", marginRight: "6px" }}></span>
+                                                                Invitar Usuarios
+                                                            </div>
+                                                        )}
+                                                        {userPermissions.some(rp => rp.base_permissions.see_user_list) && (
+                                                            <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                                                                <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "2px", backgroundColor: "#198754", marginRight: "6px" }}></span>
+                                                                Ver Lista de Usuarios
+                                                            </div>
+                                                        )}
+                                                        {userPermissions.some(rp => rp.base_permissions.approve_accounts) && (
+                                                            <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                                                                <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "2px", backgroundColor: "#198754", marginRight: "6px" }}></span>
+                                                                Aprobar Cuentas
+                                                            </div>
+                                                        )}
+                                                        {userPermissions.some(rp => rp.base_permissions.deny_accounts) && (
+                                                            <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                                                                <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "2px", backgroundColor: "#198754", marginRight: "6px" }}></span>
+                                                                Rechazar Cuentas
+                                                            </div>
+                                                        )}
+                                                        {!userPermissions.some(rp => rp.base_permissions.invite_users || rp.base_permissions.see_user_list || rp.base_permissions.approve_accounts || rp.base_permissions.deny_accounts) && (
+                                                            <div style={{ color: "#999", fontSize: "11px" }}>Sin permisos</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Roles */}
+                                                <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "14px", minWidth: "180px" }}>
+                                                    <div style={{ fontWeight: 500, marginBottom: 8, fontSize: "13px" }}>
+                                                        <i className="bi bi-shield-lock" style={{ marginRight: 6 }} /> Roles
+                                                    </div>
+                                                    <div style={{ fontSize: "12px" }}>
+                                                        {userPermissions.some(rp => rp.base_permissions.create_roles) && (
+                                                            <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                                                                <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "2px", backgroundColor: "#198754", marginRight: "6px" }}></span>
+                                                                Crear Roles
+                                                            </div>
+                                                        )}
+                                                        {userPermissions.some(rp => rp.base_permissions.update_roles) && (
+                                                            <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                                                                <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "2px", backgroundColor: "#198754", marginRight: "6px" }}></span>
+                                                                Actualizar Roles
+                                                            </div>
+                                                        )}
+                                                        {userPermissions.some(rp => rp.base_permissions.delete_roles) && (
+                                                            <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                                                                <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "2px", backgroundColor: "#198754", marginRight: "6px" }}></span>
+                                                                Eliminar Roles
+                                                            </div>
+                                                        )}
+                                                        {!userPermissions.some(rp => rp.base_permissions.create_roles || rp.base_permissions.update_roles || rp.base_permissions.delete_roles) && (
+                                                            <div style={{ color: "#999", fontSize: "11px" }}>Sin permisos</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Sucursales */}
+                                                <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "14px", minWidth: "180px" }}>
+                                                    <div style={{ fontWeight: 500, marginBottom: 8, fontSize: "13px" }}>
+                                                        <i className="bi bi-building" style={{ marginRight: 6 }} /> Sucursales
+                                                    </div>
+                                                    <div style={{ fontSize: "12px" }}>
+                                                        {userPermissions.some(rp => rp.base_permissions.create_branches) && (
+                                                            <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                                                                <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "2px", backgroundColor: "#198754", marginRight: "6px" }}></span>
+                                                                Crear Sucursales
+                                                            </div>
+                                                        )}
+                                                        {userPermissions.some(rp => rp.base_permissions.update_branches) && (
+                                                            <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                                                                <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "2px", backgroundColor: "#198754", marginRight: "6px" }}></span>
+                                                                Actualizar Sucursales
+                                                            </div>
+                                                        )}
+                                                        {userPermissions.some(rp => rp.base_permissions.delete_branches) && (
+                                                            <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                                                                <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "2px", backgroundColor: "#198754", marginRight: "6px" }}></span>
+                                                                Eliminar Sucursales
+                                                            </div>
+                                                        )}
+                                                        {!userPermissions.some(rp => rp.base_permissions.create_branches || rp.base_permissions.update_branches || rp.base_permissions.delete_branches) && (
+                                                            <div style={{ color: "#999", fontSize: "11px" }}>Sin permisos</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
                                 </motion.div>
                             </div>
 

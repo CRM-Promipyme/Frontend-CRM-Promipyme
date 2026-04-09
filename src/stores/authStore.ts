@@ -14,6 +14,7 @@ interface AuthState {
     retrievePermissions: () => Promise<RolePermission[]>;
     isAdmin: () => boolean;
     updateRoles: (roles: Role[]) => void;
+    refreshRoles: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -80,6 +81,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     },
 
+    refreshRoles: async (): Promise<void> => {
+        try {
+            const userId = get().userId;
+            if (!userId) return;
+            
+            const response = await api.get(`/auth/users/detail/${userId}/`);
+            const freshRoles = response.data.roles;
+            
+            set({ roles: freshRoles });
+            localStorage.setItem("roles", JSON.stringify(freshRoles));
+        } catch (error) {
+            console.error("Error refreshing roles:", error);
+        }
+    },
+
     retrievePermissions: async (): Promise<RolePermission[]> => {
         try {
             const response = await api.get(`/auth/manage/system-roles/permissions/user/${get().userId}/`);
@@ -93,6 +109,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     isAdmin: () => {
-        return get().roles.some(role => role.nombre_rol === "Administrador");
+        const roles = get().roles;
+        return roles.some(role => role.nombre_rol === "Administrador");
     }
 }));

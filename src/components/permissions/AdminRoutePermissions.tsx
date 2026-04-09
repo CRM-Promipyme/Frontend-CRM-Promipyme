@@ -18,33 +18,52 @@ export function AdminRoutePermissions({ children, requiredBasePermissions, fallb
 
     useEffect(() => {
         let isMounted = true;
-        authStore.isAuthenticated()
-            .then(async (result) => {
-                if (!isMounted) return;
-                setAuthenticated(result);
-                if (!result) {
-                    toast.error("Tu sesión ha expirado, inicia sesión nuevamente.");
-                    setAllowed(false);
-                } else if (authStore.isAdmin()) {
-                    setAllowed(true);
-                } else if (requiredBasePermissions.length < 1) {
-                    // not allowed if no permissions are required and not admin
-                    toast.warning("No tienes permisos para acceder a esta página.");
-                    setAllowed(false);
-                } else {
-                    const permissions = await authStore.retrievePermissions();
-                    const hasPermission = permissions.some((perm: RolePermission) =>
-                        perm.base_permissions &&
-                        requiredBasePermissions.some(
-                            (permName) => perm.base_permissions[permName as keyof typeof perm.base_permissions]
-                        )
-                    );
-                    if (!hasPermission) {
-                        toast.warning("No tienes permisos para acceder a esta página.");
+        
+        (async () => {
+            // First, refresh roles once to get fresh data
+            await authStore.refreshRoles();
+            
+            const isAuth = await authStore.isAuthenticated();
+            if (!isMounted) return;
+            
+            setAuthenticated(isAuth);
+            if (!isAuth) {
+                toast.error("Tu sesión ha expirado, inicia sesión nuevamente.");
+                setAllowed(false);
+            } else if (authStore.isAdmin()) {
+                setAllowed(true);
+            } else if (requiredBasePermissions.length < 1) {
+                // not allowed if no permissions are required and not admin
+                toast.warning("No tienes permisos para acceder a esta página.");
+                setAllowed(false);
+            } else {
+                const permissions = await authStore.retrievePermissions();
+                console.log("User permissions:", permissions);
+                console.log("Required permissions:", requiredBasePermissions);
+                
+                const hasPermission = permissions.some((perm: RolePermission) => {
+                    if (!perm.base_permissions) {
+                        console.log("No base_permissions found");
+                        return false;
                     }
-                    setAllowed(hasPermission);
+                    
+                    const hasRequiredPerm = requiredBasePermissions.some((permName) => {
+                        const permValue = perm.base_permissions[permName as keyof typeof perm.base_permissions];
+                        console.log(`Checking ${permName}: ${permValue}`);
+                        return !!permValue; // Explicitly check for truthiness
+                    });
+                    
+                    console.log("Has required permission:", hasRequiredPerm);
+                    return hasRequiredPerm;
+                });
+                
+                console.log("Final permission result:", hasPermission);
+                if (!hasPermission) {
+                    toast.warning("No tienes permisos para acceder a esta página.");
                 }
-            })
+                setAllowed(hasPermission);
+            }
+        })()
             .catch(err => {
                 console.error(err);
                 toast.error("Error al verificar permisos. Intenta nuevamente.");
@@ -53,8 +72,9 @@ export function AdminRoutePermissions({ children, requiredBasePermissions, fallb
             .finally(() => {
                 if (isMounted) setLoading(false);
             });
+        
         return () => { isMounted = false; };
-    }, [requiredBasePermissions, authStore]);
+    }, [JSON.stringify(requiredBasePermissions)]);
 
     if (loading) return null;
 

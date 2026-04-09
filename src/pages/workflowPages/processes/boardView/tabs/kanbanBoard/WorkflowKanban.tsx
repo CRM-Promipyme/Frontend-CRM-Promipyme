@@ -111,7 +111,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     
         // Check for admin privileges or permissions
         let allowed = false;
-        if (authStore.isAdmin()) {
+        if (await authStore.isAdmin()) {
             allowed = true;
         } else {
             const permissions = await authStore.retrievePermissions();
@@ -172,11 +172,11 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
                     clearTimeout(debounceTimer.current);
                 }
                 
-                debounceTimer.current = setTimeout(() => {
+                debounceTimer.current = setTimeout(async () => {
                     setColor(process.color);
                     
                     // Only include allowed etapas
-                    const allowedEtapas = isAdmin
+                    const allowedEtapas = await isAdmin
                         ? process.etapas
                         : process.etapas.filter(etapa => {
                             const allowedStageIds: number[] = permissions
