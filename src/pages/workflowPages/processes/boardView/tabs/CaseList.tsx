@@ -275,11 +275,18 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                                     </div>
                                 </div>
 
-                                {caseObj.abierto ? (
-                                    <span className="case-status-badge case-open">Abierto</span>
-                                ) : (
-                                    <span className="case-status-badge case-closed">Cerrado</span>
-                                )}
+                                <div style={{ display: "flex", gap: "8px" }}>
+                                    {caseObj.abierto ? (
+                                        <span className="case-status-badge case-open">Abierto</span>
+                                    ) : (
+                                        <>
+                                            <span className="case-status-badge case-closed">Cerrado</span>
+                                            <span className={`case-status-badge ${caseObj.exitoso ? "case-success" : "case-failed"}`}>
+                                                {caseObj.exitoso ? "Exitoso" : "No exitoso"}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         ))
                     ) : (

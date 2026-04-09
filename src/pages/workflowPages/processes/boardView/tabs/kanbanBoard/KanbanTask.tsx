@@ -75,11 +75,18 @@ export function KanbanTask({ case: kanbanCase, columnId, isOverlay = false }: Ka
                 </div>
             </div>
 
-            {kanbanCase.abierto ? (
-                <span className="case-status-badge case-open">Abierto</span>
-            ) : (
-                <span className="case-status-badge case-closed">Cerrado</span>
-            )}
+            <div style={{ display: "flex", gap: "8px" }}>
+                {kanbanCase.abierto ? (
+                    <span className="case-status-badge case-open">Abierto</span>
+                ) : (
+                    <>
+                        <span className="case-status-badge case-closed">Cerrado</span>
+                        <span className={`case-status-badge ${kanbanCase.exitoso ? "case-success" : "case-failed"}`}>
+                            {kanbanCase.exitoso ? "Exitoso" : "No exitoso"}
+                        </span>
+                    </>
+                )}
+            </div>
         </div>
     );
 }

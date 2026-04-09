@@ -156,7 +156,7 @@ export function WorkflowSelectionMenu() {
                             <Link to={`/workflows/board-view/${process.id_proceso}`} style={{ textDecoration: 'none', width: '400px' }}>
                                 <span className="badge workflow-badge-bg" style={{ backgroundColor: lowerColorOpacity(process.color, 0.2), width: '100%' }}>
                                     <p style={{ color: process.color }}>{process.nombre_proceso}</p>
-                                    <p style={{ color: process.color }}>{process.etapas.length}</p>
+                                    {/* <p style={{ color: process.color }}>{process.etapas.length}</p> */}
                                 </span>
                                 {/* TODO: Status shouldn't be hardcoded */}
                                 <span className="status-badge" style={{ marginLeft: '10px' }}>Activo</span> 

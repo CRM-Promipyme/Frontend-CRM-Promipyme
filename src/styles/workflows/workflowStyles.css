@@ -246,6 +246,16 @@
     color: #E00B0B;
 }
 
+.case-status-badge.case-success {
+    background-color: #EBFCF4;
+    color: #0F7E5E;
+}
+
+.case-status-badge.case-failed {
+    background-color: #FFF3CD;
+    color: #856404;
+}
+
 .case-contact-information {
     display: flex;
     flex-direction: row;

@@ -234,6 +234,9 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                 ) : (
                                     <div className="case-status">
                                         <span className="case-status-badge case-closed">Cerrado</span>
+                                        <span className={`case-status-badge ${selectedCase.exitoso ? "case-success" : "case-failed"}`}>
+                                            {selectedCase.exitoso ? "Exitoso" : "No exitoso"}
+                                        </span>
                                     </div>
                                 )}
                             </div>
