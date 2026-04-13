@@ -151,174 +151,274 @@ export function UpdateCase() {
         <SidebarLayout sidebarWidthPx={sidebarWidthPx}>
             <h1 className="page-title">Actualizar Caso</h1>
             <div className="case-creation-content">
-                <div className="workflow-form-card card-body">
-                    <form onSubmit={handleSubmit} className="p-3" style={{ width: "100%" }}>
-                        <div className="mb-3">
-                            <label>Nombre del Caso</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                value={caseName}
-                                onChange={(e) => setCaseName(e.target.value)}
-                                required
-                            />
-                        </div>
+                <div className="workflow-form-card card-body" style={{ maxWidth: '900px', margin: '0 auto' }}>
+                    <form onSubmit={handleSubmit} className="p-4" style={{ width: "100%" }}>
+                        {/* BASIC INFORMATION SECTION */}
+                        <div style={{ marginBottom: '40px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', paddingBottom: '15px', borderBottom: '2px solid #f0f0f0' }}>
+                                <i className="bi bi-file-text" style={{ fontSize: '24px', color: '#0d6efd', marginRight: '10px' }}></i>
+                                <h5 style={{ margin: 0, fontWeight: 600, color: '#212529' }}>Información Básica</h5>
+                            </div>
 
-                        <div className="mb-3">
-                            <label>Descripción del Caso</label>
-                            <textarea
-                                className="form-control"
-                                value={caseDescription}
-                                onChange={(e) => setCaseDescription(e.target.value)}
-                                rows={3}
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label>Valor del Caso (RD$)</label>
-                            <input
-                                type="text"
-                                className={`form-control ${parseFloat(caseValue.replace(/,/g, '')) < 0 ? 'is-invalid' : ''}`}
-                                value={caseValue ? formatNumber(caseValue) : ''}
-                                onChange={(e) => {
-                                    // Solo permitir números y punto decimal
-                                    const value = e.target.value.replace(/[^\d.]/g, '');
-                                    setCaseValue(value);
-                                }}
-                            />
-                            {parseFloat(caseValue.replace(/,/g, '')) < 0 && (
-                                <div className="text-danger mt-1" style={{ fontSize: "0.9rem" }}>
-                                    El valor no puede ser negativo.
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mb-3">
-                            <label>Valor Aprobado (RD$)</label>
-                            <input
-                                type="text"
-                                className={`form-control ${approvedValue && parseFloat(approvedValue.replace(/,/g, '')) < 0 ? 'is-invalid' : ''}`}
-                                value={approvedValue ? formatNumber(approvedValue) : ''}
-                                onChange={(e) => {
-                                    const value = e.target.value.replace(/[^\d.]/g, '');
-                                    setApprovedValue(value);
-                                }}
-                            />
-                            {approvedValue && parseFloat(approvedValue.replace(/,/g, '')) < 0 && (
-                                <div className="text-danger mt-1" style={{ fontSize: "0.9rem" }}>
-                                    El valor no puede ser negativo.
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mb-3">
-                            <label>Valor Final (RD$)</label>
-                            <input
-                                type="text"
-                                className={`form-control ${finalValue && parseFloat(finalValue.replace(/,/g, '')) < 0 ? 'is-invalid' : ''}`}
-                                value={finalValue ? formatNumber(finalValue) : ''}
-                                onChange={(e) => {
-                                    const value = e.target.value.replace(/[^\d.]/g, '');
-                                    setFinalValue(value);
-                                }}
-                            />
-                            {finalValue && parseFloat(finalValue.replace(/,/g, '')) < 0 && (
-                                <div className="text-danger mt-1" style={{ fontSize: "0.9rem" }}>
-                                    El valor no puede ser negativo.
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mb-3">
-                            <label>Proceso</label>
-                            <Select
-                                options={processes.map(p => ({
-                                    value: p.id_proceso,
-                                    label: p.nombre_proceso
-                                }))}
-                                value={selectedProcessId ? {
-                                    value: selectedProcessId,
-                                    label: selectedProcess?.nombre_proceso || ""
-                                } : null}
-                                onChange={(opt) => {
-                                    setSelectedProcessId((opt as ContactOption)?.value ?? null);
-                                    setSelectedStageId(null);
-                                }}
-                                isClearable
-                                components={{ Menu: AnimatedSelectMenu }}
-                                menuPortalTarget={document.body}
-                                styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-                            />
-                        </div>
-
-                        {selectedProcess && (
                             <div className="mb-3">
-                                <label>Etapa</label>
+                                <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Nombre del Caso <span style={{ color: '#dc3545' }}>*</span></label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={caseName}
+                                    onChange={(e) => setCaseName(e.target.value)}
+                                    required
+                                    style={{ borderRadius: '8px', border: '1px solid #dee2e6', padding: '10px 12px' }}
+                                    placeholder="Ingresa el nombre del caso"
+                                />
+                            </div>
+
+                            <div className="mb-3">
+                                <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Descripción del Caso</label>
+                                <textarea
+                                    className="form-control"
+                                    value={caseDescription}
+                                    onChange={(e) => setCaseDescription(e.target.value)}
+                                    rows={3}
+                                    style={{ borderRadius: '8px', border: '1px solid #dee2e6', padding: '10px 12px' }}
+                                    placeholder="Describe el caso en detalle"
+                                />
+                            </div>
+
+                            <div className="mb-3">
+                                <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Valor del Caso (RD$)</label>
+                                <input
+                                    type="text"
+                                    className={`form-control ${parseFloat(caseValue.replace(/,/g, '')) < 0 ? 'is-invalid' : ''}`}
+                                    value={caseValue ? formatNumber(caseValue) : ''}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^\d.]/g, '');
+                                        setCaseValue(value);
+                                    }}
+                                    style={{ borderRadius: '8px', border: '1px solid #dee2e6', padding: '10px 12px' }}
+                                    placeholder="0.00"
+                                />
+                                {parseFloat(caseValue.replace(/,/g, '')) < 0 && (
+                                    <div className="text-danger mt-1" style={{ fontSize: "0.9rem" }}>
+                                        El valor no puede ser negativo.
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mb-3">
+                                <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Valor Aprobado (RD$)</label>
+                                <input
+                                    type="text"
+                                    className={`form-control ${approvedValue && parseFloat(approvedValue.replace(/,/g, '')) < 0 ? 'is-invalid' : ''}`}
+                                    value={approvedValue ? formatNumber(approvedValue) : ''}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^\d.]/g, '');
+                                        setApprovedValue(value);
+                                    }}
+                                    style={{ borderRadius: '8px', border: '1px solid #dee2e6', padding: '10px 12px' }}
+                                    placeholder="0.00"
+                                />
+                                {approvedValue && parseFloat(approvedValue.replace(/,/g, '')) < 0 && (
+                                    <div className="text-danger mt-1" style={{ fontSize: "0.9rem" }}>
+                                        El valor no puede ser negativo.
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mb-3">
+                                <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Valor Final (RD$)</label>
+                                <input
+                                    type="text"
+                                    className={`form-control ${finalValue && parseFloat(finalValue.replace(/,/g, '')) < 0 ? 'is-invalid' : ''}`}
+                                    value={finalValue ? formatNumber(finalValue) : ''}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^\d.]/g, '');
+                                        setFinalValue(value);
+                                    }}
+                                    style={{ borderRadius: '8px', border: '1px solid #dee2e6', padding: '10px 12px' }}
+                                    placeholder="0.00"
+                                />
+                                {finalValue && parseFloat(finalValue.replace(/,/g, '')) < 0 && (
+                                    <div className="text-danger mt-1" style={{ fontSize: "0.9rem" }}>
+                                        El valor no puede ser negativo.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* WORKFLOW SECTION */}
+                        <div style={{ marginBottom: '40px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', paddingBottom: '15px', borderBottom: '2px solid #f0f0f0' }}>
+                                <i className="bi bi-kanban" style={{ fontSize: '24px', color: '#0d6efd', marginRight: '10px' }}></i>
+                                <h5 style={{ margin: 0, fontWeight: 600, color: '#212529' }}>Flujo de Trabajo</h5>
+                            </div>
+
+                            <div className="mb-3">
+                                <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Proceso <span style={{ color: '#dc3545' }}>*</span></label>
                                 <Select
-                                    options={selectedProcess.etapas.map(e => ({
-                                        value: e.id_etapa,
-                                        label: e.nombre_etapa
+                                    options={processes.map(p => ({
+                                        value: p.id_proceso,
+                                        label: p.nombre_proceso
                                     }))}
-                                    value={selectedStageId ? {
-                                        value: selectedStageId,
-                                        label: selectedProcess.etapas.find(e => e.id_etapa === selectedStageId)?.nombre_etapa || ""
+                                    value={selectedProcessId ? {
+                                        value: selectedProcessId,
+                                        label: selectedProcess?.nombre_proceso || ""
                                     } : null}
-                                    onChange={(opt) => setSelectedStageId((opt as ContactOption)?.value ?? null)}
+                                    onChange={(opt) => {
+                                        setSelectedProcessId((opt as ContactOption)?.value ?? null);
+                                        setSelectedStageId(null);
+                                    }}
                                     isClearable
                                     components={{ Menu: AnimatedSelectMenu }}
                                     menuPortalTarget={document.body}
-                                    styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                    styles={{ 
+                                        menuPortal: base => ({ ...base, zIndex: 9999 }),
+                                        control: (base) => ({ ...base, borderRadius: '8px', border: '1px solid #dee2e6' }),
+                                    }}
                                 />
                             </div>
-                        )}
 
-                        <div className="mb-3">
-                            <label>Contacto</label>
-                            <AsyncSelect
-                                cacheOptions
-                                defaultOptions
-                                loadOptions={loadContactOptions}
-                                value={selectedContact}
-                                onChange={(opt) => setSelectedContact((opt as ContactOption) ?? null)}
-                                placeholder="Buscar contacto..."
-                                isClearable
-                                components={{ Menu: AnimatedSelectMenu }}
-                                menuPortalTarget={document.body}
-                                styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-                            />
+                            {selectedProcess && (
+                                <div className="mb-3">
+                                    <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Etapa <span style={{ color: '#dc3545' }}>*</span></label>
+                                    <Select
+                                        options={selectedProcess.etapas.map(e => ({
+                                            value: e.id_etapa,
+                                            label: e.nombre_etapa
+                                        }))}
+                                        value={selectedStageId ? {
+                                            value: selectedStageId,
+                                            label: selectedProcess.etapas.find(e => e.id_etapa === selectedStageId)?.nombre_etapa || ""
+                                        } : null}
+                                        onChange={(opt) => setSelectedStageId((opt as ContactOption)?.value ?? null)}
+                                        isClearable
+                                        components={{ Menu: AnimatedSelectMenu }}
+                                        menuPortalTarget={document.body}
+                                        styles={{ 
+                                            menuPortal: base => ({ ...base, zIndex: 9999 }),
+                                            control: (base) => ({ ...base, borderRadius: '8px', border: '1px solid #dee2e6' }),
+                                        }}
+                                    />
+                                </div>
+                            )}
                         </div>
 
-                        <div className="mb-3">
-                            <label>Fecha Estimada de Cierre</label>
-                            <input
-                                type="datetime-local"
-                                className="form-control"
-                                value={estimatedCloseDate}
-                                onChange={(e) => setEstimatedCloseDate(formatDatetimeForInput(e.target.value))}
-                            />
+                        {/* CONTACT SECTION */}
+                        <div style={{ marginBottom: '40px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', paddingBottom: '15px', borderBottom: '2px solid #f0f0f0' }}>
+                                <i className="bi bi-person-lines-fill" style={{ fontSize: '24px', color: '#0d6efd', marginRight: '10px' }}></i>
+                                <h5 style={{ margin: 0, fontWeight: 600, color: '#212529' }}>Contacto</h5>
+                            </div>
+
+                            <div className="mb-3">
+                                <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Contacto Principal <span style={{ color: '#dc3545' }}>*</span></label>
+                                <AsyncSelect
+                                    cacheOptions
+                                    defaultOptions
+                                    loadOptions={loadContactOptions}
+                                    value={selectedContact}
+                                    onChange={(opt) => setSelectedContact((opt as ContactOption) ?? null)}
+                                    placeholder="Buscar por cédula, nombre o email"
+                                    isClearable
+                                    components={{ Menu: AnimatedSelectMenu }}
+                                    menuPortalTarget={document.body}
+                                    styles={{ 
+                                        menuPortal: base => ({ ...base, zIndex: 9999 }),
+                                        control: (base) => ({ ...base, borderRadius: '8px', border: '1px solid #dee2e6' }),
+                                    }}
+                                />
+                            </div>
                         </div>
 
-                        <div className="mb-3">
-                            <label>Fecha Real de Cierre</label>
-                            <input
-                                type="datetime-local"
-                                className="form-control"
-                                value={closingDate}
-                                onChange={(e) => setClosingDate(formatDatetimeForInput(e.target.value))}
-                            />
+                        {/* DATES SECTION */}
+                        <div style={{ marginBottom: '40px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', paddingBottom: '15px', borderBottom: '2px solid #f0f0f0' }}>
+                                <i className="bi bi-calendar-event" style={{ fontSize: '24px', color: '#0d6efd', marginRight: '10px' }}></i>
+                                <h5 style={{ margin: 0, fontWeight: 600, color: '#212529' }}>Fechas</h5>
+                            </div>
+
+                            <div className="mb-3">
+                                <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Fecha Estimada de Cierre</label>
+                                <input
+                                    type="datetime-local"
+                                    className="form-control"
+                                    value={estimatedCloseDate}
+                                    onChange={(e) => setEstimatedCloseDate(formatDatetimeForInput(e.target.value))}
+                                    style={{ borderRadius: '8px', border: '1px solid #dee2e6', padding: '10px 12px', boxSizing: 'border-box', width: '100%' }}
+                                />
+                            </div>
+
+                            <div className="mb-3">
+                                <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Fecha Real de Cierre</label>
+                                <input
+                                    type="datetime-local"
+                                    className="form-control"
+                                    value={closingDate}
+                                    onChange={(e) => setClosingDate(formatDatetimeForInput(e.target.value))}
+                                    style={{ borderRadius: '8px', border: '1px solid #dee2e6', padding: '10px 12px', boxSizing: 'border-box', width: '100%' }}
+                                />
+                            </div>
                         </div>
 
-                        <div className="form-check form-switch mb-3">
-                            <input className="form-check-input" type="checkbox" id="openSwitch" checked={open} onChange={() => setOpen(prev => !prev)} />
-                            <label className="form-check-label" htmlFor="openSwitch">Caso Abierto</label>
+                        {/* STATUS SECTION */}
+                        <div style={{ marginBottom: '30px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', paddingBottom: '15px', borderBottom: '2px solid #f0f0f0' }}>
+                                <i className="bi bi-toggle-on" style={{ fontSize: '24px', color: '#0d6efd', marginRight: '10px' }}></i>
+                                <h5 style={{ margin: 0, fontWeight: 600, color: '#212529' }}>Estado</h5>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '30px' }}>
+                                <div className="form-check form-switch">
+                                    <input 
+                                        className="form-check-input" 
+                                        type="checkbox" 
+                                        id="openSwitch" 
+                                        checked={open} 
+                                        onChange={() => setOpen(prev => !prev)}
+                                        style={{ width: '3em', height: '1.5em', cursor: 'pointer' }}
+                                    />
+                                    <label className="form-check-label" htmlFor="openSwitch" style={{ cursor: 'pointer', fontWeight: 500, marginLeft: "5px" }}>
+                                        Caso Abierto
+                                    </label>
+                                </div>
+
+                                <div className="form-check form-switch">
+                                    <input 
+                                        className="form-check-input" 
+                                        type="checkbox" 
+                                        id="successSwitch" 
+                                        checked={successful} 
+                                        onChange={() => setSuccessful(prev => !prev)}
+                                        style={{ width: '3em', height: '1.5em', cursor: 'pointer' }}
+                                    />
+                                    <label className="form-check-label" htmlFor="successSwitch" style={{ cursor: 'pointer', fontWeight: 500, marginLeft: "5px" }}>
+                                        Caso Exitoso
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="form-check form-switch mb-3">
-                            <input className="form-check-input" type="checkbox" id="successSwitch" checked={successful} onChange={() => setSuccessful(prev => !prev)} />
-                            <label className="form-check-label" htmlFor="successSwitch">Caso Exitoso</label>
-                        </div>
-
-                        <button type="submit" className="btn btn-primary w-100">
+                        {/* SUBMIT BUTTON */}
+                        <button 
+                            type="submit" 
+                            className="btn btn-primary w-100"
+                            style={{
+                                borderRadius: '8px',
+                                padding: '12px 24px',
+                                fontWeight: 600,
+                                fontSize: '1rem',
+                                transition: 'all 0.3s ease',
+                                boxShadow: '0 2px 8px rgba(13, 110, 253, 0.15)'
+                            }}
+                            onMouseEnter={(e) => {
+                                (e.target as HTMLElement).style.boxShadow = '0 4px 16px rgba(13, 110, 253, 0.3)';
+                                (e.target as HTMLElement).style.transform = 'translateY(-2px)';
+                            }}
+                            onMouseLeave={(e) => {
+                                (e.target as HTMLElement).style.boxShadow = '0 2px 8px rgba(13, 110, 253, 0.15)';
+                                (e.target as HTMLElement).style.transform = 'translateY(0)';
+                            }}
+                        >
                             {loading ? <Spinner /> : "Actualizar Caso"}
                         </button>
                     </form>
