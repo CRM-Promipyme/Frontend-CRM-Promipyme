@@ -71,6 +71,8 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
         // Case Details Table
         const caseDetailsData = [
             ['Valor del Caso', `RD$ ${formatNumber(parseFloat(selectedCase.valor_caso))}`],
+            ...(selectedCase.valor_aprobado ? [['Valor Aprobado', `RD$ ${formatNumber(parseFloat(selectedCase.valor_aprobado))}`]] : []),
+            ...(selectedCase.valor_final ? [['Valor Final', `RD$ ${formatNumber(parseFloat(selectedCase.valor_final))}`]] : []),
             ['Contacto', `${selectedCase.contact_first_name} ${selectedCase.contact_last_name}`],
             ['Etapa Actual', selectedCase.etapa_actual && process.etapas.find((step) => step.id_etapa === selectedCase.etapa_actual) 
                 ? process.etapas.find((step) => step.id_etapa === selectedCase.etapa_actual)?.nombre_etapa || 'N/A'
@@ -323,6 +325,28 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                                 <p style={{ fontWeight: 700, fontSize: "1.5rem" }}>RD$ {formatNumber(parseFloat(selectedCase.valor_caso))}</p>
                                             </div>
                                         </div>
+                                        {selectedCase.valor_aprobado && (
+                                            <div className="case-item-container">
+                                                <div className="case-item-header">
+                                                    <i className="bi bi-check-circle"></i>
+                                                    <p>Valor Aprobado:</p>
+                                                </div>
+                                                <div className="case-item-body">
+                                                    <p style={{ fontWeight: 700, fontSize: "1.5rem" }}>RD$ {formatNumber(parseFloat(selectedCase.valor_aprobado))}</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {selectedCase.valor_final && (
+                                            <div className="case-item-container">
+                                                <div className="case-item-header">
+                                                    <i className="bi bi-flag-fill"></i>
+                                                    <p>Valor Final:</p>
+                                                </div>
+                                                <div className="case-item-body">
+                                                    <p style={{ fontWeight: 700, fontSize: "1.5rem" }}>RD$ {formatNumber(parseFloat(selectedCase.valor_final))}</p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                     <Link 
                                         to={`/contacts/details/${selectedCase.contact}`} 

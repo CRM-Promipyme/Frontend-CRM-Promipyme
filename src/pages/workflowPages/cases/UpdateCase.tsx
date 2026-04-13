@@ -41,6 +41,8 @@ export function UpdateCase() {
     const [caseName, setCaseName] = useState("");
     const [caseDescription, setCaseDescription] = useState("");
     const [caseValue, setCaseValue] = useState("");
+    const [approvedValue, setApprovedValue] = useState("");
+    const [finalValue, setFinalValue] = useState("");
     const [estimatedCloseDate, setEstimatedCloseDate] = useState("");
     const [closingDate, setClosingDate] = useState("");
     const [open, setOpen] = useState(true);
@@ -66,6 +68,8 @@ export function UpdateCase() {
                 setCaseName(c.nombre_caso);
                 setCaseDescription(c.descripcion_caso);
                 setCaseValue(c.valor_caso);
+                setApprovedValue(c.valor_aprobado || "");
+                setFinalValue(c.valor_final || "");
                 setEstimatedCloseDate(formatDatetimeForInput(c.fecha_cierre_estimada) || "");
                 setClosingDate(formatDatetimeForInput(c.fecha_cierre) || "");
                 setOpen(c.abierto);
@@ -97,6 +101,8 @@ export function UpdateCase() {
             case_name: caseName,
             case_description: caseDescription,
             case_value: caseValue.replace(/,/g, ''), // Remove commas before sending
+            valor_aprobado: approvedValue.replace(/,/g, '') || null,
+            valor_final: finalValue.replace(/,/g, '') || null,
             case_estimated_close_date: estimatedCloseDate,
             closing_date: closingDate,
             open,
@@ -181,6 +187,42 @@ export function UpdateCase() {
                                 }}
                             />
                             {parseFloat(caseValue.replace(/,/g, '')) < 0 && (
+                                <div className="text-danger mt-1" style={{ fontSize: "0.9rem" }}>
+                                    El valor no puede ser negativo.
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mb-3">
+                            <label>Valor Aprobado (RD$)</label>
+                            <input
+                                type="text"
+                                className={`form-control ${approvedValue && parseFloat(approvedValue.replace(/,/g, '')) < 0 ? 'is-invalid' : ''}`}
+                                value={approvedValue ? formatNumber(approvedValue) : ''}
+                                onChange={(e) => {
+                                    const value = e.target.value.replace(/[^\d.]/g, '');
+                                    setApprovedValue(value);
+                                }}
+                            />
+                            {approvedValue && parseFloat(approvedValue.replace(/,/g, '')) < 0 && (
+                                <div className="text-danger mt-1" style={{ fontSize: "0.9rem" }}>
+                                    El valor no puede ser negativo.
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mb-3">
+                            <label>Valor Final (RD$)</label>
+                            <input
+                                type="text"
+                                className={`form-control ${finalValue && parseFloat(finalValue.replace(/,/g, '')) < 0 ? 'is-invalid' : ''}`}
+                                value={finalValue ? formatNumber(finalValue) : ''}
+                                onChange={(e) => {
+                                    const value = e.target.value.replace(/[^\d.]/g, '');
+                                    setFinalValue(value);
+                                }}
+                            />
+                            {finalValue && parseFloat(finalValue.replace(/,/g, '')) < 0 && (
                                 <div className="text-danger mt-1" style={{ fontSize: "0.9rem" }}>
                                     El valor no puede ser negativo.
                                 </div>
