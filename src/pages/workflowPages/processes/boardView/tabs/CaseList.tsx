@@ -30,6 +30,7 @@ export function CaseList({ process }: WorkflowKanbanProps) {
     const [stageIdFilter, setStageIdFilter] = useState<string>("");
     const [caseNameFilter, setCaseNameFilter] = useState<string>("");
     const [isCompactLayout, setIsCompactLayout] = useState(false);
+    const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     // collect active case from URL search params
@@ -147,8 +148,83 @@ export function CaseList({ process }: WorkflowKanbanProps) {
     }
 
     return (
-        <div className="case-list-container">
-            <div className="case-list-sidepanel">
+        <div className="case-list-container" style={{ display: "flex", height: "100%", gap: 0, position: "relative" }}>
+            {/* Floating Button - Only visible when sidebar is minimized */}
+            <AnimatePresence>
+                {isSidebarMinimized && (
+                    <motion.button
+                        onClick={() => setIsSidebarMinimized(false)}
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -30 }}
+                        transition={{ duration: 0.3 }}
+                        style={{
+                            zIndex: 9999,
+                            height: "40px",
+                            width: "40px",
+                            padding: "0",
+                            borderRadius: "8px",
+                            border: "2px solid #0dcaf0",
+                            backgroundColor: "rgba(13, 202, 240, 0.1)",
+                            color: "#0dcaf0",
+                            cursor: "pointer",
+                            boxShadow: "0 4px 12px rgba(13, 202, 240, 0.2)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "1.3rem"
+                        }}
+                        whileHover={{ scale: 1.15, boxShadow: "0 6px 16px rgba(13, 202, 240, 0.3)", backgroundColor: "rgba(13, 202, 240, 0.15)" }}
+                        whileTap={{ scale: 0.9 }}
+                        title="Expandir panel de casos"
+                    >
+                        <i className="bi bi-chevron-right"></i>
+                    </motion.button>
+                )}
+            </AnimatePresence>
+
+            {/* Sidebar */}
+            <motion.div
+                className="case-list-sidepanel"
+                initial={false}
+                animate={{
+                    width: isSidebarMinimized ? 0 : "420px",
+                    opacity: isSidebarMinimized ? 0 : 1,
+                    marginRight: isSidebarMinimized ? 0 : "0px"
+                }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                style={{
+                    overflow: "hidden",
+                    flexShrink: 0
+                }}
+            >
+                {/* Minimize Button - Inside sidebar, at the top */}
+                <motion.button
+                    onClick={() => setIsSidebarMinimized(true)}
+                    style={{
+                        width: "100%",
+                        padding: "12px",
+                        borderRadius: "0",
+                        border: "none",
+                        borderBottom: "1px solid #e0e0e0",
+                        backgroundColor: "#f8f9fa",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "flex-end",
+                        gap: "8px",
+                        fontSize: "0.85rem",
+                        color: "#666",
+                        marginBottom: "10px"
+                    }}
+                    whileHover={{ backgroundColor: "#efefef" }}
+                    whileTap={{ scale: 0.98 }}
+                    title="Minimizar panel de casos"
+                >
+                    Maximizar Caso
+                    <i className="bi bi-chevron-left"></i>
+                </motion.button>
+
                 <div className="case-list-sidepanel-search-controls">
                     {/* Layout toggle button */}
                     <p style={{ fontSize: "0.75rem", color: "#6c757d", marginBottom: "8px", fontWeight: 600, textTransform: "uppercase" }}>
@@ -368,12 +444,19 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                     )}
                     {isFetchingMore && <Spinner className="spinner-border-sm" />}
                 </div>
-            </div>
+            </motion.div>
+
+            {/* Selected Case Details */}
             <motion.div
                 className="selected-case-container"
+                animate={{
+                    flex: isSidebarMinimized ? 1 : "1 1 auto"
+                }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
                 initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
+                style={{ overflow: "auto", flex: 1 }}
             >
                 <AnimatePresence mode="wait">
                     {selectedCase ? (
