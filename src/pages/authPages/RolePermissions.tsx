@@ -29,6 +29,17 @@ interface BasePermissions {
     create_branches: boolean;
     update_branches: boolean;
     delete_branches: boolean;
+    create_cases: boolean;
+    update_cases: boolean;
+    delete_cases: boolean;
+    block_cases: boolean;
+    unblock_cases: boolean;
+    approve_cases: boolean;
+    deny_cases: boolean;
+    create_workflows: boolean;
+    update_workflows: boolean;
+    delete_workflows: boolean;
+    configure_workflows: boolean;
 }
 
 interface WorkflowPermission {
@@ -111,6 +122,17 @@ export function RolePermissions({ selectedRole, onClose }: RolePermissionsProps)
                     create_branches: basePermissions.create_branches,
                     update_branches: basePermissions.update_branches,
                     delete_branches: basePermissions.delete_branches,
+                    create_cases: basePermissions.create_cases,
+                    update_cases: basePermissions.update_cases,
+                    delete_cases: basePermissions.delete_cases,
+                    block_cases: basePermissions.block_cases,
+                    unblock_cases: basePermissions.unblock_cases,
+                    approve_cases: basePermissions.approve_cases,
+                    deny_cases: basePermissions.deny_cases,
+                    create_workflows: basePermissions.create_workflows,
+                    update_workflows: basePermissions.update_workflows,
+                    delete_workflows: basePermissions.delete_workflows,
+                    configure_workflows: basePermissions.configure_workflows,
                 },
                 workflow_permissions: workflowPermissions.map(wp => ({
                     proceso: wp.proceso,
@@ -398,6 +420,156 @@ export function RolePermissions({ selectedRole, onClose }: RolePermissionsProps)
                                                 }
                                             />{" "}
                                             <span>Eliminar sucursales</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Gestión de casos */}
+                                <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "18px", minWidth: "220px" }}>
+                                    <div style={{ fontWeight: 500, marginBottom: 8 }}>
+                                        <i className="bi bi-briefcase" style={{ marginRight: 6 }} /> Gestión de casos
+                                    </div>
+                                    <div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.create_cases}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, create_cases: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Crear casos</span>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.update_cases}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, update_cases: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Actualizar casos</span>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.delete_cases}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, delete_cases: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Eliminar casos</span>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.block_cases}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, block_cases: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Bloquear casos</span>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.unblock_cases}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, unblock_cases: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Desbloquear casos</span>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.approve_cases}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, approve_cases: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Aprobar casos</span>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.deny_cases}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, deny_cases: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Denegar casos</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Gestión de procesos */}
+                                <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "18px", minWidth: "220px" }}>
+                                    <div style={{ fontWeight: 500, marginBottom: 8 }}>
+                                        <i className="bi bi-diagram-3" style={{ marginRight: 6 }} /> Gestión de procesos
+                                    </div>
+                                    <div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.create_workflows}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, create_workflows: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Crear procesos</span>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.update_workflows}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, update_workflows: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Actualizar procesos</span>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.delete_workflows}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, delete_workflows: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Eliminar procesos</span>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.configure_workflows}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, configure_workflows: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Configurar procesos</span>
                                         </div>
                                     </div>
                                 </div>

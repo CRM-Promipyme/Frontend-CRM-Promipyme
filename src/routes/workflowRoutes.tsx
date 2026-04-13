@@ -26,17 +26,23 @@ export function WorkflowRoutes() {
         {
             path: "/processes/create",
             comp: CreateWorkflow,
-            requiredBasePermissions: []
+            requiredBasePermissions: [
+                "create_workflows"
+            ]
         },
         {
             path: "/cases/create/:workflowId",
             comp: CreateCase,
-            requiredBasePermissions: []
+            requiredBasePermissions: [
+                "create_cases"
+            ]
         },
         {
             path: "/cases/update/:caseId",
             comp: UpdateCase,
-            requiredBasePermissions: []
+            requiredBasePermissions: [
+                "update_cases"
+            ]
         },
     ]
 
