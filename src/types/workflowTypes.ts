@@ -34,6 +34,8 @@ export interface Caso {
     nombre_caso: string;
     descripcion_caso: string;
     valor_caso: string;
+    valor_aprobado?: string;
+    valor_final?: string;
     fecha_creacion: string;
     fecha_cierre: string;
     fecha_cierre_estimada: string;
