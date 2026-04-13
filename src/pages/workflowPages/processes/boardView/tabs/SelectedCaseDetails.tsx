@@ -442,19 +442,7 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                             </div>
                                         )}
                                     </div>
-                                    <Link 
-                                        to={`/contacts/details/${selectedCase.contact}`} 
-                                        style={{ textDecoration: 'none', color: 'inherit' }} 
-                                    >
-                                        <div className="case-contact-box" style={{ marginBottom: '20px' }}>
-                                                <i className="bi bi-file-person" style={{ fontSize: '30px' }}></i>
-                                                <div>
-                                                    <strong className="status-title">Contacto Relacionado</strong>
-                                                    <p className="status-description">{selectedCase.contact_first_name} {selectedCase.contact_last_name}</p>
-                                                </div>
-                                        </div>
-                                    </Link>
-                                    <div className="case-stage-box" style={{ color: process.color, backgroundColor: lowerColorOpacity(process.color, 0.05), borderColor: lowerColorOpacity(process.color, 0.15) }}>
+                                    <div className="case-stage-box" style={{ color: process.color, backgroundColor: lowerColorOpacity(process.color, 0.05), borderColor: lowerColorOpacity(process.color, 0.15), marginBottom: '20px' }}>
                                         <i className="bi bi-kanban" style={{ fontSize: '25px' }}></i>
                                         <div>
                                             <strong className="status-title" style={{ color: process.color }}>Etapa Actual</strong>
@@ -465,6 +453,18 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                             )}
                                         </div>
                                     </div>
+                                    <Link 
+                                        to={`/contacts/details/${selectedCase.contact}`} 
+                                        style={{ textDecoration: 'none', color: 'inherit' }} 
+                                    >
+                                        <div className="case-contact-box">
+                                                <i className="bi bi-file-person" style={{ fontSize: '30px' }}></i>
+                                                <div>
+                                                    <strong className="status-title">Principal Solicitante</strong>
+                                                    <p className="status-description">{selectedCase.contact_first_name} {selectedCase.contact_last_name}</p>
+                                                </div>
+                                        </div>
+                                    </Link>
                                     <div className="case-attachments">
                                         {selectedCase && (
                                             <CaseAttatchments caseId={selectedCase.id_caso}/>
