@@ -373,7 +373,7 @@ export function CreateCaseForm({
                             color: "#6c757d"
                         }}>
                             <i className="bi bi-file-earmark-check" style={{ fontSize: "3rem", marginBottom: "1rem" }}></i>
-                            <p>Todos los formularios ya han sido completados para este caso.</p>
+                            <p>No hay formularios posibles para este proceso.</p>
                         </div>
                     ) : (
                         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>

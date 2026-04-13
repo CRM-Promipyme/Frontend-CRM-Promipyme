@@ -33,6 +33,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     const authStore = useAuthStore();
     const [activeTask, setActiveTask] = useState<Caso | null>(null);
     const [isDragging, setIsDragging] = useState(false); // Track drag state
+    const [isCompactLayout, setIsCompactLayout] = useState(false);
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -284,6 +285,37 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     return (
         <>
             <div className="kanban-board-controls">
+                <div>
+                    <p style={{ fontSize: "0.75rem", color: "#6c757d", marginBottom: "8px", fontWeight: 600, textTransform: "uppercase" }}>
+                        Modo de visualización
+                    </p>
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                        <button
+                            onClick={() => setIsCompactLayout(false)}
+                            className={`btn ${!isCompactLayout ? "btn-primary" : "btn-outline-primary"}`}
+                            style={{
+                                fontSize: "0.85rem",
+                                padding: "6px 12px",
+                                borderRadius: "6px"
+                            }}
+                            title="Vista completa"
+                        >
+                            <i className="bi bi-list-ul"></i>
+                        </button>
+                        <button
+                            onClick={() => setIsCompactLayout(true)}
+                            className={`btn ${isCompactLayout ? "btn-primary" : "btn-outline-primary"}`}
+                            style={{
+                                fontSize: "0.85rem",
+                                padding: "6px 12px",
+                                borderRadius: "6px"
+                            }}
+                            title="Vista compacta"
+                        >
+                            <i className="bi bi-list"></i>
+                        </button>
+                    </div>
+                </div>
                 <input type="text" className="form-control" placeholder="Nombre del Caso" value={caseName} onChange={(e) => setCaseName(e.target.value)} style={{ maxWidth: '400px' }}/>
                 <div style={{ minWidth: "250px" }}>
                     <Select
@@ -326,13 +358,14 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
                                     isDragging={isDragging}
                                     color={color}
                                     onLoadMore={onLoadMore}
+                                    isCompactLayout={isCompactLayout}
                                 />
                             ))}
                         </SortableContext>
                     </div>
 
                     <DragOverlay>
-                        {activeTask ? <KanbanTask case={activeTask} columnId="" isOverlay /> : null}
+                        {activeTask ? <KanbanTask case={activeTask} columnId="" isOverlay isCompactLayout={isCompactLayout} /> : null}
                     </DragOverlay>
                 </DndContext>
             )}

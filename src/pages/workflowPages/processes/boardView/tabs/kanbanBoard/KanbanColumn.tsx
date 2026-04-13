@@ -5,7 +5,7 @@ import { KanbanColumnProps } from "../../../../../../types/kanbanBoardTypes";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
 
-export function KanbanColumn({ column, isDragging, color, onLoadMore }: KanbanColumnProps) {
+export function KanbanColumn({ column, isDragging, color, onLoadMore, isCompactLayout }: KanbanColumnProps) {
     const { setNodeRef, isOver } = useDroppable({ id: column.id });
     const loaderRef = useRef<HTMLDivElement | null>(null);
 
@@ -37,7 +37,7 @@ export function KanbanColumn({ column, isDragging, color, onLoadMore }: KanbanCo
                 <div ref={setNodeRef} className="kanban-tasks">
                     {column.cases.length > 0 ? (
                         column.cases.map((task) => (
-                            <KanbanTask key={task.id_caso} case={task} columnId={column.id} />
+                            <KanbanTask key={task.id_caso} case={task} columnId={column.id} isCompactLayout={isCompactLayout} />
                         ))
                     ) : (
                         <div className="empty-column">Drop tasks here</div>

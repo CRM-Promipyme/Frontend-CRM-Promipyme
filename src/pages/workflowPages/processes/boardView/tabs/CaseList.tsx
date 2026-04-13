@@ -29,6 +29,7 @@ export function CaseList({ process }: WorkflowKanbanProps) {
     const [caseStatusFilter, setCaseStatusFilter] = useState<string>("");
     const [stageIdFilter, setStageIdFilter] = useState<string>("");
     const [caseNameFilter, setCaseNameFilter] = useState<string>("");
+    const [isCompactLayout, setIsCompactLayout] = useState(false);
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     // collect active case from URL search params
@@ -149,6 +150,41 @@ export function CaseList({ process }: WorkflowKanbanProps) {
         <div className="case-list-container">
             <div className="case-list-sidepanel">
                 <div className="case-list-sidepanel-search-controls">
+                    {/* Layout toggle button */}
+                    <p style={{ fontSize: "0.75rem", color: "#6c757d", marginBottom: "8px", fontWeight: 600, textTransform: "uppercase" }}>
+                        Modo de visualización
+                    </p>
+                    <div style={{ marginBottom: "15px", display: "flex", gap: "8px" }}>
+                        <button
+                            onClick={() => setIsCompactLayout(false)}
+                            className={`btn ${!isCompactLayout ? "btn-primary" : "btn-outline-primary"}`}
+                            style={{
+                                flex: 1,
+                                fontSize: "0.85rem",
+                                padding: "6px 12px",
+                                borderRadius: "6px"
+                            }}
+                        >
+                            <i className="bi bi-list-ul"></i> Completo
+                        </button>
+                        <button
+                            onClick={() => setIsCompactLayout(true)}
+                            className={`btn ${isCompactLayout ? "btn-primary" : "btn-outline-primary"}`}
+                            style={{
+                                flex: 1,
+                                fontSize: "0.85rem",
+                                padding: "6px 12px",
+                                borderRadius: "6px"
+                            }}
+                        >
+                            <i className="bi bi-list"></i> Compacto
+                        </button>
+                    </div>
+
+                    <p style={{ fontSize: "0.75rem", color: "#6c757d", marginBottom: "8px", fontWeight: 600, textTransform: "uppercase" }}>
+                        Filtros
+                    </p>
+
                     {/* Name input stays regular */}
                     <input
                         style={{ marginBottom: "15px" }}
@@ -226,67 +262,105 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                                 </p>
                                 <h4 className="case-title">{caseObj.nombre_caso}</h4>
 
-                                <div className="case-contact-information">
-                                    <i className="bi bi-person"></i>
-                                    <p>{caseObj.contact_first_name}</p>
-                                    <p>{caseObj.contact_last_name}</p>
-                                </div>
+                                {!isCompactLayout && (
+                                    <div className="case-contact-information">
+                                        <i className="bi bi-person"></i>
+                                        <p>{caseObj.contact_first_name}</p>
+                                        <p>{caseObj.contact_last_name}</p>
+                                    </div>
+                                )}
 
-                                <div className="case-dates">
-                                    <div className="case-date">
-                                        <div className="date-item">
-                                            <i className="bi bi-calendar"></i>
-                                            <p className="date-label">Creado:</p>
-                                        </div>
-                                        <p className="item-value">{format(new Date(caseObj.fecha_creacion), "PPP", { locale: es })}</p>
-                                    </div>
-                                    <div className="case-date">
-                                        <div className="date-item">
-                                            <i className="bi bi-clock"></i>
-                                            <p className="date-label">Fecha de cierre:</p>
-                                        </div>
-                                        <p className="item-value">{format(new Date(caseObj.fecha_cierre), "PPP", { locale: es })}</p>
-                                    </div>
-                                </div>
+                                {isCompactLayout && (
+                                    <p style={{ fontSize: "0.85rem", color: "#6c757d", margin: "6px 0" }}>
+                                        {caseObj.contact_first_name} {caseObj.contact_last_name}
+                                    </p>
+                                )}
 
-                                <div className="case-dates" style={{ justifyContent: "space-between", gap: "unset", textAlign: "right" }}>
-                                    <div className="case-date">
-                                        <div className="date-item">
-                                            <i className="bi bi-currency-dollar"></i>
-                                            <p>Valor:</p>
+                                {!isCompactLayout && (
+                                    <>
+                                        <div className="case-dates">
+                                            <div className="case-date">
+                                                <div className="date-item">
+                                                    <i className="bi bi-calendar"></i>
+                                                    <p className="date-label">Creado:</p>
+                                                </div>
+                                                <p className="item-value">{format(new Date(caseObj.fecha_creacion), "PPP", { locale: es })}</p>
+                                            </div>
+                                            <div className="case-date">
+                                                <div className="date-item">
+                                                    <i className="bi bi-clock"></i>
+                                                    <p className="date-label">Fecha de cierre:</p>
+                                                </div>
+                                                <p className="item-value">{format(new Date(caseObj.fecha_cierre), "PPP", { locale: es })}</p>
+                                            </div>
                                         </div>
-                                        <p className="item-value">RD$ {formatNumber(parseFloat(caseObj.valor_caso))}</p>
-                                    </div>
-                                    <div className="case-date">
-                                        <div className="date-item">
-                                            <i className="bi bi-clock"></i>
-                                            <p>Tiempo Restante:</p>
+
+                                        <div className="case-dates" style={{ justifyContent: "space-between", gap: "unset", textAlign: "right" }}>
+                                            <div className="case-date">
+                                                <div className="date-item">
+                                                    <i className="bi bi-currency-dollar"></i>
+                                                    <p>Valor:</p>
+                                                </div>
+                                                <p className="item-value">RD$ {formatNumber(parseFloat(caseObj.valor_caso))}</p>
+                                            </div>
+                                            <div className="case-date">
+                                                <div className="date-item">
+                                                    <i className="bi bi-clock"></i>
+                                                    <p>Tiempo Restante:</p>
+                                                </div>
+                                                <p
+                                                    className="item-value"
+                                                    style={{
+                                                        color: daysLeft(new Date(caseObj.fecha_cierre_estimada)) >= 0
+                                                            ? "#0F7E5E"
+                                                            : "#FF8A05"
+                                                    }}
+                                                >
+                                                    {daysLeft(new Date(caseObj.fecha_cierre_estimada))} días
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                {isCompactLayout && (
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", marginTop: "6px" }}>
+                                        <div style={{ display: "flex", gap: "6px" }}>
+                                            {caseObj.abierto ? (
+                                                <span className="case-status-badge case-open">Abierto</span>
+                                            ) : (
+                                                <span className="case-status-badge case-closed">Cerrado</span>
+                                            )}
                                         </div>
                                         <p
-                                            className="item-value"
                                             style={{
                                                 color: daysLeft(new Date(caseObj.fecha_cierre_estimada)) >= 0
                                                     ? "#0F7E5E"
-                                                    : "#FF8A05"
+                                                    : "#FF8A05",
+                                                fontSize: "0.8rem",
+                                                margin: 0,
+                                                fontWeight: 500
                                             }}
                                         >
                                             {daysLeft(new Date(caseObj.fecha_cierre_estimada))} días
                                         </p>
                                     </div>
-                                </div>
+                                )}
 
-                                <div style={{ display: "flex", gap: "8px" }}>
-                                    {caseObj.abierto ? (
-                                        <span className="case-status-badge case-open">Abierto</span>
-                                    ) : (
-                                        <>
-                                            <span className="case-status-badge case-closed">Cerrado</span>
-                                            <span className={`case-status-badge ${caseObj.exitoso ? "case-success" : "case-failed"}`}>
-                                                {caseObj.exitoso ? "Exitoso" : "No exitoso"}
-                                            </span>
-                                        </>
-                                    )}
-                                </div>
+                                {!isCompactLayout && (
+                                    <div style={{ display: "flex", gap: "8px" }}>
+                                        {caseObj.abierto ? (
+                                            <span className="case-status-badge case-open">Abierto</span>
+                                        ) : (
+                                            <>
+                                                <span className="case-status-badge case-closed">Cerrado</span>
+                                                <span className={`case-status-badge ${caseObj.exitoso ? "case-success" : "case-failed"}`}>
+                                                    {caseObj.exitoso ? "Exitoso" : "No exitoso"}
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         ))
                     ) : (

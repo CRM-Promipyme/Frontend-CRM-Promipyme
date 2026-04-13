@@ -21,12 +21,14 @@ export interface KanbanColumnProps {
     isDragging: boolean;
     color: string;
     onLoadMore?: (columnId: string) => void;
+    isCompactLayout?: boolean;
 }
 
 export interface KanbanTaskProps {
     case: Caso;
     columnId: string;
     isOverlay?: boolean; // This is to detect if the task is being dragged
+    isCompactLayout?: boolean;
 }
 
 export interface WorkflowSettingsProps {
