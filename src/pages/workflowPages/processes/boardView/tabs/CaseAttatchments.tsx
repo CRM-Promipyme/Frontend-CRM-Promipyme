@@ -5,6 +5,7 @@ import { Spinner } from "../../../../../components/ui/Spinner";
 import { useAuthStore } from "../../../../../stores/authStore";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface CaseAttatchmentsProps {
     caseId: number;
@@ -26,6 +27,8 @@ export function CaseAttatchments({ caseId }: CaseAttatchmentsProps) {
     const [attachments, setAttachments] = useState<Attachment[]>([]);
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [previewFileName, setPreviewFileName] = useState<string>("");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Fetch attachments
@@ -80,6 +83,18 @@ export function CaseAttatchments({ caseId }: CaseAttatchmentsProps) {
     function getFileExtension(filename: string) {
         return filename.split('.').pop()?.toUpperCase() || '';
     }
+
+    // Preview handler
+    const handlePreview = (fileUrl: string, fileName: string) => {
+        setPreviewUrl(fileUrl);
+        setPreviewFileName(fileName);
+    };
+
+    // Close preview
+    const closePreview = () => {
+        setPreviewUrl(null);
+        setPreviewFileName("");
+    };
 
     return (
         <div
@@ -200,23 +215,40 @@ export function CaseAttatchments({ caseId }: CaseAttatchmentsProps) {
                                             </div>
                                         </td>
                                         <td>
-                                            <a
-                                                href={fileUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="btn btn-primary"
-                                                style={{
-                                                    borderRadius: 8,
-                                                    fontWeight: 600,
-                                                    fontSize: "0.97em",
-                                                    padding: "6px 18px",
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    gap: 6
-                                                }}
-                                            >
-                                                <i className="bi bi-download" /> Descargar
-                                            </a>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                                <button
+                                                    onClick={() => handlePreview(fileUrl, fileName)}
+                                                    className="btn btn-outline-secondary"
+                                                    style={{
+                                                        borderRadius: 8,
+                                                        fontWeight: 600,
+                                                        fontSize: "0.97em",
+                                                        padding: "6px 12px",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        gap: 6
+                                                    }}
+                                                >
+                                                    <i className="bi bi-eye" /> Ver
+                                                </button>
+                                                <a
+                                                    href={fileUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="btn btn-primary"
+                                                    style={{
+                                                        borderRadius: 8,
+                                                        fontWeight: 600,
+                                                        fontSize: "0.97em",
+                                                        padding: "6px 18px",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        gap: 6
+                                                    }}
+                                                >
+                                                    <i className="bi bi-download" /> Descargar
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -225,6 +257,106 @@ export function CaseAttatchments({ caseId }: CaseAttatchmentsProps) {
                     </table>
                 </div>
             )}
+
+            {/* File Preview Modal */}
+            <AnimatePresence>
+                {previewUrl && (
+                    <motion.div
+                        className="modal-overlay"
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 1000,
+                            padding: '20px'
+                        }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={closePreview}
+                    >
+                        <motion.div
+                            className="modal-content"
+                            style={{
+                                backgroundColor: 'white',
+                                borderRadius: '12px',
+                                width: '90%',
+                                maxWidth: '900px',
+                                height: '85vh',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
+                            }}
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '20px',
+                                borderBottom: '1px solid #e0e0e0'
+                            }}>
+                                <h3 style={{ margin: 0 }}>Vista Previa - {previewFileName}</h3>
+                                <button
+                                    onClick={closePreview}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        fontSize: '24px',
+                                        cursor: 'pointer',
+                                        color: '#666'
+                                    }}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                            <div style={{
+                                flex: 1,
+                                overflow: 'auto',
+                                padding: '20px'
+                            }}>
+                                <iframe
+                                    src={previewUrl || ''}
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        border: 'none',
+                                        borderRadius: '8px'
+                                    }}
+                                    title="File Preview"
+                                />
+                            </div>
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                gap: '10px',
+                                padding: '20px',
+                                borderTop: '1px solid #e0e0e0'
+                            }}>
+                                <button
+                                    onClick={closePreview}
+                                    className="btn btn-secondary"
+                                    style={{
+                                        borderRadius: '8px',
+                                        padding: '8px 16px'
+                                    }}
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
