@@ -1,8 +1,9 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
+import axios from "axios";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { CaseTasks } from "./CaseTasks";
@@ -17,6 +18,24 @@ import { Caso, Proceso } from "../../../../../types/workflowTypes";
 import { lowerColorOpacity } from "../../../../../utils/formatUtils";
 import { ActivityLog } from "../../../../../components/ui/ActivityLog";
 import { Spinner } from "../../../../../components/ui/Spinner";
+import { useAuthStore } from "../../../../../stores/authStore";
+
+interface Attachment {
+    id_adjunto: number;
+    archivo: string;
+    archivo_url: string;
+    fecha_creacion: string;
+    subido_por: string;
+}
+
+interface Document {
+    id: string;
+    name: string;
+    url: string;
+    type: 'pdf' | 'attachment';
+    uploadedBy?: string;
+    uploadedDate?: string;
+}
 
 interface SelectedCaseDetailsProps {
     selectedCase: Caso;
@@ -26,9 +45,63 @@ interface SelectedCaseDetailsProps {
 }
 
 export function SelectedCaseDetails({ selectedCase, process, caseActivities, setCaseActivities }: SelectedCaseDetailsProps) {
+    const BASE_URL = import.meta.env.VITE_VERCEL_REACT_APP_DJANGO_API_URL;
+    const authStore = useAuthStore();
+    const accessToken = authStore.accessToken;
+
     const [exporting, setExporting] = useState(false);
     const [previewing, setPreviewing] = useState(false);
     const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
+    const [attachments, setAttachments] = useState<Attachment[]>([]);
+    const [documents, setDocuments] = useState<Document[]>([]);
+    const [selectedDocumentId, setSelectedDocumentId] = useState<string>('case-pdf');
+    const [loadingAttachments, setLoadingAttachments] = useState(false);
+
+    // Fetch attachments
+    useEffect(() => {
+        const fetchAttachments = async () => {
+            setLoadingAttachments(true);
+            try {
+                const res = await axios.get(
+                    `${BASE_URL}/workflows/casos/manage/attachments/${selectedCase.id_caso}/`,
+                    { headers: { Authorization: `Bearer ${accessToken}` } }
+                );
+                setAttachments(res.data);
+            } catch {
+                console.error("Error fetching attachments");
+            }
+            setLoadingAttachments(false);
+        };
+
+        if (selectedCase.id_caso) {
+            fetchAttachments();
+        }
+    }, [selectedCase.id_caso, BASE_URL, accessToken]);
+
+    // Update documents list when attachments change
+    useEffect(() => {
+        const newDocuments: Document[] = [
+            {
+                id: 'case-pdf',
+                name: `Caso ${String(selectedCase.id_caso).padStart(7, '0')}`,
+                url: '',
+                type: 'pdf'
+            }
+        ];
+
+        attachments.forEach((att) => {
+            newDocuments.push({
+                id: `att-${att.id_adjunto}`,
+                name: att.archivo,
+                url: att.archivo_url,
+                type: 'attachment',
+                uploadedBy: att.subido_por,
+                uploadedDate: att.fecha_creacion
+            });
+        });
+
+        setDocuments(newDocuments);
+    }, [attachments, selectedCase.id_caso]);
 
     const generateCasePDF = () => {
         const doc = new jsPDF();
@@ -171,12 +244,33 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
             const blob = doc.output('blob');
             const blobUrl = URL.createObjectURL(blob);
             setPreviewBlobUrl(blobUrl);
+            setSelectedDocumentId('case-pdf');
         } catch (error) {
             console.error("Error generating PDF preview:", error);
             toast.error("Error al generar la vista previa del PDF");
         } finally {
             setPreviewing(false);
         }
+    };
+
+    const handleDocumentSelect = (docId: string) => {
+        setSelectedDocumentId(docId);
+    };
+
+    const getCurrentDocument = (): Document | null => {
+        return documents.find(doc => doc.id === selectedDocumentId) || null;
+    };
+
+    const getPreviewUrl = (): string | null => {
+        const doc = getCurrentDocument();
+        if (!doc) return null;
+        
+        if (doc.type === 'pdf' && doc.id === 'case-pdf') {
+            return previewBlobUrl;
+        } else if (doc.type === 'attachment') {
+            return doc.url;
+        }
+        return null;
     };
 
     const exportCaseToPDF = async () => {
@@ -482,7 +576,7 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                     )}
                 </AnimatePresence>
 
-                {/* PDF Preview Modal */}
+                {/* Document Hub Preview Modal */}
                 <AnimatePresence>
                     {previewBlobUrl && (
                         <motion.div
@@ -513,8 +607,8 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                 style={{
                                     backgroundColor: 'white',
                                     borderRadius: '12px',
-                                    width: '90%',
-                                    maxWidth: '900px',
+                                    width: '95%',
+                                    maxWidth: '1100px',
                                     height: '85vh',
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -532,7 +626,7 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                     padding: '20px',
                                     borderBottom: '1px solid #e0e0e0'
                                 }}>
-                                    <h3 style={{ margin: 0 }}>Vista Previa del PDF</h3>
+                                    <h3 style={{ margin: 0 }}>Centro de Documentos</h3>
                                     <button
                                         onClick={() => {
                                             if (previewBlobUrl) URL.revokeObjectURL(previewBlobUrl);
@@ -549,28 +643,93 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                         ✕
                                     </button>
                                 </div>
+
+                                {/* Document Tabs */}
+                                <div style={{
+                                    display: 'flex',
+                                    overflowX: 'auto',
+                                    borderBottom: '1px solid #e0e0e0',
+                                    padding: '0 20px',
+                                    gap: '5px',
+                                    backgroundColor: '#f8f9fa'
+                                }}>
+                                    {documents.map((doc) => (
+                                        <button
+                                            key={doc.id}
+                                            onClick={() => handleDocumentSelect(doc.id)}
+                                            style={{
+                                                padding: '12px 16px',
+                                                border: 'none',
+                                                background: selectedDocumentId === doc.id ? 'white' : 'transparent',
+                                                borderBottom: selectedDocumentId === doc.id ? '3px solid #0d6efd' : 'none',
+                                                cursor: 'pointer',
+                                                fontWeight: selectedDocumentId === doc.id ? 600 : 400,
+                                                color: selectedDocumentId === doc.id ? '#0d6efd' : '#666',
+                                                fontSize: '0.9rem',
+                                                whiteSpace: 'nowrap',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            <i className={`bi ${doc.type === 'pdf' ? 'bi-file-earmark-pdf' : 'bi-file-earmark'}`} style={{ marginRight: '6px' }}></i>
+                                            {doc.name}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Document Info */}
+                                {getCurrentDocument() && getCurrentDocument()?.type === 'attachment' && (
+                                    <div style={{
+                                        padding: '12px 20px',
+                                        backgroundColor: '#f0f8ff',
+                                        borderBottom: '1px solid #dde3f0',
+                                        fontSize: '0.85rem',
+                                        color: '#555'
+                                    }}>
+                                        Subido por: <strong>{getCurrentDocument()?.uploadedBy}</strong> • 
+                                        {getCurrentDocument()?.uploadedDate && (
+                                            <> {format(new Date(getCurrentDocument()!.uploadedDate!), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { locale: es })}</>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Document Viewer */}
                                 <div style={{
                                     flex: 1,
                                     overflow: 'auto',
-                                    padding: '20px'
+                                    padding: '20px',
+                                    backgroundColor: '#f5f5f5'
                                 }}>
-                                    <iframe
-                                        src={previewBlobUrl}
-                                        style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            border: 'none',
-                                            borderRadius: '8px'
-                                        }}
-                                        title="PDF Preview"
-                                    />
+                                    {loadingAttachments ? (
+                                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                            <Spinner />
+                                        </div>
+                                    ) : getPreviewUrl() ? (
+                                        <iframe
+                                            src={getPreviewUrl()!}
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                border: 'none',
+                                                borderRadius: '8px',
+                                                backgroundColor: 'white'
+                                            }}
+                                            title="Document Preview"
+                                        />
+                                    ) : (
+                                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#999' }}>
+                                            No se puede mostrar vista previa
+                                        </div>
+                                    )}
                                 </div>
+
+                                {/* Modal Footer */}
                                 <div style={{
                                     display: 'flex',
                                     justifyContent: 'flex-end',
                                     gap: '10px',
                                     padding: '20px',
-                                    borderTop: '1px solid #e0e0e0'
+                                    borderTop: '1px solid #e0e0e0',
+                                    backgroundColor: '#f8f9fa'
                                 }}>
                                     <button
                                         onClick={() => {
@@ -585,32 +744,34 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                     >
                                         Cerrar
                                     </button>
-                                    <motion.button
-                                        onClick={exportCaseToPDF}
-                                        disabled={exporting}
-                                        className="btn btn-warning"
-                                        style={{
-                                            borderRadius: '8px',
-                                            padding: '8px 16px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px'
-                                        }}
-                                        whileHover={{ scale: exporting ? 1 : 1.02 }}
-                                        whileTap={{ scale: exporting ? 1 : 0.98 }}
-                                    >
-                                        {exporting ? (
-                                            <>
-                                                <Spinner className="spinner-border-sm" />
-                                                Exportando...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i className="bi bi-file-earmark-pdf"></i>
-                                                Descargar PDF
-                                            </>
-                                        )}
-                                    </motion.button>
+                                    {getCurrentDocument()?.type === 'pdf' && getCurrentDocument()?.id === 'case-pdf' && (
+                                        <motion.button
+                                            onClick={exportCaseToPDF}
+                                            disabled={exporting}
+                                            className="btn btn-warning"
+                                            style={{
+                                                borderRadius: '8px',
+                                                padding: '8px 16px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px'
+                                            }}
+                                            whileHover={{ scale: exporting ? 1 : 1.02 }}
+                                            whileTap={{ scale: exporting ? 1 : 0.98 }}
+                                        >
+                                            {exporting ? (
+                                                <>
+                                                    <Spinner className="spinner-border-sm" />
+                                                    Exportando...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="bi bi-download"></i>
+                                                    Descargar PDF
+                                                </>
+                                            )}
+                                        </motion.button>
+                                    )}
                                 </div>
                             </motion.div>
                         </motion.div>
