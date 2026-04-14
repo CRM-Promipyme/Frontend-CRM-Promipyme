@@ -144,7 +144,7 @@ export function CaseAttatchments({ caseId }: CaseAttatchmentsProps) {
                     No hay archivos adjuntos para este caso.
                 </div>
             ) : (
-                <div style={{ overflowX: "scroll", maxWidth: "700px" }}>
+                <div style={{ overflowX: "scroll", maxWidth: "100%" }}>
                     <table className="table">
                         <thead>
                             <tr style={{ background: "#f8fafc" }}>

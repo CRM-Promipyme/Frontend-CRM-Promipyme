@@ -111,3 +111,30 @@ export interface WorkflowFormsResponse {
     process_name: string;
     forms: WorkflowForm[];
 }
+
+export interface CaseContact {
+    id_contacto_caso: number;
+    caso: number;
+    contacto: number;
+    contacto_detail: {
+        contact_id: number;
+        cedula: string;
+        nombres: string;
+        apellidos: string;
+        email: string;
+        fecha_nacimiento: string;
+        fecha_ingreso: string;
+        last_updated: string;
+    };
+    rol_contacto: string;
+}
+
+export interface CaseContactsResponse {
+    case_id: number;
+    contacts: CaseContact[];
+}
+
+export interface CreateCaseContactData {
+    contacto: number;
+    rol_contacto: string;
+}

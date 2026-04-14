@@ -257,3 +257,54 @@ export const deleteCaseForm = async (caseId: number, formId: number) => {
         throw error;
     }
 }
+
+/**
+ * Fetches all additional contacts for a case
+ * @param caseId The ID of the case
+ * @returns the contacts associated with the case
+ */
+export const fetchCaseContacts = async (caseId: number) => {
+    try {
+        const response = await api.get(`/workflows/casos/manage/contacts/${caseId}/`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching case contacts:", error);
+        return null;
+    }
+}
+
+/**
+ * Adds a new contact to a case
+ * @param caseId The ID of the case
+ * @param contactData The contact data (contacto ID and rol_contacto)
+ * @returns the created contact relationship data
+ */
+export const addContactToCase = async (caseId: number, contactData: { contacto: number; rol_contacto: string }) => {
+    try {
+        const response = await api.post(`/workflows/casos/manage/contacts/${caseId}/`, contactData);
+        return response.data;
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        console.error("Error adding contact to case:", axiosError);
+        showResponseErrors(axiosError.response?.data);
+        throw error;
+    }
+}
+
+/**
+ * Removes a contact from a case
+ * @param caseId The ID of the case
+ * @param contactCaseId The ID of the case-contact relationship to remove
+ * @returns the response data from the deletion
+ */
+export const removeContactFromCase = async (caseId: number, contactCaseId: number) => {
+    try {
+        const response = await api.delete(`/workflows/casos/manage/contacts/${caseId}/${contactCaseId}/`);
+        return response.data;
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        console.error("Error removing contact from case:", axiosError);
+        showResponseErrors(axiosError.response?.data);
+        throw error;
+    }
+}

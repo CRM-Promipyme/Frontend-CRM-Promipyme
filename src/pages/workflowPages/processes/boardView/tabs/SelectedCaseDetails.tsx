@@ -8,6 +8,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { CaseTasks } from "./CaseTasks";
 import { CaseAttatchments } from "./CaseAttatchments";
+import { CaseContacts } from "./CaseContacts";
 import { motion, AnimatePresence } from "framer-motion";
 import { NotesSection } from "./kanbanBoard/NotesSection";
 import { daysLeft } from "../../../../../utils/formatUtils";
@@ -465,14 +466,19 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                                 </div>
                                         </div>
                                     </Link>
-                                    <div className="case-attachments">
+                                    <div className="case-contacts">
                                         {selectedCase && (
-                                            <CaseAttatchments caseId={selectedCase.id_caso}/>
+                                            <CaseContacts caseId={selectedCase.id_caso} mainContactId={selectedCase.contact}/>
                                         )}
                                     </div>
                                     <div className="case-forms">
                                         {selectedCase && (
                                             <CaseFormsList caseId={selectedCase.id_caso} workflowId={process.id_proceso}/>
+                                        )}
+                                    </div>
+                                    <div className="case-attachments">
+                                        {selectedCase && (
+                                            <CaseAttatchments caseId={selectedCase.id_caso}/>
                                         )}
                                     </div>
                                     <div className="case-notes-container">
