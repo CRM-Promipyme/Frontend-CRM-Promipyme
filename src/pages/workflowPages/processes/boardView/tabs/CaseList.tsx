@@ -29,6 +29,7 @@ export function CaseList({ process }: WorkflowKanbanProps) {
     const [caseStatusFilter, setCaseStatusFilter] = useState<string>("");
     const [stageIdFilter, setStageIdFilter] = useState<string>("");
     const [caseNameFilter, setCaseNameFilter] = useState<string>("");
+    const [cedulaFilter, setCedulaFilter] = useState<string>("");
     const [isCompactLayout, setIsCompactLayout] = useState(false);
     const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -60,6 +61,7 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                 if (caseStatusFilter) params.case_status = caseStatusFilter;
                 if (stageIdFilter) params.stage_id = stageIdFilter;
                 if (caseNameFilter) params.case_name = caseNameFilter;
+                if (cedulaFilter) params.cedula = cedulaFilter;
 
                 const queryString = new URLSearchParams(params).toString();
                 const response = await api.get(`/workflows/casos/list/?${queryString}`);
@@ -78,7 +80,7 @@ export function CaseList({ process }: WorkflowKanbanProps) {
         return () => {
             if (debounceTimer.current) clearTimeout(debounceTimer.current);
         };
-    }, [process.id_proceso, caseStatusFilter, stageIdFilter, caseNameFilter]);
+    }, [process.id_proceso, caseStatusFilter, stageIdFilter, caseNameFilter, cedulaFilter]);
 
     // Infinite scroll observer
     useEffect(() => {
@@ -270,6 +272,17 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                         value={caseNameFilter}
                         onChange={(e) => setCaseNameFilter(e.target.value)}
                         placeholder="Filtrar por nombre..."
+                    />
+
+                    {/* Cedula input */}
+                    <input
+                        style={{ marginBottom: "15px" }}
+                        type="text"
+                        name="cedula"
+                        className="form-control"
+                        value={cedulaFilter}
+                        onChange={(e) => setCedulaFilter(e.target.value)}
+                        placeholder="Filtrar por cédula..."
                     />
 
                     {/* Status dropdown */}
