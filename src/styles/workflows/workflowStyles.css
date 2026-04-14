@@ -404,7 +404,7 @@
     border-radius: 8px;
     background-color: #f3fcf6;
     color: #198754;
-    max-width: 700px;
+    max-width: 100%;
 }
 
 .case-status-box i {
@@ -444,7 +444,7 @@
     border-radius: 8px;
     background-color: #f5f9ff;
     color: #0D6EFD;
-    max-width: 700px;
+    max-width: 100%;
     transition: all 0.3s ease;
 }
 
@@ -465,7 +465,7 @@
     border-radius: 8px;
     background-color: #fff3f4;
     color: #dc3545;
-    max-width: 700px;
+    max-width: 100%;
 }
 
 .case-activities {
