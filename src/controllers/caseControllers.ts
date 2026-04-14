@@ -308,3 +308,41 @@ export const removeContactFromCase = async (caseId: number, contactCaseId: numbe
         throw error;
     }
 }
+
+/**
+ * Performs bulk assignment of cases to a stage and/or process
+ * @param caseIds Array of case IDs to move
+ * @param processId Target process ID
+ * @param stageId Target stage ID
+ * @param changeMotive Reason for the change
+ * @param assigneeId Optional user ID to assign tasks to
+ * @returns the response data
+ */
+export const bulkAssignCases = async (
+    caseIds: number[],
+    processId: number,
+    stageId: number,
+    changeMotive: string,
+    assigneeId?: number
+) => {
+    try {
+        const payload: Record<string, unknown> = {
+            case_ids: caseIds,
+            process_id: processId,
+            stage_id: stageId,
+            change_motive: changeMotive,
+        };
+        
+        if (assigneeId) {
+            payload.assignee_id = assigneeId;
+        }
+
+        const response = await api.put(`/workflows/casos/manage/bulk-assignment/`, payload);
+        return response.data;
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        console.error("Error bulk assigning cases:", axiosError);
+        showResponseErrors(axiosError.response?.data);
+        throw error;
+    }
+}

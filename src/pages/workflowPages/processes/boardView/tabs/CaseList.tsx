@@ -1,12 +1,13 @@
 import { format } from "date-fns";
 import Select from "react-select";
+import AsyncSelect from "react-select/async";
 import { es } from "date-fns/locale";
 import { toast } from "react-toastify";
 import api from "../../../../../controllers/api";
 import { useEffect, useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
-import { Caso } from "../../../../../types/workflowTypes";
+import { Caso, Proceso } from "../../../../../types/workflowTypes";
 import { daysLeft } from "../../../../../utils/formatUtils";
 import { SelectedCaseDetails } from "./SelectedCaseDetails";
 import { Activity } from "../../../../../types/activityTypes";
@@ -14,6 +15,8 @@ import { Spinner } from "../../../../../components/ui/Spinner";
 import { formatNumber } from "../../../../../utils/formatUtils";
 import { WorkflowKanbanProps } from "../../../../../types/kanbanBoardTypes"
 import { AnimatedSelectMenu } from "../../../../../components/ui/forms/AnimatedSelectMenu";
+import { bulkAssignCases } from "../../../../../controllers/caseControllers";
+import { fetchProcesses } from "../../../../../controllers/workflowControllers";
 
 export function CaseList({ process }: WorkflowKanbanProps) {
     // Local states
@@ -32,7 +35,20 @@ export function CaseList({ process }: WorkflowKanbanProps) {
     const [cedulaFilter, setCedulaFilter] = useState<string>("");
     const [isCompactLayout, setIsCompactLayout] = useState(false);
     const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
-    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+    const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Bulk assignment states
+    const [selectedCaseIds, setSelectedCaseIds] = useState<Set<number>>(new Set());
+    const [showBulkAssignmentModal, setShowBulkAssignmentModal] = useState(false);
+    const [allProcesses, setAllProcesses] = useState<Proceso[]>([]);
+    const [bulkAssignmentFormData, setBulkAssignmentFormData] = useState({
+        process_id: "",
+        stage_id: "",
+        change_motive: "",
+        assignee_id: ""
+    });
+    const [selectedAssignee, setSelectedAssignee] = useState<any>(null);
+    const [isSubmittingBulkAssignment, setIsSubmittingBulkAssignment] = useState(false);
 
     // collect active case from URL search params
     useEffect(() => {
@@ -135,6 +151,31 @@ export function CaseList({ process }: WorkflowKanbanProps) {
         }
     }
 
+    async function refetchCases() {
+        try {
+            setLoading(true);
+            const params: Record<string, string> = {
+                process_id: process.id_proceso.toString(),
+            };
+            if (caseStatusFilter) params.case_status = caseStatusFilter;
+            if (stageIdFilter) params.stage_id = stageIdFilter;
+            if (caseNameFilter) params.case_name = caseNameFilter;
+            if (cedulaFilter) params.cedula = cedulaFilter;
+
+            const queryString = new URLSearchParams(params).toString();
+            const response = await api.get(`/workflows/casos/list/?${queryString}`);
+
+            setCaseQty(response.data.count);
+            setCases(response.data.results);
+            setNextPaginationUrl(response.data.next);
+        } catch (error) {
+            console.error("Error refetching cases:", error);
+            toast.error("Error al refrescar la lista de casos");
+        } finally {
+            setLoading(false);
+        }
+    }
+
     // Load activities on case selection
     useEffect(() => {
         if (selectedCase) {
@@ -142,6 +183,99 @@ export function CaseList({ process }: WorkflowKanbanProps) {
             setLoading(false);
         }
     }, [selectedCase]);
+
+    // Fetch all processes when bulk assignment modal opens
+    useEffect(() => {
+        if (showBulkAssignmentModal && allProcesses.length === 0) {
+            const loadProcesses = async () => {
+                try {
+                    const processes = await fetchProcesses();
+                    setAllProcesses(processes);
+                } catch (error) {
+                    console.error("Error fetching processes:", error);
+                    toast.error("Error al cargar los procesos");
+                }
+            };
+            loadProcesses();
+        }
+    }, [showBulkAssignmentModal]);
+
+    const handleCaseSelection = (caseId: number) => {
+        const newSelectedIds = new Set(selectedCaseIds);
+        if (newSelectedIds.has(caseId)) {
+            newSelectedIds.delete(caseId);
+        } else {
+            newSelectedIds.add(caseId);
+        }
+        setSelectedCaseIds(newSelectedIds);
+    };
+
+    const handleBulkAssignmentSubmit = async () => {
+        if (selectedCaseIds.size === 0) {
+            toast.warning("Por favor selecciona al menos un caso");
+            return;
+        }
+
+        if (!bulkAssignmentFormData.process_id || !bulkAssignmentFormData.stage_id) {
+            toast.warning("Por favor selecciona un proceso y una etapa");
+            return;
+        }
+
+        if (!bulkAssignmentFormData.change_motive.trim()) {
+            toast.warning("Por favor indica el motivo del cambio");
+            return;
+        }
+
+        setIsSubmittingBulkAssignment(true);
+        try {
+            await bulkAssignCases(
+                Array.from(selectedCaseIds),
+                parseInt(bulkAssignmentFormData.process_id.toString()),
+                parseInt(bulkAssignmentFormData.stage_id.toString()),
+                bulkAssignmentFormData.change_motive,
+                selectedAssignee?.value ? parseInt(selectedAssignee.value) : undefined
+            );
+
+            toast.success(`${selectedCaseIds.size} casos reasignados correctamente`);
+            setShowBulkAssignmentModal(false);
+            setSelectedCaseIds(new Set());
+            setSelectedAssignee(null);
+            setBulkAssignmentFormData({
+                process_id: "",
+                stage_id: "",
+                change_motive: "",
+                assignee_id: ""
+            });
+
+            // Refresh the case list
+            await refetchCases();
+        } catch (error) {
+            console.error("Error bulk assigning cases:", error);
+            toast.error("Error al reasignar los casos");
+        } finally {
+            setIsSubmittingBulkAssignment(false);
+        }
+    };
+
+    const loadUsers = async (inputValue: string) => {
+        if (!inputValue) return [];
+        try {
+            const res = await api.get("/auth/users/list", {
+                params: { name: inputValue }
+            });
+            return res.data.results.map((u: any) => ({
+                value: u.id,
+                label: `${u.first_name} ${u.last_name} (${u.email})`
+            }));
+        } catch {
+            return [];
+        }
+    };
+
+    const selectedProcess = bulkAssignmentFormData.process_id 
+        ? allProcesses.find((p) => p.id_proceso === parseInt(bulkAssignmentFormData.process_id))
+        : undefined;
+    const selectedProcessStages = selectedProcess?.etapas || [];
 
     if (loading) {
         return (
@@ -341,15 +475,26 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                             <div
                                 key={caseObj.id_caso}
                                 className="kanban-task"
+                                style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}
                                 onClick={() => {
                                     searchParams.set("selected_case", caseObj.id_caso.toString());
                                     setSearchParams(searchParams);
                                 }}
                             >
-                                <p className="case-number" style={{ fontSize: "0.85rem", color: "#6c757d", marginBottom: "5px" }}>
-                                    Caso #{String(caseObj.id_caso).padStart(7, '0')}
-                                </p>
-                                <h4 className="case-title">{caseObj.nombre_caso}</h4>
+                                <input
+                                    type="checkbox"
+                                    checked={selectedCaseIds.has(caseObj.id_caso)}
+                                    onChange={(e) => {
+                                        e.stopPropagation();
+                                        handleCaseSelection(caseObj.id_caso);
+                                    }}
+                                    style={{ marginTop: "8px", cursor: "pointer", flex: "0 0 auto" }}
+                                />
+                                <div style={{ flex: 1 }}>
+                                    <p className="case-number" style={{ fontSize: "0.85rem", color: "#6c757d", marginBottom: "5px" }}>
+                                        Caso #{String(caseObj.id_caso).padStart(7, '0')}
+                                    </p>
+                                    <h4 className="case-title">{caseObj.nombre_caso}</h4>
 
                                 {!isCompactLayout && (
                                     <div className="case-contact-information">
@@ -450,6 +595,7 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                                         )}
                                     </div>
                                 )}
+                                </div>
                             </div>
                         ))
                     ) : (
@@ -492,6 +638,238 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                     )}
                 </AnimatePresence>
             </motion.div>
+
+            {/* Floating Action Bar - Bulk Assignment */}
+            <AnimatePresence>
+                {selectedCaseIds.size > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 30 }}
+                        style={{
+                            position: "fixed",
+                            bottom: "20px",
+                            left: "50%",
+                            transform: "translateX(-50%)",
+                            zIndex: 999,
+                            backgroundColor: "#0d6efd",
+                            color: "white",
+                            padding: "12px 20px",
+                            borderRadius: "8px",
+                            boxShadow: "0 4px 20px rgba(13, 110, 253, 0.3)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "15px"
+                        }}
+                    >
+                        <span style={{ fontWeight: 600 }}>
+                            {selectedCaseIds.size} caso{selectedCaseIds.size > 1 ? "s" : ""} seleccionado{selectedCaseIds.size > 1 ? "s" : ""}
+                        </span>
+                        <button
+                            onClick={() => setShowBulkAssignmentModal(true)}
+                            style={{
+                                backgroundColor: "white",
+                                color: "#0d6efd",
+                                border: "none",
+                                padding: "6px 16px",
+                                borderRadius: "6px",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                fontSize: "0.85rem"
+                            }}
+                        >
+                            <i className="bi bi-arrow-left-right me-1"></i>
+                            Reasignar
+                        </button>
+                        <button
+                            onClick={() => setSelectedCaseIds(new Set())}
+                            style={{
+                                backgroundColor: "rgba(255,255,255,0.2)",
+                                color: "white",
+                                border: "none",
+                                padding: "6px 12px",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                                fontSize: "1rem"
+                            }}
+                        >
+                            <i className="bi bi-x"></i>
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Bulk Assignment Modal */}
+            <AnimatePresence>
+                {showBulkAssignmentModal && (
+                    <motion.div
+                        className="case-contacts-modal-overlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowBulkAssignmentModal(false)}
+                    >
+                        <motion.div
+                            className="case-contacts-modal"
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ maxWidth: "500px" }}
+                        >
+                            <div className="case-contacts-modal-header">
+                                <h5>Reasignar Casos</h5>
+                                <button
+                                    className="btn-close"
+                                    onClick={() => setShowBulkAssignmentModal(false)}
+                                    disabled={isSubmittingBulkAssignment}
+                                    aria-label="Close"
+                                ></button>
+                            </div>
+
+                            <div className="case-contacts-modal-body">
+                                <div style={{ marginBottom: "15px", padding: "12px", backgroundColor: "#f8f9fa", borderRadius: "6px" }}>
+                                    <p style={{ marginBottom: "0", fontWeight: 600, color: "#333" }}>
+                                        {selectedCaseIds.size} caso{selectedCaseIds.size > 1 ? "s" : ""} seleccionado{selectedCaseIds.size > 1 ? "s" : ""}
+                                    </p>
+                                </div>
+
+                                <div className="form-group mb-3">
+                                    <label className="form-label">Proceso <span style={{ color: '#dc3545' }}>*</span></label>
+                                    <Select
+                                        options={allProcesses.map((proc) => ({
+                                            value: proc.id_proceso,
+                                            label: proc.nombre_proceso,
+                                        }))}
+                                        value={
+                                            bulkAssignmentFormData.process_id !== ""
+                                                ? {
+                                                    value: parseInt(bulkAssignmentFormData.process_id),
+                                                    label: allProcesses.find((p) => p.id_proceso === parseInt(bulkAssignmentFormData.process_id))?.nombre_proceso || "",
+                                                  }
+                                                : null
+                                        }
+                                        onChange={(option: any) => {
+                                            setBulkAssignmentFormData({
+                                                ...bulkAssignmentFormData,
+                                                process_id: option?.value?.toString() || "",
+                                                stage_id: ""
+                                            });
+                                        }}
+                                        placeholder="Selecciona un proceso"
+                                        isClearable
+                                        components={{ Menu: AnimatedSelectMenu }}
+                                        menuPortalTarget={document.body}
+                                        styles={{
+                                            menuPortal: (base) => ({ ...base, zIndex: 10000 }),
+                                            control: (base) => ({ ...base, borderRadius: '8px', border: '1px solid #dee2e6' }),
+                                        }}
+                                    />
+                                </div>
+
+                                {selectedProcessStages.length > 0 && (
+                                    <div className="form-group mb-3">
+                                        <label className="form-label">Etapa <span style={{ color: '#dc3545' }}>*</span></label>
+                                        <Select
+                                            options={selectedProcessStages.map((stage) => ({
+                                                value: stage.id_etapa.toString(),
+                                                label: stage.nombre_etapa,
+                                            }))}
+                                            value={
+                                                bulkAssignmentFormData.stage_id !== ""
+                                                    ? {
+                                                        value: bulkAssignmentFormData.stage_id,
+                                                        label: selectedProcessStages.find((s) => s.id_etapa.toString() === bulkAssignmentFormData.stage_id)?.nombre_etapa || "",
+                                                      }
+                                                    : null
+                                            }
+                                            onChange={(option: any) => {
+                                                setBulkAssignmentFormData({
+                                                    ...bulkAssignmentFormData,
+                                                    stage_id: option?.value || ""
+                                                });
+                                            }}
+                                            placeholder="Selecciona una etapa"
+                                            isClearable
+                                            components={{ Menu: AnimatedSelectMenu }}
+                                            menuPortalTarget={document.body}
+                                            styles={{
+                                                menuPortal: (base) => ({ ...base, zIndex: 10000 }),
+                                                control: (base) => ({ ...base, borderRadius: '8px', border: '1px solid #dee2e6' }),
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="form-group mb-3">
+                                    <label className="form-label">Motivo del Cambio <span style={{ color: '#dc3545' }}>*</span></label>
+                                    <textarea
+                                        className="form-control"
+                                        rows={3}
+                                        value={bulkAssignmentFormData.change_motive}
+                                        onChange={(e) => {
+                                            setBulkAssignmentFormData({
+                                                ...bulkAssignmentFormData,
+                                                change_motive: e.target.value
+                                            });
+                                        }}
+                                        placeholder="Describe el motivo de la reasignación"
+                                        disabled={isSubmittingBulkAssignment}
+                                        style={{ borderRadius: '8px', border: '1px solid #dee2e6' }}
+                                    />
+                                </div>
+
+                                <div className="form-group mb-3">
+                                    <label className="form-label">Asignar a Usuario (Opcional)</label>
+                                    <AsyncSelect
+                                        cacheOptions
+                                        loadOptions={loadUsers}
+                                        defaultOptions={false}
+                                        value={selectedAssignee}
+                                        onChange={(option) => setSelectedAssignee(option)}
+                                        placeholder="Buscar usuario por nombre o email"
+                                        isClearable
+                                        isDisabled={isSubmittingBulkAssignment}
+                                        classNamePrefix="react-select"
+                                        components={{ Menu: AnimatedSelectMenu }}
+                                        menuPortalTarget={document.body}
+                                        styles={{
+                                            menuPortal: (base) => ({ ...base, zIndex: 10000 }),
+                                            control: (base) => ({ ...base, borderRadius: '8px', border: '1px solid #dee2e6' }),
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="case-contacts-modal-footer">
+                                <button
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowBulkAssignmentModal(false)}
+                                    disabled={isSubmittingBulkAssignment}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={handleBulkAssignmentSubmit}
+                                    disabled={isSubmittingBulkAssignment}
+                                >
+                                    {isSubmittingBulkAssignment ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            Reasignando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="bi bi-arrow-left-right me-1"></i>Reasignar
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }
