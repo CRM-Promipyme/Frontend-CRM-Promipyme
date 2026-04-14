@@ -6,6 +6,8 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 import { CaseTasks } from "./CaseTasks";
 import { CaseAttatchments } from "./CaseAttatchments";
 import { CaseContacts } from "./CaseContacts";
@@ -51,6 +53,7 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
     const accessToken = authStore.accessToken;
 
     const [exporting, setExporting] = useState(false);
+    const [exportingZip, setExportingZip] = useState(false);
     const [previewing, setPreviewing] = useState(false);
     const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
     const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -295,6 +298,143 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
         }
     };
 
+    const exportCaseAsZip = async () => {
+        if (!selectedCase) return;
+        
+        try {
+            setExportingZip(true);
+            console.log("Starting ZIP export for case:", selectedCase.id_caso);
+            console.log("Attachments count:", attachments.length);
+            console.log("Attachments data:", attachments);
+            
+            const zip = new JSZip();
+            
+            // Create a folder for the case
+            const caseFolder = zip.folder(`caso_${String(selectedCase.id_caso).padStart(7, '0')}_${selectedCase.nombre_caso.replace(/[^a-z0-9]/gi, '_')}`);
+            if (!caseFolder) throw new Error("Failed to create ZIP folder");
+            
+            // Add the case PDF
+            try {
+                const doc = generateCasePDF();
+                const pdfBlob = doc.output('blob');
+                caseFolder.file('Caso_Resumen.pdf', pdfBlob);
+            } catch (error) {
+                console.error("Error adding PDF to ZIP:", error);
+                toast.warning("No se pudo incluir el PDF en el ZIP");
+            }
+            
+            // Add attachments
+            if (attachments && attachments.length > 0) {
+                const attachmentsFolder = caseFolder.folder('Documentos_Adjuntos');
+                if (!attachmentsFolder) throw new Error("Failed to create attachments folder");
+                
+                let successCount = 0;
+                for (const attachment of attachments) {
+                    try {
+                        console.log("Attempting to download attachment:", attachment.id_adjunto, attachment.archivo);
+                        
+                        // Use the archivo_url directly (S3 pre-signed URL, no auth needed)
+                        const downloadUrl = attachment.archivo_url;
+                        
+                        console.log("Download URL:", downloadUrl);
+                        
+                        const response = await axios.get(downloadUrl, {
+                            responseType: 'blob',
+                            timeout: 30000
+                        });
+                        
+                        if (response.status === 200 && response.data && response.data.size > 0) {
+                            attachmentsFolder.file(attachment.archivo, response.data);
+                            successCount++;
+                            console.log(`✓ Successfully added ${attachment.archivo} (${response.data.size} bytes)`);
+                        } else {
+                            console.warn(`✗ Empty or invalid response for ${attachment.archivo}`);
+                        }
+                    } catch (error) {
+                        console.error(`✗ Error downloading ${attachment.archivo}:`, error);
+                    }
+                }
+                
+                console.log(`Downloaded ${successCount} out of ${attachments.length} attachments`);
+                if (successCount === 0) {
+                    toast.warning(`No se pudieron descargar los documentos adjuntos`);
+                } else if (successCount < attachments.length) {
+                    toast.warning(`Se descargaron ${successCount} de ${attachments.length} documentos`);
+                }
+            } else {
+                console.log("No attachments to download");
+            }
+            
+            // Add case metadata as formatted text file
+            const metadataText = `
+================================================================================
+                        INFORMACIÓN DEL CASO
+================================================================================
+
+IDENTIFICACIÓN
+--------------
+ID del Caso:                ${String(selectedCase.id_caso).padStart(7, '0')}
+Nombre del Caso:            ${selectedCase.nombre_caso}
+
+
+ESTADO Y ETAPA
+--------------
+Estado:                     ${selectedCase.abierto ? "Abierto" : "Cerrado"}
+Etapa Actual:               ${process.etapas.find((step) => step.id_etapa === selectedCase.etapa_actual)?.nombre_etapa || "N/A"}
+
+
+INFORMACIÓN DE CONTACTO
+-----------------------
+Principal Solicitante:      ${selectedCase.contact_first_name} ${selectedCase.contact_last_name}
+
+
+VALORES FINANCIEROS
+-------------------
+Valor del Caso:             RD$ ${formatNumber(parseFloat(selectedCase.valor_caso))}
+${selectedCase.valor_aprobado ? `Valor Aprobado:             RD$ ${formatNumber(parseFloat(selectedCase.valor_aprobado))}\n` : ''}${selectedCase.valor_final ? `Valor Final:                RD$ ${formatNumber(parseFloat(selectedCase.valor_final))}\n` : ''}
+
+FECHAS IMPORTANTES
+------------------
+Fecha de Creación:          ${format(new Date(selectedCase.fecha_creacion), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { locale: es })}
+Fecha de Cierre Estimada:   ${format(new Date(selectedCase.fecha_cierre_estimada), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { locale: es })}
+Fecha de Cierre:            ${format(new Date(selectedCase.fecha_cierre), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { locale: es })}
+Última Actualización:       ${format(new Date(selectedCase.ultima_actualizacion), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { locale: es })}
+
+
+DESCRIPCIÓN
+-----------
+${selectedCase.descripcion_caso}
+
+
+DOCUMENTACIÓN
+-------------
+Total de Documentos Adjuntos: ${attachments.length}
+
+
+================================================================================
+Generado: ${format(new Date(), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { locale: es })}
+================================================================================
+            `.trim();
+            
+            caseFolder.file('Información_Caso.txt', metadataText);
+            
+            // Generate and download ZIP
+            console.log("Generating ZIP file...");
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            const zipFileName = `caso_${String(selectedCase.id_caso).padStart(7, '0')}_${selectedCase.nombre_caso.replace(/[^a-z0-9]/gi, '_')}_${new Date().getTime()}.zip`;
+            saveAs(zipBlob, zipFileName);
+            
+            console.log("ZIP export completed successfully");
+            toast.success("Caso exportado como ZIP correctamente");
+            
+        } catch (error) {
+            console.error("Error exporting case as ZIP:", error);
+            toast.error("Error al exportar el caso como ZIP");
+        } finally {
+            setExportingZip(false);
+        }
+    };
+
     return (
         <motion.div 
             key={selectedCase.id_caso}
@@ -399,6 +539,35 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
                                                 <>
                                                     <i className="bi bi-file-earmark-pdf"></i>
                                                     Exportar PDF
+                                                </>
+                                            )}
+                                        </motion.button>
+                                        <motion.button
+                                            className="btn btn-outline-success"
+                                            style={{
+                                                borderRadius: "8px",
+                                                padding: "8px 16px",
+                                                fontSize: "0.875rem",
+                                                fontWeight: 500,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "8px"
+                                            }}
+                                            whileHover={{ scale: exportingZip ? 1 : 1.02 }}
+                                            whileTap={{ scale: exportingZip ? 1 : 0.98 }}
+                                            onClick={exportCaseAsZip}
+                                            disabled={exportingZip}
+                                            title="Exporta el caso con todos sus documentos como ZIP"
+                                        >
+                                            {exportingZip ? (
+                                                <>
+                                                    <Spinner className="spinner-border-sm" />
+                                                    Exportando...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="bi bi-file-earmark-zip"></i>
+                                                    Exportar ZIP
                                                 </>
                                             )}
                                         </motion.button>
