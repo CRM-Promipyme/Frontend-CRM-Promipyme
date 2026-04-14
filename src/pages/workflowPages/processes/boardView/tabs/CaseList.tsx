@@ -49,6 +49,7 @@ export function CaseList({ process }: WorkflowKanbanProps) {
     });
     const [selectedAssignee, setSelectedAssignee] = useState<any>(null);
     const [isSubmittingBulkAssignment, setIsSubmittingBulkAssignment] = useState(false);
+    const [isExportingCases, setIsExportingCases] = useState(false);
 
     // collect active case from URL search params
     useEffect(() => {
@@ -254,6 +255,107 @@ export function CaseList({ process }: WorkflowKanbanProps) {
             toast.error("Error al reasignar los casos");
         } finally {
             setIsSubmittingBulkAssignment(false);
+        }
+    };
+
+    const exportSelectedCasesAsTxt = async () => {
+        if (selectedCaseIds.size === 0) {
+            toast.warning("Por favor selecciona al menos un caso");
+            return;
+        }
+
+        try {
+            setIsExportingCases(true);
+
+            // Get all selected cases
+            const selectedCases = cases.filter(c => selectedCaseIds.has(c.id_caso));
+            
+            if (selectedCases.length === 0) {
+                toast.error("No se encontraron los casos seleccionados");
+                return;
+            }
+
+            // Build the text content
+            let textContent = `
+================================================================================
+                    EXPORTACIÓN DE CASOS
+================================================================================
+
+Proceso: ${process.nombre_proceso}
+Fecha de Exportación: ${format(new Date(), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { locale: es })}
+Total de Casos: ${selectedCases.length}
+
+================================================================================
+`;
+
+            for (const caseObj of selectedCases) {
+                const etapaActual = process.etapas.find((step) => step.id_etapa === caseObj.etapa_actual)?.nombre_etapa || "N/A";
+                
+                textContent += `
+
+--------------------------------------------------------------------------------
+CASO #${String(caseObj.id_caso).padStart(7, '0')} - ${caseObj.nombre_caso}
+--------------------------------------------------------------------------------
+
+INFORMACIÓN GENERAL
+-------------------
+Estado:                     ${caseObj.abierto ? "Abierto" : "Cerrado"}
+Etapa Actual:               ${etapaActual}
+Creado:                     ${format(new Date(caseObj.fecha_creacion), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { locale: es })}
+Última Actualización:       ${format(new Date(caseObj.ultima_actualizacion), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { locale: es })}
+
+CONTACTO PRINCIPAL
+------------------
+Nombre:                     ${caseObj.contact_first_name} ${caseObj.contact_last_name}
+
+VALORES FINANCIEROS
+-------------------
+Valor del Caso:             RD$ ${formatNumber(parseFloat(caseObj.valor_caso))}
+${caseObj.valor_aprobado ? `Valor Aprobado:             RD$ ${formatNumber(parseFloat(caseObj.valor_aprobado))}\n` : ''}${caseObj.valor_final ? `Valor Final:                RD$ ${formatNumber(parseFloat(caseObj.valor_final))}\n` : ''}
+
+FECHAS IMPORTANTES
+------------------
+Fecha de Cierre:            ${format(new Date(caseObj.fecha_cierre), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { locale: es })}
+Fecha de Cierre Estimada:   ${format(new Date(caseObj.fecha_cierre_estimada), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { locale: es })}
+Días Restantes:             ${daysLeft(new Date(caseObj.fecha_cierre_estimada))} días
+
+DESCRIPCIÓN
+-----------
+${caseObj.descripcion_caso || "(Sin descripción)"}
+`;
+            }
+
+            textContent += `
+
+================================================================================
+Fin de Exportación
+================================================================================
+            `.trim();
+
+            // Create and download the file
+            const blob = new Blob([textContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `casos_exportados_${format(new Date(), "yyyy-MM-dd_HH-mm-ss")}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            // Report the export
+            const caseIds = Array.from(selectedCaseIds);
+            await api.post('workflows/casos/export/report/', {
+                case_ids: caseIds
+            });
+
+            toast.success(`${selectedCases.length} caso(s) exportado(s) correctamente`);
+
+        } catch (error) {
+            console.error("Error exporting cases:", error);
+            toast.error("Error al exportar los casos");
+        } finally {
+            setIsExportingCases(false);
         }
     };
 
@@ -680,6 +782,36 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                         >
                             <i className="bi bi-arrow-left-right me-1"></i>
                             Reasignar
+                        </button>
+                        <button
+                            onClick={exportSelectedCasesAsTxt}
+                            disabled={isExportingCases}
+                            style={{
+                                backgroundColor: "rgba(255,255,255,0.9)",
+                                color: "#0d6efd",
+                                border: "none",
+                                padding: "6px 16px",
+                                borderRadius: "6px",
+                                fontWeight: 600,
+                                cursor: isExportingCases ? "not-allowed" : "pointer",
+                                fontSize: "0.85rem",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                opacity: isExportingCases ? 0.7 : 1
+                            }}
+                        >
+                            {isExportingCases ? (
+                                <>
+                                    <Spinner className="spinner-border-sm" />
+                                    Exportando...
+                                </>
+                            ) : (
+                                <>
+                                    <i className="bi bi-download"></i>
+                                    Exportar
+                                </>
+                            )}
                         </button>
                         <button
                             onClick={() => setSelectedCaseIds(new Set())}
