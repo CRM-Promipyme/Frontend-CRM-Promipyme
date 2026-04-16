@@ -55,6 +55,10 @@ export interface Caso {
     tags: number[];
     sucursal?: number;
     sucursal_nombre?: string;
+    fondo_crediticio?: number | null;
+    fondo_nombre?: string;
+    producto_crediticio?: number | null;
+    producto_nombre?: string;
 }
 
 export interface DashboardCase {
@@ -158,4 +162,31 @@ export interface CreateDenialReasonData {
 export interface UpdateDenialReasonData {
     proceso_id: number;
     descripcion_razon: string;
+}
+
+// Fondos Crediticios
+export interface Producto {
+    id_producto: number;
+    nombre_producto: string;
+    fondo_crediticio: number;
+    fondo_nombre: string;
+    requisitos?: Requisito[];
+}
+
+export interface Fondo {
+    id_fondo: number;
+    nombre_fondo: string;
+    productos: Producto[];
+}
+
+export interface Requisito {
+    id_requisito: number;
+    producto_crediticio: number;
+    nombre_requisito: string;
+    descripcion?: string;
+    es_obligatorio: boolean;
+    categoria?: string;
+    orden: number;
+    fecha_creacion: string;
+    ultima_actualizacion: string;
 }

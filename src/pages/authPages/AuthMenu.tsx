@@ -50,6 +50,12 @@ export function AdminMenu() {
             description: "Crear, editar y eliminar sucursales de la empresa.",
             icon: "bi bi-building",
             url: "/auth/manage/branches/list"
+        },
+        {
+            title: "Fondos Crediticios",
+            description: "Crear y gestionar fondos crediticios y sus productos asociados.",
+            icon: "bi bi-cash-coin",
+            url: "/auth/fondos-crediticios"
         }
     ]
 

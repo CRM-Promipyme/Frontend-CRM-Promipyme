@@ -9,13 +9,14 @@ import { SidebarLayout } from "../../../components/layouts/SidebarLayout";
 import { useSidebarStore } from "../../../stores/sidebarStore";
 import { useAuthStore } from "../../../stores/authStore";
 import { Contact } from "../../../types/contactTypes";
-import { Proceso } from "../../../types/workflowTypes";
+import { Proceso, Fondo } from "../../../types/workflowTypes";
 import { fetchCase } from "../../../controllers/caseControllers";
 import { fetchContacts } from "../../../controllers/contactControllers";
 import { fetchProcesses } from "../../../controllers/workflowControllers";
 import { updateCase } from "../../../controllers/caseControllers";
 import { formatDatetimeForInput } from "../../../utils/formatUtils";
 import { AnimatedSelectMenu } from "../../../components/ui/forms/AnimatedSelectMenu";
+import api from "../../../controllers/api";
 
 const formatNumber = (num: string) => {
     // Remove any existing commas first
@@ -51,6 +52,11 @@ export function UpdateCase() {
     const [archived, setArchived] = useState(false);
     const [editable, setEditable] = useState(true);
 
+    // Fondos & Productos State
+    const [fondos, setFondos] = useState<Fondo[]>([]);
+    const [selectedFondoId, setSelectedFondoId] = useState<number | null>(null);
+    const [selectedProductoId, setSelectedProductoId] = useState<number | null>(null);
+
     const selectedProcess = processes.find(p => p.id_proceso === selectedProcessId);
 
     useEffect(() => {
@@ -60,6 +66,10 @@ export function UpdateCase() {
             try {
                 const processesRes = await fetchProcesses();
                 setProcesses(processesRes);
+
+                // Load fondos
+                const fondosRes = await api.get('/workflows/fondos-crediticios/list/');
+                setFondos(fondosRes.data || []);
 
                 const caseRes = await fetchCase(Number(caseId));
                 if (!caseRes?.case) {
@@ -86,6 +96,13 @@ export function UpdateCase() {
                     label: `${c.contact_first_name} ${c.contact_last_name}`,
                     value: c.contact,
                 });
+                // Set fondo and producto
+                if (c.fondo_crediticio) {
+                    setSelectedFondoId(c.fondo_crediticio);
+                    if (c.producto_crediticio) {
+                        setSelectedProductoId(c.producto_crediticio);
+                    }
+                }
             } catch (err) {
                 console.error(err);
                 toast.error("Error al cargar los datos del caso.");
@@ -120,6 +137,8 @@ export function UpdateCase() {
             stage_id: selectedStageId,
             contact_id: selectedContact.value,
             creator_id: userId,
+            fondo_crediticio_id: selectedFondoId || null,
+            producto_crediticio_id: selectedProductoId || null,
         };
 
         setLoading(true);
@@ -337,6 +356,63 @@ export function UpdateCase() {
                                     }}
                                 />
                             </div>
+                        </div>
+
+                        {/* FONDOS Y PRODUCTOS SECTION */}
+                        <div style={{ marginBottom: '40px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', paddingBottom: '15px', borderBottom: '2px solid #f0f0f0' }}>
+                                <i className="bi bi-cash-coin" style={{ fontSize: '24px', color: '#0d6efd', marginRight: '10px' }}></i>
+                                <h5 style={{ margin: 0, fontWeight: 600, color: '#212529' }}>Fondos y Productos Crediticios</h5>
+                            </div>
+
+                            <div className="mb-3">
+                                <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Fondo Crediticio</label>
+                                <Select
+                                    options={fondos.map(f => ({
+                                        value: f.id_fondo,
+                                        label: f.nombre_fondo
+                                    }))}
+                                    value={selectedFondoId ? {
+                                        value: selectedFondoId,
+                                        label: fondos.find(f => f.id_fondo === selectedFondoId)?.nombre_fondo || ""
+                                    } : null}
+                                    onChange={(opt) => {
+                                        setSelectedFondoId((opt as ContactOption)?.value ?? null);
+                                        setSelectedProductoId(null);
+                                    }}
+                                    isClearable
+                                    components={{ Menu: AnimatedSelectMenu }}
+                                    menuPortalTarget={document.body}
+                                    styles={{ 
+                                        menuPortal: base => ({ ...base, zIndex: 9999 }),
+                                        control: (base) => ({ ...base, borderRadius: '8px', border: '1px solid #dee2e6' }),
+                                    }}
+                                />
+                            </div>
+
+                            {selectedFondoId && (
+                                <div className="mb-3">
+                                    <label style={{ fontWeight: 600, marginBottom: '8px', display: 'block' }}>Producto Crediticio</label>
+                                    <Select
+                                        options={(fondos.find(f => f.id_fondo === selectedFondoId)?.productos || []).map(p => ({
+                                            value: p.id_producto,
+                                            label: p.nombre_producto
+                                        }))}
+                                        value={selectedProductoId ? {
+                                            value: selectedProductoId,
+                                            label: fondos.find(f => f.id_fondo === selectedFondoId)?.productos.find(p => p.id_producto === selectedProductoId)?.nombre_producto || ""
+                                        } : null}
+                                        onChange={(opt) => setSelectedProductoId((opt as ContactOption)?.value ?? null)}
+                                        isClearable
+                                        components={{ Menu: AnimatedSelectMenu }}
+                                        menuPortalTarget={document.body}
+                                        styles={{ 
+                                            menuPortal: base => ({ ...base, zIndex: 9999 }),
+                                            control: (base) => ({ ...base, borderRadius: '8px', border: '1px solid #dee2e6' }),
+                                        }}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         {/* DATES SECTION */}

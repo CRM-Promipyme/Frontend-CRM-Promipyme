@@ -15,6 +15,7 @@ import { AuthenticatedRoutePermissions } from '../components/permissions/Authent
 import { BulkInviteUsers } from '../pages/authPages/BulkInviteUsers';
 import { MassInviteUsers } from '../pages/authPages/MassInviteUsers';
 import { ManageBranches } from '../pages/authPages/ManageBranches';
+import { FondosCrediticios } from '../pages/authPages/FondosCrediticios';
 
 export function AuthRoutes() {
     const publicAuthRoutes = [
@@ -66,6 +67,11 @@ export function AuthRoutes() {
             path: "/manage/branches/list",
             comp: ManageBranches,
             requiredBasePermissions: ["create_branches", "update_branches", "delete_branches"]
+        },
+        {
+            path: "/fondos-crediticios",
+            comp: FondosCrediticios,
+            requiredBasePermissions: []
         }
     ]
 

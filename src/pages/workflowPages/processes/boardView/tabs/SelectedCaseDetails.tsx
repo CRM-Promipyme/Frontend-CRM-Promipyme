@@ -17,12 +17,14 @@ import { daysLeft } from "../../../../../utils/formatUtils";
 import { CaseFormsList } from "../../../cases/CaseFormsList";
 import { Activity } from "../../../../../types/activityTypes";
 import { formatNumber } from "../../../../../utils/formatUtils";
-import { Caso, Proceso, DenialReason } from "../../../../../types/workflowTypes";
+import { Caso, Proceso, DenialReason, Requisito, Fondo } from "../../../../../types/workflowTypes";
 import { lowerColorOpacity } from "../../../../../utils/formatUtils";
 import { ActivityLog } from "../../../../../components/ui/ActivityLog";
 import { Spinner } from "../../../../../components/ui/Spinner";
 import { useAuthStore } from "../../../../../stores/authStore";
 import { denyCase, blockUnblockCase, fetchDenialReasons, approveCase } from "../../../../../controllers/workflowControllers";
+import { fetchProductoRequisitos } from "../../../../../controllers/requisitosCrediticiosControllers";
+import api from "../../../../../controllers/api";
 
 interface Attachment {
     id_adjunto: number;
@@ -69,6 +71,11 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
     const [userPermissions, setUserPermissions] = useState<any[]>([]);
     const [showApproveModal, setShowApproveModal] = useState(false);
     const [approvingCase, setApprovingCase] = useState(false);
+    const [requisitos, setRequisitos] = useState<Requisito[]>([]);
+    const [loadingRequisitos, setLoadingRequisitos] = useState(false);
+    const [isFondosExpanded, setIsFondosExpanded] = useState(true);
+    const [fondoNombre, setFondoNombre] = useState<string | null>(null);
+    const [productoNombre, setProductoNombre] = useState<string | null>(null);
 
     // Fetch attachments
     useEffect(() => {
@@ -134,6 +141,49 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
             loadData();
         }
     }, [process.id_proceso]);
+
+    // Load requisitos and fondo/producto names for the case
+    useEffect(() => {
+        const loadRequisitosAndNames = async () => {
+            if (!selectedCase.fondo_crediticio || !selectedCase.producto_crediticio) {
+                setRequisitos([]);
+                setFondoNombre(null);
+                setProductoNombre(null);
+                return;
+            }
+
+            try {
+                setLoadingRequisitos(true);
+                
+                // Fetch fondos to get names
+                const fondosRes = await api.get('/workflows/fondos-crediticios/list/');
+                const fondosList: Fondo[] = fondosRes.data || [];
+                
+                // Find fondo and producto names
+                const fondo = fondosList.find((f: Fondo) => f.id_fondo === selectedCase.fondo_crediticio);
+                if (fondo) {
+                    setFondoNombre(fondo.nombre_fondo);
+                    const producto = fondo.productos.find((p) => p.id_producto === selectedCase.producto_crediticio);
+                    if (producto) {
+                        setProductoNombre(producto.nombre_producto);
+                    }
+                }
+                
+                // Fetch requisitos
+                const data = await fetchProductoRequisitos(selectedCase.fondo_crediticio, selectedCase.producto_crediticio);
+                setRequisitos(data || []);
+            } catch (error) {
+                console.error("Error loading requisitos and names:", error);
+                setRequisitos([]);
+                setFondoNombre(null);
+                setProductoNombre(null);
+            } finally {
+                setLoadingRequisitos(false);
+            }
+        };
+
+        loadRequisitosAndNames();
+    }, [selectedCase.fondo_crediticio, selectedCase.producto_crediticio]);
 
     const generateCasePDF = () => {
         const doc = new jsPDF();
@@ -864,6 +914,139 @@ Generado: ${format(new Date(), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { local
                                                 </div>
                                         </div>
                                     </Link>
+
+                                    {/* FONDO Y PRODUCTO SECTION */}
+                                    {(selectedCase.fondo_crediticio || selectedCase.producto_crediticio) && (
+                                        <div style={{ marginBottom: '20px', marginTop: '25px' }}>
+                                            <div style={{ 
+                                                padding: '15px', 
+                                                backgroundColor: '#f8f9fa', 
+                                                borderRadius: '8px',
+                                                border: '1px solid #dee2e6'
+                                            }}>
+                                                <button
+                                                    onClick={() => setIsFondosExpanded(!isFondosExpanded)}
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
+                                                        padding: 0,
+                                                        width: '100%',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'space-between',
+                                                        marginBottom: '0px'
+                                                    }}
+                                                >
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                                                        <i className="bi bi-cash-coin" style={{ fontSize: '20px', color: '#0d6efd' }}></i>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                            <h6 style={{ margin: 0, fontWeight: 600, color: '#212529' }}>Fondo Crediticio</h6>
+                                                            <small style={{ color: '#6c757d' }}>
+                                                                {fondoNombre && productoNombre 
+                                                                    ? `${fondoNombre} - ${productoNombre}`
+                                                                    : fondoNombre || productoNombre || 'Sin asignar'
+                                                                }
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                    <motion.i 
+                                                        className="bi bi-chevron-down"
+                                                        animate={{ rotate: isFondosExpanded ? 0 : -90 }}
+                                                        transition={{ duration: 0.2 }}
+                                                        style={{ fontSize: '18px', color: '#0d6efd', flexShrink: 0 }}
+                                                    />
+                                                </button>
+
+                                                <AnimatePresence>
+                                                    {isFondosExpanded && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, height: 0 }}
+                                                            animate={{ opacity: 1, height: 'auto' }}
+                                                            exit={{ opacity: 0, height: 0 }}
+                                                            transition={{ duration: 0.2 }}
+                                                            style={{ overflow: 'hidden' }}
+                                                        >
+                                                            <div style={{ marginTop: '12px' }}>
+                                                                {fondoNombre && (
+                                                                    <div style={{ marginBottom: '10px' }}>
+                                                                        <small style={{ color: '#6c757d' }}>Fondo:</small>
+                                                                        <p style={{ margin: '4px 0 0 0', fontWeight: 500 }}>{fondoNombre}</p>
+                                                                    </div>
+                                                                )}
+
+                                                                {productoNombre && (
+                                                                    <div style={{ marginBottom: '10px' }}>
+                                                                        <small style={{ color: '#6c757d' }}>Producto:</small>
+                                                                        <p style={{ margin: '4px 0 0 0', fontWeight: 500 }}>{productoNombre}</p>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* REQUISITOS SUBSECTION */}
+                                                                {requisitos.length > 0 && (
+                                                                    <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #dee2e6' }}>
+                                                                        <div style={{ marginBottom: '10px' }}>
+                                                                            <small style={{ fontWeight: 600, color: '#212529' }}>Requisitos:</small>
+                                                                        </div>
+
+                                                                        {loadingRequisitos ? (
+                                                                            <div style={{ textAlign: 'center', padding: '10px' }}>
+                                                                                <Spinner />
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div>
+                                                                                {requisitos.sort((a, b) => (a.orden || 0) - (b.orden || 0)).map((req) => (
+                                                                                    <div key={req.id_requisito} style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid #e9ecef' }}>
+                                                                                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                                                                                            <i 
+                                                                                                className={`bi ${req.es_obligatorio ? 'bi-check-circle-fill' : 'bi-circle'}`}
+                                                                                                style={{ 
+                                                                                                    fontSize: '16px',
+                                                                                                    color: req.es_obligatorio ? '#dc3545' : '#ffc107',
+                                                                                                    marginTop: '2px',
+                                                                                                    flexShrink: 0
+                                                                                                }}
+                                                                                            ></i>
+                                                                                            <div style={{ flex: 1 }}>
+                                                                                                <p style={{ margin: '0 0 4px 0', fontWeight: 500 }}>{req.nombre_requisito}</p>
+                                                                                                {req.descripcion && (
+                                                                                                    <small style={{ color: '#6c757d', display: 'block' }}>{req.descripcion}</small>
+                                                                                                )}
+                                                                                                {req.categoria && (
+                                                                                                    <small style={{ color: '#495057', display: 'block', marginTop: '2px' }}>
+                                                                                                        <strong>Categoría:</strong> {req.categoria}
+                                                                                                    </small>
+                                                                                                )}
+                                                                                                <span 
+                                                                                                    style={{
+                                                                                                        display: 'inline-block',
+                                                                                                        fontSize: '11px',
+                                                                                                        marginTop: '4px',
+                                                                                                        padding: '2px 8px',
+                                                                                                        borderRadius: '4px',
+                                                                                                        backgroundColor: req.es_obligatorio ? '#f8d7da' : '#fff3cd',
+                                                                                                        color: req.es_obligatorio ? '#721c24' : '#856404',
+                                                                                                        fontWeight: 600
+                                                                                                    }}
+                                                                                                >
+                                                                                                    {req.es_obligatorio ? 'Obligatorio' : 'Opcional'}
+                                                                                                </span>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="case-contacts">
                                         {selectedCase && (
                                             <CaseContacts caseId={selectedCase.id_caso} mainContactId={selectedCase.contact}/>
