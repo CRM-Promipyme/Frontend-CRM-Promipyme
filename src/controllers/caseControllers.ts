@@ -45,9 +45,10 @@ export const updateCase = async (caseId: number, caseData: unknown) => {
  * @param stageId The stage ID
  * @param caseName The case name filter (optional)
  * @param sucursalId The branch/sucursal ID filter (optional)
+ * @param archiveFilter Filter for archived cases (optional, default: ''). Options: '' (non-archived only), 'include-archived' (both), 'archived-only' (archived only)
  * @returns a list of cases (paginated, comes in the form of {'count': number, 'next': string, 'previous': string, 'results': Case[]})
  */
-export const fetchStageCases = async (processId: number, stageId: number, caseName: string, sucursalId?: number) => {
+export const fetchStageCases = async (processId: number, stageId: number, caseName: string, sucursalId?: number, archiveFilter: string = '') => {
     try {
         let endpoint = `/workflows/casos/board-view/${processId}/${stageId}/`;
         const params = [];
@@ -57,6 +58,11 @@ export const fetchStageCases = async (processId: number, stageId: number, caseNa
         }
         if (sucursalId !== undefined) {
             params.push(`sucursal_id=${sucursalId}`);
+        }
+        if (archiveFilter === 'include-archived') {
+            params.push(`include_archived=true`);
+        } else if (archiveFilter === 'archived-only') {
+            params.push(`archived_only=true`);
         }
         
         if (params.length > 0) {
@@ -75,11 +81,18 @@ export const fetchStageCases = async (processId: number, stageId: number, caseNa
 /**
  * Fetch all of a process' cases
  * @param processId The process' ID
+ * @param archiveFilter Filter for archived cases (optional, default: ''). Options: '' (non-archived only), 'include-archived' (both), 'archived-only' (archived only)
  * @returns a list of cases (paginasted, sames as format as before)
  */
-export const fetchProcessCases = async (processId: number) => {
+export const fetchProcessCases = async (processId: number, archiveFilter: string = '') => {
     try {
-        const response = await api.get(`/workflows/casos/list/?process_id=${processId}`)
+        let endpoint = `/workflows/casos/list/?process_id=${processId}`;
+        if (archiveFilter === 'include-archived') {
+            endpoint += `&include_archived=true`;
+        } else if (archiveFilter === 'archived-only') {
+            endpoint += `&archived_only=true`;
+        }
+        const response = await api.get(endpoint)
         return response.data
     } catch (error) {
         console.error("Error fetching ccases: ", error)
@@ -91,11 +104,18 @@ export const fetchProcessCases = async (processId: number) => {
 /**
  * Fetch a contact's related cases
  * @param contactId The contact's ID
+ * @param archiveFilter Filter for archived cases (optional, default: ''). Options: '' (non-archived only), 'include-archived' (both), 'archived-only' (archived only)
  * @returns a list of cases (paginated, same format as before)
  */
-export const fetchContactCases = async (contactId: number) => {
+export const fetchContactCases = async (contactId: number, archiveFilter: string = '') => {
     try {
-        const response = await api.get(`/workflows/casos/list/?contact_id=${contactId}`);
+        let endpoint = `/workflows/casos/list/?contact_id=${contactId}`;
+        if (archiveFilter === 'include-archived') {
+            endpoint += `&include_archived=true`;
+        } else if (archiveFilter === 'archived-only') {
+            endpoint += `&archived_only=true`;
+        }
+        const response = await api.get(endpoint);
         return response.data;
     }
     catch (error) {
@@ -108,11 +128,18 @@ export const fetchContactCases = async (contactId: number) => {
 /**
  * Fetch a user's related cases
  * @param userId The user's ID
+ * @param archiveFilter Filter for archived cases (optional, default: ''). Options: '' (non-archived only), 'include-archived' (both), 'archived-only' (archived only)
  * @returns a list of cases (paginated, same format as before)
  */
-export const fetchUserCases = async (userId: number) => {
+export const fetchUserCases = async (userId: number, archiveFilter: string = '') => {
     try {
-        const response = await api.get(`/workflows/casos/list/?user_id=${userId}`);
+        let endpoint = `/workflows/casos/list/?user_id=${userId}`;
+        if (archiveFilter === 'include-archived') {
+            endpoint += `&include_archived=true`;
+        } else if (archiveFilter === 'archived-only') {
+            endpoint += `&archived_only=true`;
+        }
+        const response = await api.get(endpoint);
         return response.data;
     }
     catch (error) {

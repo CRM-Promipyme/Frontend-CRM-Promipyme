@@ -102,7 +102,7 @@ export function KanbanTask({ case: kanbanCase, columnId, isOverlay = false, isCo
                 </p>
             )}
 
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 {kanbanCase.abierto ? (
                     <span className="case-status-badge case-open">Abierto</span>
                 ) : (
@@ -114,6 +114,12 @@ export function KanbanTask({ case: kanbanCase, columnId, isOverlay = false, isCo
                             </span>
                         )}
                     </>
+                )}
+                {kanbanCase.archived && (
+                    <span className="case-status-badge" style={{ backgroundColor: "#6c757d", color: "white" }}>
+                        <i className="bi bi-archive" style={{ marginRight: "4px" }}></i>
+                        Archivado
+                    </span>
                 )}
             </div>
         </div>

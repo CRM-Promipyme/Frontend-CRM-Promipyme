@@ -42,6 +42,10 @@ export interface Caso {
     ultima_actualizacion: string;
     abierto: boolean;
     exitoso: boolean;
+    editable?: boolean;
+    restructurado?: boolean;
+    archived?: boolean;
+    denial_reason?: number | null;
     contact: number;
     contact_first_name: string;
     contact_last_name: string;
@@ -137,4 +141,21 @@ export interface CaseContactsResponse {
 export interface CreateCaseContactData {
     contacto: number;
     rol_contacto: string;
+}
+
+export interface DenialReason {
+    id_razon: number;
+    proceso: number;
+    proceso_nombre: string;
+    descripcion_razon: string;
+}
+
+export interface CreateDenialReasonData {
+    proceso_id: number;
+    descripcion_razon: string;
+}
+
+export interface UpdateDenialReasonData {
+    proceso_id: number;
+    descripcion_razon: string;
 }

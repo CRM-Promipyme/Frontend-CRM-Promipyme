@@ -66,7 +66,7 @@ export function EditWorkflow({ process, setProcess }: WorkflowSettingsProps) {
     }, [branches.length]);
 
     useEffect(() => {
-        if (process) {
+        if (process && process.etapas) {
             setNombreProceso(process.nombre_proceso);
             setColor(process.color);
             setEtapas(

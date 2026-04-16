@@ -51,6 +51,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [branches, setBranches] = useState<Branch[]>([]);
     const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+    const [archiveFilter, setArchiveFilter] = useState('');
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     const columnIds = useMemo(() => columns.map(col => col.id), [columns]);
@@ -199,7 +200,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
                     // Fetch all allowed stages in parallel
                     Promise.all(
                         allowedEtapas.map((etapa) =>
-                            fetchStageCases(process.id_proceso, etapa.id_etapa, caseName, selectedBranch?.id).then((result) => ({
+                            fetchStageCases(process.id_proceso, etapa.id_etapa, caseName, selectedBranch?.id, archiveFilter).then((result) => ({
                                 etapaId: etapa.id_etapa.toString(),
                                 data: result,
                             }))
@@ -225,7 +226,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         };
         
         fetchAllowedStagesAndColumns();
-    }, [process, caseName, selectedBranch, authStore]);
+    }, [process, caseName, selectedBranch, authStore, archiveFilter]);
     
     const onLoadMore = async (columnId: string) => {
         const col = columns.find(c => c.id === columnId);
@@ -262,8 +263,8 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         ) {
             // Fetch both the source and target columns
             Promise.all([
-                fetchStageCases(process.id_proceso, data.from_stage_id, caseName, selectedBranch?.id),
-                fetchStageCases(process.id_proceso, data.to_stage_id, caseName, selectedBranch?.id)
+                fetchStageCases(process.id_proceso, data.from_stage_id, caseName, selectedBranch?.id, archiveFilter),
+                fetchStageCases(process.id_proceso, data.to_stage_id, caseName, selectedBranch?.id, archiveFilter)
             ]).then(([fromResult, toResult]) => {
                 setColumns(prev =>
                     prev.map(col => {
@@ -327,6 +328,54 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
                         getOptionValue={(option: Branch) => String(option.id)}
                         placeholder="Filtrar por sucursal..."
                     />
+                </div>
+                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center", minWidth: "300px" }}>
+                    <p style={{ fontSize: "0.75rem", color: "#6c757d", margin: 0, fontWeight: 600, textTransform: "uppercase" }}>
+                        <i className="bi bi-archive" style={{ marginRight: "6px" }}></i>
+                        Filtro
+                    </p>
+                    <div className="form-check">
+                        <input
+                            className="form-check-input"
+                            type="radio"
+                            name="archiveFilterKanban"
+                            id="archiveFilterNoneKanban"
+                            value=""
+                            checked={archiveFilter === ''}
+                            onChange={() => setArchiveFilter('')}
+                        />
+                        <label className="form-check-label" htmlFor="archiveFilterNoneKanban" style={{ cursor: 'pointer', marginLeft: "6px", userSelect: 'none', marginBottom: 0 }}>
+                            Solo activos
+                        </label>
+                    </div>
+                    <div className="form-check">
+                        <input
+                            className="form-check-input"
+                            type="radio"
+                            name="archiveFilterKanban"
+                            id="archiveFilterIncludeKanban"
+                            value="include-archived"
+                            checked={archiveFilter === 'include-archived'}
+                            onChange={() => setArchiveFilter('include-archived')}
+                        />
+                        <label className="form-check-label" htmlFor="archiveFilterIncludeKanban" style={{ cursor: 'pointer', marginLeft: "6px", userSelect: 'none', marginBottom: 0 }}>
+                            Todos
+                        </label>
+                    </div>
+                    <div className="form-check">
+                        <input
+                            className="form-check-input"
+                            type="radio"
+                            name="archiveFilterKanban"
+                            id="archiveFilterOnlyKanban"
+                            value="archived-only"
+                            checked={archiveFilter === 'archived-only'}
+                            onChange={() => setArchiveFilter('archived-only')}
+                        />
+                        <label className="form-check-label" htmlFor="archiveFilterOnlyKanban" style={{ cursor: 'pointer', marginLeft: "6px", userSelect: 'none', marginBottom: 0 }}>
+                            Solo archivados
+                        </label>
+                    </div>
                 </div>
                 {process && (
                     <Link to={`/workflows/cases/create/${process.id_proceso}`}>

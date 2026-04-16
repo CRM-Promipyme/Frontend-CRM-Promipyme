@@ -35,6 +35,7 @@ export function CaseList({ process }: WorkflowKanbanProps) {
     const [cedulaFilter, setCedulaFilter] = useState<string>("");
     const [isCompactLayout, setIsCompactLayout] = useState(false);
     const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+    const [archiveFilter, setArchiveFilter] = useState('');
     const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Bulk assignment states
@@ -79,6 +80,8 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                 if (stageIdFilter) params.stage_id = stageIdFilter;
                 if (caseNameFilter) params.case_name = caseNameFilter;
                 if (cedulaFilter) params.cedula = cedulaFilter;
+                if (archiveFilter === 'include-archived') params.include_archived = "true";
+                if (archiveFilter === 'archived-only') params.archived_only = "true";
 
                 const queryString = new URLSearchParams(params).toString();
                 const response = await api.get(`/workflows/casos/list/?${queryString}`);
@@ -97,7 +100,7 @@ export function CaseList({ process }: WorkflowKanbanProps) {
         return () => {
             if (debounceTimer.current) clearTimeout(debounceTimer.current);
         };
-    }, [process.id_proceso, caseStatusFilter, stageIdFilter, caseNameFilter, cedulaFilter]);
+    }, [process.id_proceso, caseStatusFilter, stageIdFilter, caseNameFilter, cedulaFilter, archiveFilter]);
 
     // Infinite scroll observer
     useEffect(() => {
@@ -544,7 +547,7 @@ Fin de Exportación
                     </div>
 
                     {/* Stage dropdown */}
-                    <div>
+                    <div style={{ marginBottom: "15px" }}>
                         <Select
                             options={[
                                 { value: "", label: "Todas las etapas" },
@@ -567,6 +570,58 @@ Fin de Exportación
                             styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                             placeholder="Filtrar por etapa..."
                         />
+                    </div>
+
+                    {/* Archive filter radio buttons */}
+                    <div style={{ marginBottom: "15px" }}>
+                        <p style={{ fontSize: "0.75rem", color: "#6c757d", marginBottom: "8px", fontWeight: 600, textTransform: "uppercase" }}>
+                            <i className="bi bi-archive" style={{ marginRight: "6px" }}></i>
+                            Filtro de Archivados
+                        </p>
+                        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                            <div className="form-check">
+                                <input
+                                    className="form-check-input"
+                                    type="radio"
+                                    name="archiveFilter"
+                                    id="archiveFilterNone"
+                                    value=""
+                                    checked={archiveFilter === ''}
+                                    onChange={() => setArchiveFilter('')}
+                                />
+                                <label className="form-check-label" htmlFor="archiveFilterNone" style={{ cursor: 'pointer', marginLeft: "6px", userSelect: 'none' }}>
+                                    Solo activos
+                                </label>
+                            </div>
+                            <div className="form-check">
+                                <input
+                                    className="form-check-input"
+                                    type="radio"
+                                    name="archiveFilter"
+                                    id="archiveFilterInclude"
+                                    value="include-archived"
+                                    checked={archiveFilter === 'include-archived'}
+                                    onChange={() => setArchiveFilter('include-archived')}
+                                />
+                                <label className="form-check-label" htmlFor="archiveFilterInclude" style={{ cursor: 'pointer', marginLeft: "6px", userSelect: 'none' }}>
+                                    Incluir archivados
+                                </label>
+                            </div>
+                            <div className="form-check">
+                                <input
+                                    className="form-check-input"
+                                    type="radio"
+                                    name="archiveFilter"
+                                    id="archiveFilterOnly"
+                                    value="archived-only"
+                                    checked={archiveFilter === 'archived-only'}
+                                    onChange={() => setArchiveFilter('archived-only')}
+                                />
+                                <label className="form-check-label" htmlFor="archiveFilterOnly" style={{ cursor: 'pointer', marginLeft: "6px", userSelect: 'none' }}>
+                                    Solo archivados
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -661,11 +716,17 @@ Fin de Exportación
 
                                 {isCompactLayout && (
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", marginTop: "6px" }}>
-                                        <div style={{ display: "flex", gap: "6px" }}>
+                                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
                                             {caseObj.abierto ? (
                                                 <span className="case-status-badge case-open">Abierto</span>
                                             ) : (
                                                 <span className="case-status-badge case-closed">Cerrado</span>
+                                            )}
+                                            {caseObj.archived && (
+                                                <span className="case-status-badge" style={{ backgroundColor: "#6c757d", color: "white", fontSize: "0.75rem", padding: "4px 8px" }}>
+                                                    <i className="bi bi-archive" style={{ marginRight: "3px" }}></i>
+                                                    Archivado
+                                                </span>
                                             )}
                                         </div>
                                         <p
@@ -684,7 +745,7 @@ Fin de Exportación
                                 )}
 
                                 {!isCompactLayout && (
-                                    <div style={{ display: "flex", gap: "8px" }}>
+                                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                                         {caseObj.abierto ? (
                                             <span className="case-status-badge case-open">Abierto</span>
                                         ) : (
@@ -694,6 +755,12 @@ Fin de Exportación
                                                     {caseObj.exitoso ? "Exitoso" : "No exitoso"}
                                                 </span>
                                             </>
+                                        )}
+                                        {caseObj.archived && (
+                                            <span className="case-status-badge" style={{ backgroundColor: "#6c757d", color: "white" }}>
+                                                <i className="bi bi-archive" style={{ marginRight: "4px" }}></i>
+                                                Archivado
+                                            </span>
                                         )}
                                     </div>
                                 )}

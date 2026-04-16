@@ -2,6 +2,7 @@ import { useState } from "react";
 import { WorkflowSettingsProps } from "../../../../../types/kanbanBoardTypes";
 import { EditWorkflow } from "./EditWorkflow";
 import { WorkflowForms } from "./WorkflowForms";
+import { DenialReasons } from "./DenialReasons";
 
 export function WorkflowSettings({ process, setProcess }: WorkflowSettingsProps) {
     const [activeTab, setActiveTab] = useState<"workflow" | "forms">("workflow");
@@ -33,7 +34,14 @@ export function WorkflowSettings({ process, setProcess }: WorkflowSettingsProps)
             {/* Tab Content */}
             <div className="workflow-settings-container">
                 {activeTab === "workflow" && (
-                    <EditWorkflow process={process} setProcess={setProcess} />
+                    <div className="row g-2">
+                        <div className="col-lg-6">
+                            <EditWorkflow process={process} setProcess={setProcess} />
+                        </div>
+                        <div className="col-lg-6">
+                            <DenialReasons processId={process.id_proceso} />
+                        </div>
+                    </div>
                 )}
                 {activeTab === "forms" && (
                     <WorkflowForms process={process} setProcess={setProcess} />

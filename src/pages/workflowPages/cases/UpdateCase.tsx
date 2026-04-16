@@ -47,6 +47,9 @@ export function UpdateCase() {
     const [closingDate, setClosingDate] = useState("");
     const [open, setOpen] = useState(true);
     const [successful, setSuccessful] = useState(false);
+    const [restructured, setRestructured] = useState(false);
+    const [archived, setArchived] = useState(false);
+    const [editable, setEditable] = useState(true);
 
     const selectedProcess = processes.find(p => p.id_proceso === selectedProcessId);
 
@@ -74,6 +77,9 @@ export function UpdateCase() {
                 setClosingDate(formatDatetimeForInput(c.fecha_cierre) || "");
                 setOpen(c.abierto);
                 setSuccessful(c.exitoso);
+                setRestructured(c.restructurado || false);
+                setArchived(c.archived || false);
+                setEditable(c.editable !== false);
                 setSelectedProcessId(c.proceso);
                 setSelectedStageId(c.etapa_actual);
                 setSelectedContact({
@@ -107,6 +113,9 @@ export function UpdateCase() {
             closing_date: closingDate,
             open,
             successful,
+            restructurado: restructured,
+            archived,
+            editable,
             process_id: selectedProcessId,
             stage_id: selectedStageId,
             contact_id: selectedContact.value,
@@ -367,7 +376,7 @@ export function UpdateCase() {
                                 <h5 style={{ margin: 0, fontWeight: 600, color: '#212529' }}>Estado</h5>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '30px' }}>
+                            <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
                                 <div className="form-check form-switch">
                                     <input 
                                         className="form-check-input" 
@@ -393,6 +402,48 @@ export function UpdateCase() {
                                     />
                                     <label className="form-check-label" htmlFor="successSwitch" style={{ cursor: 'pointer', fontWeight: 500, marginLeft: "5px" }}>
                                         Caso Exitoso
+                                    </label>
+                                </div>
+
+                                <div className="form-check form-switch">
+                                    <input 
+                                        className="form-check-input" 
+                                        type="checkbox" 
+                                        id="restructuredSwitch" 
+                                        checked={restructured} 
+                                        onChange={() => setRestructured(prev => !prev)}
+                                        style={{ width: '3em', height: '1.5em', cursor: 'pointer' }}
+                                    />
+                                    <label className="form-check-label" htmlFor="restructuredSwitch" style={{ cursor: 'pointer', fontWeight: 500, marginLeft: "5px" }}>
+                                        Restructurado
+                                    </label>
+                                </div>
+
+                                <div className="form-check form-switch">
+                                    <input 
+                                        className="form-check-input" 
+                                        type="checkbox" 
+                                        id="archivedSwitch" 
+                                        checked={archived} 
+                                        onChange={() => setArchived(prev => !prev)}
+                                        style={{ width: '3em', height: '1.5em', cursor: 'pointer' }}
+                                    />
+                                    <label className="form-check-label" htmlFor="archivedSwitch" style={{ cursor: 'pointer', fontWeight: 500, marginLeft: "5px" }}>
+                                        Archivado
+                                    </label>
+                                </div>
+
+                                <div className="form-check form-switch">
+                                    <input 
+                                        className="form-check-input" 
+                                        type="checkbox" 
+                                        id="editableSwitch" 
+                                        checked={editable} 
+                                        onChange={() => setEditable(prev => !prev)}
+                                        style={{ width: '3em', height: '1.5em', cursor: 'pointer' }}
+                                    />
+                                    <label className="form-check-label" htmlFor="editableSwitch" style={{ cursor: 'pointer', fontWeight: 500, marginLeft: "5px" }}>
+                                        Editable
                                     </label>
                                 </div>
                             </div>

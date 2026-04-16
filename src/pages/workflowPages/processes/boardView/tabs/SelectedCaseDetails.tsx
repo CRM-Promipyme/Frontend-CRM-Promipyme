@@ -17,11 +17,12 @@ import { daysLeft } from "../../../../../utils/formatUtils";
 import { CaseFormsList } from "../../../cases/CaseFormsList";
 import { Activity } from "../../../../../types/activityTypes";
 import { formatNumber } from "../../../../../utils/formatUtils";
-import { Caso, Proceso } from "../../../../../types/workflowTypes";
+import { Caso, Proceso, DenialReason } from "../../../../../types/workflowTypes";
 import { lowerColorOpacity } from "../../../../../utils/formatUtils";
 import { ActivityLog } from "../../../../../components/ui/ActivityLog";
 import { Spinner } from "../../../../../components/ui/Spinner";
 import { useAuthStore } from "../../../../../stores/authStore";
+import { denyCase, blockUnblockCase, fetchDenialReasons, approveCase } from "../../../../../controllers/workflowControllers";
 
 interface Attachment {
     id_adjunto: number;
@@ -60,6 +61,14 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
     const [documents, setDocuments] = useState<Document[]>([]);
     const [selectedDocumentId, setSelectedDocumentId] = useState<string>('case-pdf');
     const [loadingAttachments, setLoadingAttachments] = useState(false);
+    const [denialReasons, setDenialReasons] = useState<DenialReason[]>([]);
+    const [showDenyModal, setShowDenyModal] = useState(false);
+    const [selectedDenialReason, setSelectedDenialReason] = useState<number | null>(null);
+    const [denyingCase, setDenyingCase] = useState(false);
+    const [blockingCase, setBlockingCase] = useState(false);
+    const [userPermissions, setUserPermissions] = useState<any[]>([]);
+    const [showApproveModal, setShowApproveModal] = useState(false);
+    const [approvingCase, setApprovingCase] = useState(false);
 
     // Fetch attachments
     useEffect(() => {
@@ -106,6 +115,25 @@ export function SelectedCaseDetails({ selectedCase, process, caseActivities, set
 
         setDocuments(newDocuments);
     }, [attachments, selectedCase.id_caso]);
+
+    // Fetch denial reasons and user permissions
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const reasons = await fetchDenialReasons(process.id_proceso);
+                setDenialReasons(reasons);
+                
+                const permissions = await authStore.retrievePermissions();
+                setUserPermissions(permissions);
+            } catch (error) {
+                console.error("Error loading denial reasons or permissions:", error);
+            }
+        };
+
+        if (process.id_proceso) {
+            loadData();
+        }
+    }, [process.id_proceso]);
 
     const generateCasePDF = () => {
         const doc = new jsPDF();
@@ -435,6 +463,112 @@ Generado: ${format(new Date(), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { local
         }
     };
 
+    const canDenyCase = (): boolean => {
+        if (authStore.isAdmin && authStore.isAdmin()) return true;
+        return userPermissions.some((perm: any) =>
+            perm.base_permissions &&
+            perm.base_permissions.deny_cases === true
+        );
+    };
+
+    const canApproveCase = (): boolean => {
+        if (authStore.isAdmin && authStore.isAdmin()) return true;
+        return userPermissions.some((perm: any) =>
+            perm.base_permissions &&
+            perm.base_permissions.approve_cases === true
+        );
+    };
+
+    const canBlockUnblockCase = (): boolean => {
+        if (authStore.isAdmin && authStore.isAdmin()) return true;
+        const hasBlockPerm = userPermissions.some((perm: any) =>
+            perm.base_permissions &&
+            perm.base_permissions.block_cases === true
+        );
+        const hasUnblockPerm = userPermissions.some((perm: any) =>
+            perm.base_permissions &&
+            perm.base_permissions.unblock_cases === true
+        );
+        return hasBlockPerm || hasUnblockPerm;
+    };
+
+    const handleDenyClick = async () => {
+        if (!canDenyCase()) {
+            toast.error("No tienes permiso para denegar casos.");
+            return;
+        }
+        setShowDenyModal(true);
+        setSelectedDenialReason(null);
+    };
+
+    const handleConfirmDeny = async () => {
+        if (!selectedDenialReason) {
+            toast.error("Debes seleccionar una razón de rechazo.");
+            return;
+        }
+
+        try {
+            setDenyingCase(true);
+            await denyCase(selectedCase.id_caso, selectedDenialReason);
+            toast.success("Caso rechazado exitosamente.");
+            setShowDenyModal(false);
+            // Update the selected case with the response data would require parent callback
+            window.location.reload();
+        } catch (error) {
+            console.error("Error denying case:", error);
+            toast.error("Error al rechazar el caso.");
+        } finally {
+            setDenyingCase(false);
+        }
+    };
+
+    const handleBlockUnblock = async () => {
+        const newEditableState = !selectedCase.editable;
+        
+        if (!canBlockUnblockCase()) {
+            toast.error("No tienes permiso para bloquear/desbloquear casos.");
+            return;
+        }
+
+        try {
+            setBlockingCase(true);
+            await blockUnblockCase(selectedCase.id_caso, newEditableState);
+            const action = newEditableState ? "desbloqueado" : "bloqueado";
+            toast.success(`Caso ${action} exitosamente.`);
+            // Update the selected case with the response data would require parent callback
+            window.location.reload();
+        } catch (error) {
+            console.error("Error blocking/unblocking case:", error);
+            toast.error("Error al actualizar el estado del caso.");
+        } finally {
+            setBlockingCase(false);
+        }
+    };
+
+    const handleApproveClick = () => {
+        if (!canApproveCase()) {
+            toast.error("No tienes permiso para aprobar casos.");
+            return;
+        }
+        setShowApproveModal(true);
+    };
+
+    const handleConfirmApprove = async () => {
+        try {
+            setApprovingCase(true);
+            await approveCase(selectedCase.id_caso);
+            toast.success("Caso aprobado exitosamente.");
+            setShowApproveModal(false);
+            // Update the selected case with the response data would require parent callback
+            window.location.reload();
+        } catch (error) {
+            console.error("Error approving case:", error);
+            toast.error("Error al aprobar el caso.");
+        } finally {
+            setApprovingCase(false);
+        }
+    };
+
     return (
         <motion.div 
             key={selectedCase.id_caso}
@@ -477,15 +611,110 @@ Generado: ${format(new Date(), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { local
                                     </div>
                                 )}
                             </div>
-                            
                             <div className="column-container">
                                 <div className="column">
-                                    <div style={{ display: "flex", gap: "10px", marginBottom: '20px', marginTop: '0px' }}>
+                                    <div style={{ display: "flex", gap: "10px", marginBottom: '20px', marginTop: '0px', flexWrap: "wrap" }}>
                                         <Link to={`/workflows/cases/update/${selectedCase.id_caso}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                            <button className="btn btn-primary">
+                                            <motion.button 
+                                                className="btn btn-primary"
+                                                disabled={selectedCase.editable === false}
+                                                whileHover={{ scale: selectedCase.editable === false ? 1 : 1.02 }}
+                                                whileTap={{ scale: selectedCase.editable === false ? 1 : 0.98 }}
+                                                title={selectedCase.editable === false ? "Este caso está bloqueado y no puede ser editado" : ""}
+                                            >
                                                 Editar
-                                            </button>
+                                            </motion.button>
                                         </Link>
+                                        {canBlockUnblockCase() && (
+                                            <motion.button
+                                                className={`btn ${selectedCase.editable === false ? "btn-warning" : "btn-outline-warning"}`}
+                                                style={{
+                                                    borderRadius: "8px",
+                                                    padding: "8px 16px",
+                                                    fontSize: "0.875rem",
+                                                    fontWeight: 500,
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: "8px"
+                                                }}
+                                                whileHover={{ scale: blockingCase ? 1 : 1.02 }}
+                                                whileTap={{ scale: blockingCase ? 1 : 0.98 }}
+                                                onClick={handleBlockUnblock}
+                                                disabled={blockingCase}
+                                            >
+                                                {blockingCase ? (
+                                                    <>
+                                                        <Spinner className="spinner-border-sm" />
+                                                        Actualizando...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <i className={`bi ${selectedCase.editable === false ? "bi-lock" : "bi-unlock"}`}></i>
+                                                        {selectedCase.editable === false ? "Desbloquear" : "Bloquear"}
+                                                    </>
+                                                )}
+                                            </motion.button>
+                                        )}
+                                        {canDenyCase() && ((selectedCase.abierto && selectedCase.denial_reason === null && !selectedCase.exitoso) || selectedCase.exitoso === true) && (
+                                            <motion.button
+                                                className="btn btn-outline-danger"
+                                                style={{
+                                                    borderRadius: "8px",
+                                                    padding: "8px 16px",
+                                                    fontSize: "0.875rem",
+                                                    fontWeight: 500,
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: "8px"
+                                                }}
+                                                whileHover={{ scale: denyingCase ? 1 : 1.02 }}
+                                                whileTap={{ scale: denyingCase ? 1 : 0.98 }}
+                                                onClick={handleDenyClick}
+                                                disabled={denyingCase}
+                                            >
+                                                {denyingCase ? (
+                                                    <>
+                                                        <Spinner className="spinner-border-sm" />
+                                                        Rechazando...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <i className="bi bi-x-circle"></i>
+                                                        Rechazar
+                                                    </>
+                                                )}
+                                            </motion.button>
+                                        )}
+                                        {canApproveCase() && selectedCase.denial_reason !== null && !selectedCase.exitoso && (
+                                            <motion.button
+                                                className="btn btn-outline-success"
+                                                style={{
+                                                    borderRadius: "8px",
+                                                    padding: "8px 16px",
+                                                    fontSize: "0.875rem",
+                                                    fontWeight: 500,
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: "8px"
+                                                }}
+                                                whileHover={{ scale: approvingCase ? 1 : 1.02 }}
+                                                whileTap={{ scale: approvingCase ? 1 : 0.98 }}
+                                                onClick={handleApproveClick}
+                                                disabled={approvingCase}
+                                            >
+                                                {approvingCase ? (
+                                                    <>
+                                                        <Spinner className="spinner-border-sm" />
+                                                        Aprobando...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <i className="bi bi-check-circle"></i>
+                                                        Aprobar
+                                                    </>
+                                                )}
+                                            </motion.button>
+                                        )}
                                         <motion.button
                                             className="btn btn-outline-info"
                                             style={{
@@ -704,6 +933,49 @@ Generado: ${format(new Date(), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { local
                                             </div>
                                         </div>
                                     </div>
+                                    {/* Denial Reason Display */}
+                                    {selectedCase.denial_reason !== null && denialReasons.length > 0 && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="case-status-box closed"
+                                            style={{
+                                                backgroundColor: "#fee",
+                                                borderColor: "#dc3545",
+                                                marginTop: "15px",
+                                                marginBottom: "15px"
+                                            }}
+                                        >
+                                            <i className="bi bi-x-circle" style={{ fontSize: "22px", color: "#dc3545" }}></i>
+                                            <div>
+                                                <strong className="status-title" style={{ color: "#dc3545" }}>Caso Rechazado</strong>
+                                                <p className="status-description">
+                                                    {denialReasons.find((r) => r.id_razon === selectedCase.denial_reason)?.descripcion_razon || "Razón desconocida"}
+                                                </p>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                    {/* Restructured Display */}
+                                    {selectedCase.restructurado === true && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="case-status-box"
+                                            style={{
+                                                backgroundColor: "#e7f3ff",
+                                                borderColor: "#0d6efd",
+                                                marginBottom: "15px"
+                                            }}
+                                        >
+                                            <i className="bi bi-arrow-repeat" style={{ fontSize: "22px", color: "#0d6efd" }}></i>
+                                            <div>
+                                                <strong className="status-title" style={{ color: "#0d6efd" }}>Caso Restructurado</strong>
+                                                <p className="status-description">
+                                                    Este caso está clasificado como restructurado.
+                                                </p>
+                                            </div>
+                                        </motion.div>
+                                    )}
                                     {selectedCase.abierto && (
                                         <>
                                             {daysLeft(new Date(selectedCase.fecha_cierre_estimada)) >= 0 ? (
@@ -748,6 +1020,199 @@ Generado: ${format(new Date(), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { local
                         >
                             Seleccione un caso para ver más detalles...
                         </motion.p>
+                    )}
+                </AnimatePresence>
+
+                {/* Deny Case Modal */}
+                <AnimatePresence>
+                    {showDenyModal && (
+                        <motion.div
+                            className="modal d-block"
+                            style={{ backgroundColor: "rgba(0, 0, 0, 0.5)", zIndex: 1050 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            <motion.div
+                                className="modal-dialog modal-dialog-centered"
+                                initial={{ scale: 0.9, y: 20 }}
+                                animate={{ scale: 1, y: 0 }}
+                                exit={{ scale: 0.9, y: 20 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <div className="modal-content" style={{ borderRadius: "8px", border: "none", boxShadow: "0 10px 40px rgba(0, 0, 0, 0.2)" }}>
+                                    <div className="modal-header border-0 pb-2">
+                                        <h5 className="modal-title" style={{ fontWeight: 600, fontSize: "1.25rem" }}>
+                                            <i className="bi bi-x-circle me-2" style={{ color: "#dc3545" }}></i>
+                                            Rechazar Caso
+                                        </h5>
+                                        <button
+                                            type="button"
+                                            className="btn-close"
+                                            onClick={() => setShowDenyModal(false)}
+                                            disabled={denyingCase}
+                                        ></button>
+                                    </div>
+                                    <div className="modal-body pt-3 pb-3">
+                                        {selectedCase.exitoso === true ? (
+                                            <>
+                                                <p className="mb-3" style={{ color: "#666" }}>
+                                                    Estás revirtiendo la aprobación de este caso. Al rechazar, se deshará la aprobación:
+                                                </p>
+                                                <div className="alert alert-warning mb-3">
+                                                    Este caso fue aprobado y pasará a estado rechazado.
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <p className="mb-3" style={{ color: "#666" }}>
+                                                Selecciona la razón por la cual deseas rechazar este caso:
+                                            </p>
+                                        )}
+                                        <div className="mb-0">
+                                            <label className="form-label" style={{ fontWeight: 500 }}>
+                                                Razón de Rechazo <span className="text-danger">*</span>
+                                            </label>
+                                            <select
+                                                className="form-select"
+                                                value={selectedDenialReason || ""}
+                                                onChange={(e) => setSelectedDenialReason(parseInt(e.target.value) || null)}
+                                                disabled={denyingCase}
+                                                style={{
+                                                    borderRadius: "6px",
+                                                    borderColor: "#dee2e6",
+                                                    padding: "10px 12px"
+                                                }}
+                                            >
+                                                <option value="">-- Selecciona una razón --</option>
+                                                {denialReasons.map((reason) => (
+                                                    <option key={reason.id_razon} value={reason.id_razon}>
+                                                        {reason.descripcion_razon}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {denialReasons.length === 0 && (
+                                                <small style={{ color: "#dc3545", marginTop: "4px", display: "block" }}>
+                                                    No hay razones de rechazo disponibles para este proceso.
+                                                </small>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="modal-footer border-0 pt-2">
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary"
+                                            onClick={() => setShowDenyModal(false)}
+                                            disabled={denyingCase}
+                                            style={{ borderRadius: "6px" }}
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <motion.button
+                                            type="button"
+                                            className="btn btn-danger"
+                                            onClick={handleConfirmDeny}
+                                            disabled={denyingCase || !selectedDenialReason || denialReasons.length === 0}
+                                            whileHover={{ scale: denyingCase ? 1 : 1.02 }}
+                                            whileTap={{ scale: denyingCase ? 1 : 0.98 }}
+                                            style={{ borderRadius: "6px" }}
+                                        >
+                                            {denyingCase ? (
+                                                <>
+                                                    <Spinner className="spinner-border-sm me-1" />
+                                                    Rechazando...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="bi bi-x-circle me-1"></i>
+                                                    Rechazar Caso
+                                                </>
+                                            )}
+                                        </motion.button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Approve Case Modal */}
+                <AnimatePresence>
+                    {showApproveModal && (
+                        <motion.div
+                            className="modal d-block"
+                            style={{ backgroundColor: "rgba(0, 0, 0, 0.5)", zIndex: 1050 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            <motion.div
+                                className="modal-dialog modal-dialog-centered"
+                                initial={{ scale: 0.9, y: 20 }}
+                                animate={{ scale: 1, y: 0 }}
+                                exit={{ scale: 0.9, y: 20 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <div className="modal-content" style={{ borderRadius: "8px", border: "none", boxShadow: "0 10px 40px rgba(0, 0, 0, 0.2)" }}>
+                                    <div className="modal-header border-0 pb-2">
+                                        <h5 className="modal-title" style={{ fontWeight: 600, fontSize: "1.25rem" }}>
+                                            <i className="bi bi-check-circle me-2" style={{ color: "#198754" }}></i>
+                                            Aprobar Caso
+                                        </h5>
+                                        <button
+                                            type="button"
+                                            className="btn-close"
+                                            onClick={() => setShowApproveModal(false)}
+                                            disabled={approvingCase}
+                                        ></button>
+                                    </div>
+                                    <div className="modal-body pt-3 pb-3">
+                                        <p className="mb-3" style={{ color: "#666" }}>
+                                            Estás aprobando un caso que fue rechazado. Al aprobar, se deshará el rechazo:
+                                        </p>
+                                        {denialReasons.length > 0 && (
+                                            <div className="alert alert-warning mb-0">
+                                                <strong>Razón del rechazo:</strong><br/>
+                                                {denialReasons.find((r) => r.id_razon === selectedCase.denial_reason)?.descripcion_razon || "Razón desconocida"}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="modal-footer border-0 pt-2">
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary"
+                                            onClick={() => setShowApproveModal(false)}
+                                            disabled={approvingCase}
+                                            style={{ borderRadius: "6px" }}
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <motion.button
+                                            type="button"
+                                            className="btn btn-success"
+                                            onClick={handleConfirmApprove}
+                                            disabled={approvingCase}
+                                            whileHover={{ scale: approvingCase ? 1 : 1.02 }}
+                                            whileTap={{ scale: approvingCase ? 1 : 0.98 }}
+                                            style={{ borderRadius: "6px" }}
+                                        >
+                                            {approvingCase ? (
+                                                <>
+                                                    <Spinner className="spinner-border-sm me-1" />
+                                                    Aprobando...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="bi bi-check-circle me-1"></i>
+                                                    Aprobar Caso
+                                                </>
+                                            )}
+                                        </motion.button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </motion.div>
                     )}
                 </AnimatePresence>
 
