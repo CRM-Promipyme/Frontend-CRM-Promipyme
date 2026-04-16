@@ -3,9 +3,10 @@ import { WorkflowSettingsProps } from "../../../../../types/kanbanBoardTypes";
 import { EditWorkflow } from "./EditWorkflow";
 import { WorkflowForms } from "./WorkflowForms";
 import { DenialReasons } from "./DenialReasons";
+import { StageFormConstraints } from "./StageFormConstraints";
 
 export function WorkflowSettings({ process, setProcess }: WorkflowSettingsProps) {
-    const [activeTab, setActiveTab] = useState<"workflow" | "forms">("workflow");
+    const [activeTab, setActiveTab] = useState<"workflow" | "forms" | "constraints">("workflow");
 
     return (
         <div className="workflow-settings-tab">
@@ -29,6 +30,15 @@ export function WorkflowSettings({ process, setProcess }: WorkflowSettingsProps)
                         Formularios
                     </button>
                 </li>
+                <li className="nav-item">
+                    <button
+                        className={`nav-link ${activeTab === "constraints" ? "active" : ""}`}
+                        onClick={() => setActiveTab("constraints")}
+                    >
+                        <i className="bi bi-lock me-2"></i>
+                        Restricciones
+                    </button>
+                </li>
             </ul>
 
             {/* Tab Content */}
@@ -45,6 +55,9 @@ export function WorkflowSettings({ process, setProcess }: WorkflowSettingsProps)
                 )}
                 {activeTab === "forms" && (
                     <WorkflowForms process={process} setProcess={setProcess} />
+                )}
+                {activeTab === "constraints" && (
+                    <StageFormConstraints process={process} />
                 )}
             </div>
         </div>

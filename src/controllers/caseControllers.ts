@@ -168,6 +168,48 @@ export const updateCaseStage = async (caseId: number, stageId: number, changeMot
     }
 };
 
+/**
+ * Updates the stage of a case with constraint validation
+ * This version returns missing forms if constraints are not met
+ * @param caseId The ID of the case
+ * @param stageId The ID of the new stage
+ * @param changeMotive The reason for the change
+ * @param overrideConstraints (Optional) Admin override flag
+ * @returns response data or throws error with missing_forms
+ */
+export const updateCaseStageWithConstraints = async (
+    caseId: number,
+    stageId: number,
+    changeMotive: string,
+    overrideConstraints?: boolean
+) => {
+    try {
+        const response = await api.put(`/workflows/casos/manage/update/stage/${caseId}/`, {
+            stage_id: stageId,
+            change_motive: changeMotive,
+            ...(overrideConstraints && { override_constraints: true })
+        });
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        const axiosError = error as AxiosError;
+        
+        // Check if it's a constraint violation error
+        if (axiosError.response?.status === 400) {
+            const errorData = axiosError.response.data as any;
+            if (errorData.missing_forms) {
+                return { 
+                    success: false, 
+                    constraintViolation: true,
+                    missing_forms: errorData.missing_forms 
+                };
+            }
+        }
+        
+        console.error("Error updating case stage:", error);
+        throw error;
+    }
+};
+
 
 /**
  * Fetches a case by its ID

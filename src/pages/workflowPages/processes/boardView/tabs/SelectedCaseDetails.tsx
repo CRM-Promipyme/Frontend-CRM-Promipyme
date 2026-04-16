@@ -871,7 +871,12 @@ Generado: ${format(new Date(), "d 'de' MMMM 'de' yyyy 'a las' h:mm aaa", { local
                                     </div>
                                     <div className="case-forms">
                                         {selectedCase && (
-                                            <CaseFormsList caseId={selectedCase.id_caso} workflowId={process.id_proceso}/>
+                                            <CaseFormsList 
+                                                caseId={selectedCase.id_caso} 
+                                                workflowId={process.id_proceso}
+                                                selectedCase={selectedCase}
+                                                process={process}
+                                            />
                                         )}
                                     </div>
                                     <div className="case-attachments">

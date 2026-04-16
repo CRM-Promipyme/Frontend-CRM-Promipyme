@@ -49,6 +49,8 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     const [caseName, setCaseName] = useState<string>("");
     const [changeMotive, setChangeMotive] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [stageRequirements, setStageRequirements] = useState<Array<{id_formulario: number; formulario_nombre: string}>>([]);
+    const [loadingRequirements, setLoadingRequirements] = useState(false);
     const [branches, setBranches] = useState<Branch[]>([]);
     const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
     const [archiveFilter, setArchiveFilter] = useState('');
@@ -105,7 +107,27 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
             fromColumnId: sourceColumnId,
             toColumnId: targetColumnId,
         });
+        
+        // Fetch requirements for the destination stage
+        fetchStageRequirements(parseInt(targetColumnId));
         setIsModalOpen(true);
+    };
+
+    const fetchStageRequirements = async (stageId: number) => {
+        try {
+            setLoadingRequirements(true);
+            const response = await api.get(`/workflows/procesos/${process.id_proceso}/stages/${stageId}/requirements/`);
+            if (response.data && Array.isArray(response.data)) {
+                setStageRequirements(response.data);
+            } else {
+                setStageRequirements([]);
+            }
+        } catch (error) {
+            console.error("Error fetching stage requirements:", error);
+            setStageRequirements([]);
+        } finally {
+            setLoadingRequirements(false);
+        }
     };
 
     const confirmStageChange = async () => {
@@ -154,10 +176,26 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
     
             setIsModalOpen(false);
             setChangeMotive("");
+            setStageRequirements([]);
             setPendingMove(null);
             toast.success("Caso movido de etapa exitosamente.");
-        } catch {
-            toast.warning("No se pudo mover el caso. Intente de nuevo.");
+        } catch (error: any) {
+            // Check if error has detailed response from backend
+            if (error.response?.status === 400 && error.response?.data?.message) {
+                const errorData = error.response.data;
+                const missingForms = errorData.missing_forms || [];
+                
+                // Create detailed error message
+                let errorMessage = errorData.message;
+                if (missingForms.length > 0) {
+                    const formNames = missingForms.map((form: any) => form.nombre_formulario || form.name).join(", ");
+                    errorMessage += `\n\nFormularios faltantes:\n${formNames}`;
+                }
+                
+                toast.error(errorMessage, { autoClose: 6000 });
+            } else {
+                toast.warning("No se pudo mover el caso. Intente de nuevo.");
+            }
         }
     };
 
@@ -428,6 +466,46 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
                             {pendingMove && columns.find(col => col.id === pendingMove.toColumnId)?.title}
                         </strong>, por favor indique el motivo:
                     </p>
+                    
+                    {/* Stage Requirements Section */}
+                    {loadingRequirements ? (
+                        <div style={{ textAlign: "center", padding: "16px", color: "#6c757d" }}>
+                            <Spinner /> Cargando requisitos...
+                        </div>
+                    ) : stageRequirements.length > 0 ? (
+                        <div style={{
+                            background: "#e8f4f8",
+                            border: "1px solid #b3d9e8",
+                            borderRadius: "8px",
+                            padding: "16px",
+                            marginBottom: "16px"
+                        }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                                <i className="bi bi-lock" style={{ color: "#0066cc", fontSize: "18px" }}></i>
+                                <span style={{ fontWeight: 600, color: "#0066cc", fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                    Requerido para la siguiente etapa
+                                </span>
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                                {stageRequirements.map((req, index) => (
+                                    <div key={index} style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "10px",
+                                        background: "white",
+                                        padding: "10px 12px",
+                                        borderRadius: "6px",
+                                        fontSize: "14px",
+                                        border: "1px solid #d3e8f0"
+                                    }}>
+                                        <i className="bi bi-file-earmark-check" style={{ color: "#10b981", flexShrink: 0 }}></i>
+                                        <span style={{ color: "#1f2937", fontWeight: "500", flex: 1 }}>{req.formulario_nombre}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : null}
+                    
                     <textarea
                         className="form-control"
                         placeholder="Escriba el motivo del cambio"
