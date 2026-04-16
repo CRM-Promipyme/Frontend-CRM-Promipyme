@@ -62,9 +62,15 @@ export interface Caso {
 }
 
 export interface DashboardCase {
+    id_caso: number;
     nombre_caso: string;
     proceso: string;
     etapa_actual: string;
+    sucursal_nombre?: string;
+    region?: string;
+    producto_nombre?: string;
+    fondo_nombre?: string;
+    valor_caso: number;
     fecha_creacion: string;
     fecha_cierre: string;
     abierto: boolean;

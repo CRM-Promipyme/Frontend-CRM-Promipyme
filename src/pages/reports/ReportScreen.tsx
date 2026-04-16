@@ -17,12 +17,18 @@ export function ReportScreen() {
     const [dateRange, setDateRange] = useState<string>("30d");
     const [dateStart, setDateStart] = useState<string>("");
     const [dateEnd, setDateEnd] = useState<string>("");
+    
+    // Dashboard filters (now functional)
+    const [sucursal_id, setSucursal_id] = useState<number | undefined>(undefined);
+    const [region, setRegion] = useState<string | undefined>(undefined);
+    const [restructurado, setRestructurado] = useState<string | undefined>(undefined);
+    
     const dateOptions = [
         '30 días', '1 semana', 'Rango Personalizado'
     ]
 
     const tabs = [
-        { id: "general", label: "General", icon: "bi bi-file-bar-graph", component: <Dashboard dateStart={dateStart} dateEnd={dateEnd} /> },
+        { id: "general", label: "General", icon: "bi bi-file-bar-graph", component: <Dashboard dateStart={dateStart} dateEnd={dateEnd} sucursal_id={sucursal_id} region={region} restructurado={restructurado} /> },
         // { id: "Reportes", label: "Reportes", icon: "bi bi-file-earmark-bar-graph", component: <CustomReport dateStart={dateStart} dateEnd={dateEnd} /> },
         { id: "reporte-departamento", label: "Reporte por Departamento", icon: "bi bi-building", component: <DepartmentReport dateStart={dateStart} dateEnd={dateEnd} />},
         { id: "reporte-usuario", label: "Reporte de Usuario", icon: "bi bi-person-badge", component: <IndividualUserReport dateStart={dateStart} dateEnd={dateEnd} />}
@@ -130,6 +136,75 @@ export function ReportScreen() {
                             className="form-control"
                         />
                     </div>
+                </div>
+            )}
+
+            {/* FILTER PANEL - Sucursal, Region, Restructurado */}
+            {activeTab === "general" && (
+                <div style={{ marginTop: "20px", marginLeft: "25px", marginRight: "25px", display: "flex", gap: "20px", alignItems: "flex-end", flexWrap: "wrap", backgroundColor: "#f8f9fa", padding: "15px", borderRadius: "6px" }}>
+                    <div style={{ flex: "0 1 auto" }}>
+                        <label style={{ display: "block", marginBottom: "6px", fontWeight: 500, fontSize: "14px", color: "#495057" }}>
+                            <i className="bi bi-building" style={{ marginRight: "6px" }}></i>Sucursal
+                        </label>
+                        <select
+                            value={sucursal_id || ''}
+                            onChange={(e) => setSucursal_id(e.target.value ? Number(e.target.value) : undefined)}
+                            className="form-control"
+                            style={{ fontSize: "14px", minWidth: "150px" }}
+                        >
+                            <option value="">Todas las Sucursales</option>
+                            <option value="1">Bogotá Principal</option>
+                            <option value="2">Cali</option>
+                            <option value="3">Medellín</option>
+                            <option value="4">Barranquilla</option>
+                        </select>
+                    </div>
+
+                    <div style={{ flex: "0 1 auto" }}>
+                        <label style={{ display: "block", marginBottom: "6px", fontWeight: 500, fontSize: "14px", color: "#495057" }}>
+                            <i className="bi bi-compass" style={{ marginRight: "6px" }}></i>Región
+                        </label>
+                        <select
+                            value={region || ''}
+                            onChange={(e) => setRegion(e.target.value || undefined)}
+                            className="form-control"
+                            style={{ fontSize: "14px", minWidth: "150px" }}
+                        >
+                            <option value="">Todas las Regiones</option>
+                            <option value="Centro">Centro</option>
+                            <option value="Este">Este</option>
+                            <option value="Oeste">Oeste</option>
+                            <option value="Pacifico">Pacifico</option>
+                        </select>
+                    </div>
+
+                    <div style={{ flex: "0 1 auto" }}>
+                        <label style={{ display: "block", marginBottom: "6px", fontWeight: 500, fontSize: "14px", color: "#495057" }}>
+                            <i className="bi bi-arrow-repeat" style={{ marginRight: "6px" }}></i>Estado
+                        </label>
+                        <select
+                            value={restructurado || ''}
+                            onChange={(e) => setRestructurado(e.target.value || undefined)}
+                            className="form-control"
+                            style={{ fontSize: "14px", minWidth: "150px" }}
+                        >
+                            <option value="">Todos los Casos</option>
+                            <option value="true">Restructurados</option>
+                            <option value="false">No Restructurados</option>
+                        </select>
+                    </div>
+
+                    <button
+                        onClick={() => {
+                            setSucursal_id(undefined);
+                            setRegion(undefined);
+                            setRestructurado(undefined);
+                        }}
+                        className="btn btn-outline-secondary"
+                        style={{ fontSize: "14px", padding: "6px 12px" }}
+                    >
+                        <i className="bi bi-arrow-clockwise me-2"></i>Limpiar Filtros
+                    </button>
                 </div>
             )}
 
