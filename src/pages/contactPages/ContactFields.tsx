@@ -5,8 +5,16 @@ import { useEffect, useState } from "react";
 import { Spinner } from "../../components/ui/Spinner";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSidebarStore } from "../../stores/sidebarStore";
-import { Field, FieldTypeOption } from "../../types/contactTypes";
+import { Field, FieldTypeOption, FieldOption, FieldPayload } from "../../types/contactTypes";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
+
+const FIELD_TYPES = {
+    TEXTO: 1,
+    NUMERO: 2,
+    FECHA: 3,
+    BOOLEANO: 4,
+    DROPDOWN: 5,
+};
 
 export function ContactFields() {
     const sidebarWidthPx = useSidebarStore((state) => state.sidebarWidthPx);
@@ -16,6 +24,7 @@ export function ContactFields() {
     const [contactFields, setContactFields] = useState<Field[]>([]);
     const [baseFields, setBaseFields] = useState<Field[]>([]);
     const [fieldTypeOptions, setFieldTypeOptions] = useState<FieldTypeOption[]>([]);
+    const [expandedDropdowns, setExpandedDropdowns] = useState<Set<number>>(new Set());
 
     useEffect(() => {
         fetchFields();
@@ -62,21 +71,52 @@ export function ContactFields() {
             toast.error("No se pueden crear campos con nombres que ya existen en los campos base.");
             return;
         }
-    
+
+        // Validate dropdown fields have options
+        const invalidDropdowns = contactFields.filter(
+            f => f.field_type === FIELD_TYPES.DROPDOWN && (!f.options || f.options.length === 0)
+        );
+        if (invalidDropdowns.length > 0) {
+            toast.error("Los campos Dropdown deben tener al menos una opción.");
+            return;
+        }
+
         setLoading(true);
         try {
             const payload = {
-                contact_fields: contactFields.map(field => ({
-                    id: field.id ? field.id : '',
-                    field_name: field.field_name,
-                    field_type: typeof field.field_type === "number" ? field.field_type : parseInt(field.field_type as string, 10)
-                }))
+                contact_fields: contactFields.map(field => {
+                    const fieldPayload: FieldPayload = {
+                        field_name: field.field_name,
+                        field_type: typeof field.field_type === "number" ? field.field_type : parseInt(field.field_type as string, 10),
+                        required: field.required || false
+                    };
+
+                    // Add id only if field is being updated (has an existing id)
+                    if (field.id && typeof field.id === 'number') {
+                        fieldPayload.id = field.id;
+                    }
+
+                    // Add max_length for Texto and Número fields
+                    if ([FIELD_TYPES.TEXTO, FIELD_TYPES.NUMERO].includes(fieldPayload.field_type) && field.max_length) {
+                        fieldPayload.max_length = field.max_length;
+                    }
+
+                    // Add options for Dropdown fields
+                    if (fieldPayload.field_type === FIELD_TYPES.DROPDOWN && field.options) {
+                        fieldPayload.options = field.options.map(opt => ({
+                            option_value: opt.option_value,
+                            option_label: opt.option_label
+                        }));
+                    }
+
+                    return fieldPayload;
+                })
             };
-    
+
             console.log("Sending payload:", payload);
-    
+
             await api.put("/contacts/fields/", payload);
-    
+
             toast.success("Campos de contacto actualizados correctamente");
             await fetchFields(); // Refresh fields after saving
         } catch (error) {
@@ -102,8 +142,86 @@ export function ContactFields() {
     const updateFieldType = (id: number, typeId: number) => {
         const typeName = fieldTypeOptions.find(option => option.id === typeId)?.field_type_name || "";
         setContactFields(prevFields =>
-            prevFields.map(field => field.id === id ? { ...field, field_type: typeId, field_type_name: typeName } : field)
+            prevFields.map(field => {
+                if (field.id === id) {
+                    const updatedField = { ...field, field_type: typeId, field_type_name: typeName };
+                    // Reset options and max_length when changing type
+                    if (typeId !== FIELD_TYPES.DROPDOWN) {
+                        updatedField.options = undefined;
+                    }
+                    if (![FIELD_TYPES.TEXTO, FIELD_TYPES.NUMERO].includes(typeId)) {
+                        updatedField.max_length = undefined;
+                    }
+                    return updatedField;
+                }
+                return field;
+            })
         );
+    };
+
+    const updateFieldMaxLength = (id: number, maxLength: number | undefined) => {
+        setContactFields(prevFields =>
+            prevFields.map(field => field.id === id ? { ...field, max_length: maxLength } : field)
+        );
+    };
+
+    const toggleFieldRequired = (id: number) => {
+        setContactFields(prevFields =>
+            prevFields.map(field => field.id === id ? { ...field, required: !field.required } : field)
+        );
+    };
+
+    const addDropdownOption = (fieldId: number) => {
+        setContactFields(prevFields =>
+            prevFields.map(field => {
+                if (field.id === fieldId) {
+                    return {
+                        ...field,
+                        options: [...(field.options || []), { option_value: "", option_label: "" }]
+                    };
+                }
+                return field;
+            })
+        );
+    };
+
+    const updateDropdownOption = (fieldId: number, optionIndex: number, key: keyof FieldOption, value: string) => {
+        setContactFields(prevFields =>
+            prevFields.map(field => {
+                if (field.id === fieldId && field.options) {
+                    const updatedOptions = [...field.options];
+                    updatedOptions[optionIndex] = { ...updatedOptions[optionIndex], [key]: value };
+                    return { ...field, options: updatedOptions };
+                }
+                return field;
+            })
+        );
+    };
+
+    const removeDropdownOption = (fieldId: number, optionIndex: number) => {
+        setContactFields(prevFields =>
+            prevFields.map(field => {
+                if (field.id === fieldId && field.options) {
+                    return {
+                        ...field,
+                        options: field.options.filter((_, i) => i !== optionIndex)
+                    };
+                }
+                return field;
+            })
+        );
+    };
+
+    const toggleDropdownExpanded = (id: number) => {
+        setExpandedDropdowns(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
     };
 
     const removeField = (id: number) => {
@@ -111,13 +229,32 @@ export function ContactFields() {
     };
 
     const addField = () => {
-        const newField = {
+        const newField: Field = {
             id: Date.now(), // temp id
             field_name: "",
-            field_type: 1,
+            field_type: FIELD_TYPES.TEXTO,
             field_type_name: "Texto"
         };
         setContactFields(prevFields => [...prevFields, newField]);
+    };
+
+    const getFieldTypeLabel = (typeId: number) => {
+        const typeMap: Record<number, string> = {
+            [FIELD_TYPES.TEXTO]: "Texto",
+            [FIELD_TYPES.NUMERO]: "Número",
+            [FIELD_TYPES.FECHA]: "Fecha",
+            [FIELD_TYPES.BOOLEANO]: "Booleano",
+            [FIELD_TYPES.DROPDOWN]: "Dropdown"
+        };
+        return typeMap[typeId] || "Texto";
+    };
+
+    const supportsMaxLength = (typeId: number) => {
+        return [FIELD_TYPES.TEXTO, FIELD_TYPES.NUMERO].includes(typeId);
+    };
+
+    const isDropdownField = (typeId: number) => {
+        return typeId === FIELD_TYPES.DROPDOWN;
     };
 
     return (
@@ -132,21 +269,21 @@ export function ContactFields() {
 
                     <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
                         <div className="d-flex justify-content-between align-items-center mb-4">
-                        <motion.button
-                            type="button"
-                            className={`btn ${editMode ? "btn-outline-danger" : "btn-outline-primary"}`}
-                            onClick={() => {
-                                if (editMode) {
-                                    handleCancel();
-                                } else {
-                                    setEditMode(true);
-                                }
-                            }}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                        >
-                            {editMode ? "Cancelar" : "Editar"}
-                        </motion.button>
+                            <motion.button
+                                type="button"
+                                className={`btn ${editMode ? "btn-outline-danger" : "btn-outline-primary"}`}
+                                onClick={() => {
+                                    if (editMode) {
+                                        handleCancel();
+                                    } else {
+                                        setEditMode(true);
+                                    }
+                                }}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                            >
+                                {editMode ? "Cancelar" : "Editar"}
+                            </motion.button>
 
                             <AnimatePresence>
                                 {editMode && (
@@ -168,45 +305,177 @@ export function ContactFields() {
                         </div>
 
                         {contactFields.map((field) => (
-                            <div key={field.id} className="d-flex align-items-center mb-3">
-                                <input
-                                    type="text"
-                                    className="form-control me-2"
-                                    value={field.field_name}
-                                    onChange={(e) => updateFieldName(field.id!, e.target.value)}
-                                    disabled={!editMode}
-                                />
-                                <div className="me-2" style={{ width: "200px" }}>
-                                    <Select
-                                        options={fieldTypeOptions.map(option => ({
-                                            value: option.id,
-                                            label: option.field_type_name
-                                        }))}
-                                        value={{
-                                            value: field.field_type,
-                                            label: field.field_type_name
-                                        }}
-                                        onChange={(selectedOption) => {
-                                            if (typeof selectedOption?.value !== "undefined") {
-                                                updateFieldType(field.id!, Number(selectedOption.value));
-                                            }
-                                        }}
-                                        isDisabled={!editMode}
-                                        menuPlacement="auto"
+                            <motion.div
+                                key={field.id}
+                                className="field-editor-section mb-4"
+                                style={{ border: "1px solid #e0e0e0", padding: "15px", borderRadius: "8px" }}
+                            >
+                                <div className="d-flex align-items-center mb-3 gap-2">
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Nombre del campo"
+                                        value={field.field_name}
+                                        onChange={(e) => updateFieldName(field.id!, e.target.value)}
+                                        disabled={!editMode}
                                     />
+                                    <div style={{ width: "200px" }}>
+                                        <Select
+                                            options={fieldTypeOptions.map(option => ({
+                                                value: option.id,
+                                                label: option.field_type_name
+                                            }))}
+                                            value={{
+                                                value: field.field_type,
+                                                label: field.field_type_name || getFieldTypeLabel(field.field_type as number)
+                                            }}
+                                            onChange={(selectedOption) => {
+                                                if (typeof selectedOption?.value !== "undefined") {
+                                                    updateFieldType(field.id!, Number(selectedOption.value));
+                                                }
+                                            }}
+                                            isDisabled={!editMode}
+                                            menuPlacement="auto"
+                                        />
+                                    </div>
+                                    {field.required && !editMode && (
+                                        <motion.span
+                                            className="badge rounded-pill bg-danger text-white px-2 py-1"
+                                            initial={{ opacity: 0, scale: 0.8 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                        >
+                                            Requerido
+                                        </motion.span>
+                                    )}
+                                    {editMode && (
+                                        <motion.button
+                                            type="button"
+                                            className="btn btn-danger"
+                                            onClick={() => removeField(field.id!)}
+                                            whileHover={{ scale: 1.1 }}
+                                            whileTap={{ scale: 0.9 }}
+                                        >
+                                            <i className="bi bi-trash"></i>
+                                        </motion.button>
+                                    )}
                                 </div>
-                                {editMode && (
-                                    <motion.button
-                                        type="button"
-                                        className="btn btn-danger"
-                                        onClick={() => removeField(field.id!)}
-                                        whileHover={{ scale: 1.1 }}
-                                        whileTap={{ scale: 0.9 }}
+
+                                {/* Max Length Field */}
+                                {supportsMaxLength(field.field_type as number) && editMode && (
+                                    <motion.div
+                                        className="mb-3"
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        exit={{ opacity: 0, height: 0 }}
                                     >
-                                        <i className="bi bi-trash"></i>
-                                    </motion.button>
+                                        <label className="form-label text-muted" style={{ fontSize: "0.9rem" }}>
+                                            Máximo de caracteres (opcional)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            placeholder="Ej: 100"
+                                            value={field.max_length || ""}
+                                            onChange={(e) => updateFieldMaxLength(field.id!, e.target.value ? parseInt(e.target.value) : undefined)}
+                                            disabled={!editMode}
+                                        />
+                                    </motion.div>
                                 )}
-                            </div>
+
+                                {/* Required Field Toggle */}
+                                {editMode && (
+                                    <motion.div
+                                        className="mb-3 d-flex align-items-center gap-2"
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            className="form-check-input"
+                                            id={`required-${field.id}`}
+                                            checked={field.required || false}
+                                            onChange={() => toggleFieldRequired(field.id!)}
+                                        />
+                                        <label className="form-check-label text-muted" style={{ fontSize: "0.9rem", marginBottom: 0 }} htmlFor={`required-${field.id}`}>
+                                            Campo requerido
+                                        </label>
+                                    </motion.div>
+                                )}
+
+                                {/* Dropdown Options */}
+                                {isDropdownField(field.field_type as number) && (
+                                    <motion.div
+                                        className="dropdown-options-section"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                    >
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-secondary mb-3"
+                                            onClick={() => toggleDropdownExpanded(field.id!)}
+                                        >
+                                            <i className={`bi bi-chevron-${expandedDropdowns.has(field.id!) ? 'up' : 'down'}`}></i>
+                                            {" "}Opciones de Dropdown ({field.options?.length || 0})
+                                        </button>
+
+                                        <AnimatePresence>
+                                            {expandedDropdowns.has(field.id!) && (
+                                                <motion.div
+                                                    className="ms-3"
+                                                    initial={{ opacity: 0, height: 0 }}
+                                                    animate={{ opacity: 1, height: "auto" }}
+                                                    exit={{ opacity: 0, height: 0 }}
+                                                >
+                                                    {field.options && field.options.map((option, optIdx) => (
+                                                        <div key={optIdx} className="d-flex gap-2 mb-2">
+                                                            <input
+                                                                type="text"
+                                                                className="form-control"
+                                                                placeholder="Valor (ej: tech)"
+                                                                value={option.option_value}
+                                                                onChange={(e) => updateDropdownOption(field.id!, optIdx, 'option_value', e.target.value)}
+                                                                disabled={!editMode}
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                className="form-control"
+                                                                placeholder="Etiqueta (ej: Tecnología)"
+                                                                value={option.option_label}
+                                                                onChange={(e) => updateDropdownOption(field.id!, optIdx, 'option_label', e.target.value)}
+                                                                disabled={!editMode}
+                                                            />
+                                                            {editMode && (
+                                                                <motion.button
+                                                                    type="button"
+                                                                    className="btn btn-sm btn-danger"
+                                                                    onClick={() => removeDropdownOption(field.id!, optIdx)}
+                                                                    whileHover={{ scale: 1.1 }}
+                                                                    whileTap={{ scale: 0.9 }}
+                                                                >
+                                                                    <i className="bi bi-trash"></i>
+                                                                </motion.button>
+                                                            )}
+                                                        </div>
+                                                    ))}
+
+                                                    {editMode && (
+                                                        <motion.button
+                                                            type="button"
+                                                            className="btn btn-sm btn-success mt-2"
+                                                            onClick={() => addDropdownOption(field.id!)}
+                                                            whileHover={{ scale: 1.05 }}
+                                                            whileTap={{ scale: 0.95 }}
+                                                        >
+                                                            <i className="bi bi-plus-circle"></i> Agregar Opción
+                                                        </motion.button>
+                                                    )}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </motion.div>
+                                )}
+                            </motion.div>
                         ))}
 
                         <AnimatePresence>
