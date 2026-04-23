@@ -172,7 +172,9 @@ export function ImportContacts() {
                     borderRadius: '12px',
                     boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
                     padding: '2rem',
-                    border: '1px solid #e5e7eb'
+                    border: '1px solid #e5e7eb',
+                    marginLeft: '25px',
+                    marginRight: '25px'
                 }}
             >
                 <div style={{ marginBottom: '2rem' }}>
