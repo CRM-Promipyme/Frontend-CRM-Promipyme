@@ -473,7 +473,7 @@ export function UserProfileView() {
                                             {/* Información del Perfil */}
                                             <div className="user-profile-info">
                                                 {Object.entries(formData.profile_data_update as Record<string, unknown> || {}).map(([key, value]) =>
-                                                    key !== "foto_perfil" && key !== "sucursal" && key !== "sucursal_id" && key !== "sucursal_nombre" && key !== "codigo_empleado" && key !== "region" && key !== "sucursales" && key !== "regiones" ? (
+                                                    key !== "foto_perfil" && key !== "sucursal" && key !== "sucursal_id" && key !== "sucursal_nombre" && key !== "codigo_empleado" && key !== "pyme_codigo" && key !== "region" && key !== "sucursales" && key !== "regiones" ? (
                                                         <div key={key}>
                                                             <label htmlFor={key}>{formatKey(key)}</label>
                                                             <input
@@ -489,14 +489,14 @@ export function UserProfileView() {
                                                 )}
 
                                                 {/* Codigo PYME - Only editable by admins */}
-                                                {(formData.profile_data_update as Record<string, unknown>)?.codigo_empleado !== undefined && (
+                                                {(formData.profile_data_update as Record<string, unknown>)?.pyme_codigo !== undefined && (
                                                     <div style={{ marginTop: "15px" }}>
-                                                        <label htmlFor="codigo_empleado">Codigo PYME</label>
+                                                        <label htmlFor="pyme_codigo">Código PYME</label>
                                                         <input
                                                             type="text"
                                                             className="form-control"
-                                                            id="codigo_empleado"
-                                                            value={(formData.profile_data_update as Record<string, unknown>)?.codigo_empleado ? String((formData.profile_data_update as Record<string, unknown>)?.codigo_empleado) : ""}
+                                                            id="pyme_codigo"
+                                                            value={(formData.profile_data_update as Record<string, unknown>)?.pyme_codigo ? String((formData.profile_data_update as Record<string, unknown>)?.pyme_codigo) : ""}
                                                             onChange={handleChange}
                                                             disabled={!editMode || !authStore.isAdmin()}
                                                         />
