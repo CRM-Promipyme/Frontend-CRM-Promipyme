@@ -14,6 +14,11 @@ interface CaseTasksProps {
     selectedCase: Caso;
 }
 
+interface UserOption {
+    value: number;
+    label: string;
+}
+
 const statusOptions = [
     { value: false, label: "Pendiente" },
     { value: true, label: "Completado" }
@@ -26,12 +31,34 @@ export function CaseTasks({ selectedCase }: CaseTasksProps) {
     const [expandedTask, setExpandedTask] = useState<number | null>(null);
     const [editTaskId, setEditTaskId] = useState<number | null>(null);
     const [editFields, setEditFields] = useState<Partial<Task>>({});
+    const [users, setUsers] = useState<UserOption[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
 
     // Auth
     const userId = useAuthStore(state => state.userId);
     const isAdmin = useAuthStore(state => state.isAdmin());
+
+    // Fetch users for task assignment
+    const fetchUsers = async () => {
+        try {
+            const res = await api.get("/auth/users/list", {
+                params: { limit: 100 }
+            });
+            const userOptions = res.data.results.map((u: any) => ({
+                value: u.id,
+                label: `${u.first_name} ${u.last_name}`
+            }));
+            setUsers(userOptions);
+        } catch {
+            toast.error("No se pudieron cargar los usuarios.");
+        }
+    };
+
+    // Initial fetch of users
+    useEffect(() => {
+        fetchUsers();
+    }, []);
 
     // Fetch tasks (initial and paginated)
     const fetchTasks = async (url?: string) => {
@@ -113,11 +140,12 @@ export function CaseTasks({ selectedCase }: CaseTasksProps) {
             nombre_tarea: task.nombre_tarea,
             descripcion_tarea: task.descripcion_tarea,
             fecha_completado_estimada: task.fecha_completado_estimada?.slice(0, 10) || "",
-            completado: task.completado
+            completado: task.completado,
+            usuario_asignado: task.usuario_asignado
         });
     };
 
-    const handleEditFieldChange = (field: keyof Task, value: boolean | string) => {
+    const handleEditFieldChange = (field: keyof Task, value: boolean | string | number | null) => {
         setEditFields(prev => ({ ...prev, [field]: value }));
     };
 
@@ -127,19 +155,14 @@ export function CaseTasks({ selectedCase }: CaseTasksProps) {
             descripcion_tarea: editFields.descripcion_tarea ?? task.descripcion_tarea,
             fecha_completado_estimada:
                 (editFields.fecha_completado_estimada ?? task.fecha_completado_estimada)?.slice(0, 10) || "",
-            completado: typeof editFields.completado === "boolean" ? editFields.completado : task.completado
+            completado: typeof editFields.completado === "boolean" ? editFields.completado : task.completado,
+            usuario_asignado: typeof editFields.usuario_asignado === "number" ? editFields.usuario_asignado : task.usuario_asignado
         };
         try {
             await api.put(`/workflows/casos/manage/tasks/${task.id_tarea_caso}/`, payload);
-            setTasks(prev =>
-                prev.map(t =>
-                    t.id_tarea_caso === task.id_tarea_caso
-                        ? { ...t, ...payload }
-                        : t
-                )
-            );
             setEditTaskId(null);
             toast.success("Tarea actualizada.");
+            fetchTasks();
         } catch {
             toast.error("No se pudo actualizar la tarea.");
         }
@@ -260,6 +283,17 @@ export function CaseTasks({ selectedCase }: CaseTasksProps) {
                                                         options={statusOptions}
                                                         value={statusOptions.find(opt => opt.value === editFields.completado)}
                                                         onChange={option => handleEditFieldChange("completado", option?.value ?? false)}
+                                                        className="react-select-container"
+                                                        classNamePrefix="react-select"
+                                                    />
+                                                </div>
+                                                <div style={{ fontSize: 14, marginBottom: 8 }}>
+                                                    <b>Asignado a:</b>
+                                                    <Select
+                                                        isClearable
+                                                        options={users}
+                                                        value={users.find(u => u.value === editFields.usuario_asignado) || null}
+                                                        onChange={option => handleEditFieldChange("usuario_asignado", option ? option.value : null)}
                                                         className="react-select-container"
                                                         classNamePrefix="react-select"
                                                     />
