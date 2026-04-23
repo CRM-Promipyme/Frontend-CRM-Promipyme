@@ -1,17 +1,15 @@
-import { useEffect, useState, useRef, useCallback } from "react";
-import { toast } from "react-toastify";
-import { Branch, BranchListResponse, Region, RegionListResponse } from "../../types/branchTypes";
-import { fetchBranches, createBranch, updateBranch, deleteBranch, fetchRegions } from "../../controllers/branchControllers";
-import { useSidebarStore } from "../../stores/sidebarStore";
-import { useAuthStore } from "../../stores/authStore";
-import { SidebarLayout } from "../../components/layouts/SidebarLayout";
-import { PopupModal } from "../../components/ui/PopupModal";
-import { Spinner } from "../../components/ui/Spinner";
-import { AnimatedNumberCounter } from "../../components/ui/AnimatedNumberCounter";
-import "../../styles/tableStyling.css";
-import "../../styles/components/branch.css";
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import { SidebarLayout } from '../../components/layouts/SidebarLayout';
+import { useSidebarStore } from '../../stores/sidebarStore';
+import { useAuthStore } from '../../stores/authStore';
+import { Spinner } from '../../components/ui/Spinner';
+import { PopupModal } from '../../components/ui/PopupModal';
+import { AnimatedNumberCounter } from '../../components/ui/AnimatedNumberCounter';
+import { Region, RegionListResponse } from '../../types/branchTypes';
+import { fetchRegions, createRegion, updateRegion, deleteRegion } from '../../controllers/branchControllers';
 
-export function ManageBranches() {
+export function ManageRegions() {
     // Global States
     const sidebarWidthPx = useSidebarStore((state) => state.sidebarWidthPx);
     const accessToken = useAuthStore((state) => state.accessToken);
@@ -19,11 +17,9 @@ export function ManageBranches() {
     // Data States
     const [loading, setLoading] = useState<boolean>(false);
     const [loadingMore, setLoadingMore] = useState<boolean>(false);
-    const [totalBranches, setTotalBranches] = useState<number>(0);
-    const [branches, setBranches] = useState<Branch[]>([]);
-    const [nextPage, setNextPage] = useState<string | null>(null);
+    const [totalRegions, setTotalRegions] = useState<number>(0);
     const [regions, setRegions] = useState<Region[]>([]);
-    const [loadingRegions, setLoadingRegions] = useState<boolean>(false);
+    const [nextPage, setNextPage] = useState<string | null>(null);
 
     // Filter States
     const [searchTerm, setSearchTerm] = useState<string>("");
@@ -34,18 +30,18 @@ export function ManageBranches() {
     const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
     const [showEditModal, setShowEditModal] = useState<boolean>(false);
     const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
-    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+    const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
 
     // Form States
     const [formData, setFormData] = useState({
-        codigo_sucursal: "",
-        nombre_sucursal: "",
-        region_id: "",
+        codigo_region: "",
+        nombre_region: "",
+        descripcion: "",
     });
     const [formSubmitting, setFormSubmitting] = useState<boolean>(false);
 
-    // Fetch Branches
-    const fetchBranchesData = useCallback(
+    // Fetch Regions
+    const fetchRegionsData = useCallback(
         async (search: string = "", offset: number = 0, isLoadMore: boolean = false) => {
             if (!accessToken) {
                 toast.error("Tu sesión ha caducado. Por favor, inicia sesión nuevamente.");
@@ -55,20 +51,20 @@ export function ManageBranches() {
             if (isLoadMore) setLoadingMore(true);
             else {
                 setLoading(true);
-                setBranches([]);
+                setRegions([]);
             }
 
             try {
-                const response: BranchListResponse = await fetchBranches(10, offset, search || undefined);
-                setTotalBranches(response.count);
-                setBranches((prevBranches) =>
-                    isLoadMore ? [...prevBranches, ...response.results] : response.results
+                const response: RegionListResponse = await fetchRegions(10, offset, search || undefined);
+                setTotalRegions(response.count);
+                setRegions((prevRegions) =>
+                    isLoadMore ? [...prevRegions, ...response.results] : response.results
                 );
                 setNextPage(response.next);
             } catch (error) {
-                console.error("Error fetching branches:", error);
+                console.error("Error fetching regions:", error);
                 if (!isLoadMore) {
-                    toast.error("Error al cargar las sucursales. Por favor, intenta nuevamente.");
+                    toast.error("Error al cargar las regiones. Por favor, intenta nuevamente.");
                 }
             } finally {
                 setLoading(false);
@@ -78,37 +74,20 @@ export function ManageBranches() {
         [accessToken]
     );
 
-    // Fetch regions on mount
-    useEffect(() => {
-        const loadRegions = async () => {
-            setLoadingRegions(true);
-            try {
-                const response: RegionListResponse = await fetchRegions(1000, 0);
-                setRegions(response.results);
-            } catch (error) {
-                console.error("Error fetching regions:", error);
-                toast.error("Error al cargar las regiones.");
-            } finally {
-                setLoadingRegions(false);
-            }
-        };
-        loadRegions();
-    }, []);
-
-    // Fetch branches when search term changes
+    // Fetch regions when search term changes
     useEffect(() => {
         if (debounceTimer.current) {
             clearTimeout(debounceTimer.current);
         }
 
         debounceTimer.current = setTimeout(() => {
-            fetchBranchesData(searchTerm, 0, false);
+            fetchRegionsData(searchTerm, 0, false);
         }, 500);
 
         return () => {
             if (debounceTimer.current) clearTimeout(debounceTimer.current);
         };
-    }, [searchTerm, fetchBranchesData]);
+    }, [searchTerm, fetchRegionsData]);
 
     // Infinite Scroll Effect
     useEffect(() => {
@@ -117,8 +96,8 @@ export function ManageBranches() {
 
             const { scrollTop, scrollHeight, clientHeight } = tableRef.current;
             if (scrollHeight - scrollTop <= clientHeight + 50) {
-                const offset = branches.length;
-                fetchBranchesData(searchTerm, offset, true);
+                const offset = regions.length;
+                fetchRegionsData(searchTerm, offset, true);
             }
         };
 
@@ -132,10 +111,10 @@ export function ManageBranches() {
                 tableElement.removeEventListener("scroll", handleScroll);
             }
         };
-    }, [fetchBranchesData, nextPage, loadingMore, branches.length, searchTerm]);
+    }, [fetchRegionsData, nextPage, loadingMore, regions.length, searchTerm]);
 
     // Handle Form Input Changes
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({
             ...prev,
@@ -143,29 +122,29 @@ export function ManageBranches() {
         }));
     };
 
-    // Handle Create Branch
-    const handleCreateBranch = async (e: React.FormEvent) => {
+    // Handle Create Region
+    const handleCreateRegion = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.codigo_sucursal.trim() || !formData.nombre_sucursal.trim()) {
-            toast.error("Por favor, completa todos los campos.");
+        if (!formData.codigo_region.trim() || !formData.nombre_region.trim()) {
+            toast.error("Por favor, completa los campos obligatorios.");
             return;
         }
 
         setFormSubmitting(true);
 
         try {
-            const newBranch = await createBranch({
-                codigo_sucursal: formData.codigo_sucursal.trim(),
-                nombre_sucursal: formData.nombre_sucursal.trim(),
-                region_id: formData.region_id ? parseInt(formData.region_id) : null,
+            const newRegion = await createRegion({
+                codigo_region: formData.codigo_region.trim(),
+                nombre_region: formData.nombre_region.trim(),
+                descripcion: formData.descripcion.trim() || undefined,
             });
 
-            setBranches((prev) => [newBranch, ...prev]);
-            setTotalBranches((prev) => prev + 1);
-            toast.success("Sucursal creada exitosamente.");
+            setRegions((prev) => [newRegion, ...prev]);
+            setTotalRegions((prev) => prev + 1);
+            toast.success("Región creada exitosamente.");
             setShowCreateModal(false);
-            setFormData({ codigo_sucursal: "", nombre_sucursal: "", region_id: "" });
+            setFormData({ codigo_region: "", nombre_region: "", descripcion: "" });
         } catch (error) {
             const response = (error as any).response?.data;
             if (response?.errors) {
@@ -173,43 +152,43 @@ export function ManageBranches() {
                     errorArray.forEach((errMsg: string) => toast.error(errMsg));
                 });
             } else {
-                toast.error("Error al crear la sucursal. Por favor, intenta nuevamente.");
+                toast.error("Error al crear la región. Por favor, intenta nuevamente.");
             }
         } finally {
             setFormSubmitting(false);
         }
     };
 
-    // Handle Edit Branch
-    const handleEditBranch = async (e: React.FormEvent) => {
+    // Handle Edit Region
+    const handleEditRegion = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!selectedBranch) return;
+        if (!selectedRegion) return;
 
-        if (!formData.codigo_sucursal.trim() || !formData.nombre_sucursal.trim()) {
-            toast.error("Por favor, completa todos los campos.");
+        if (!formData.codigo_region.trim() || !formData.nombre_region.trim()) {
+            toast.error("Por favor, completa los campos obligatorios.");
             return;
         }
 
         setFormSubmitting(true);
 
         try {
-            const updatedBranch = await updateBranch(selectedBranch.id, {
-                codigo_sucursal: formData.codigo_sucursal.trim(),
-                nombre_sucursal: formData.nombre_sucursal.trim(),
-                region_id: formData.region_id ? parseInt(formData.region_id) : null,
+            const updatedRegion = await updateRegion(selectedRegion.id, {
+                codigo_region: formData.codigo_region.trim(),
+                nombre_region: formData.nombre_region.trim(),
+                descripcion: formData.descripcion.trim() || undefined,
             });
 
-            setBranches((prev) =>
-                prev.map((branch) =>
-                    branch.id === selectedBranch.id ? updatedBranch : branch
+            setRegions((prev) =>
+                prev.map((region) =>
+                    region.id === selectedRegion.id ? updatedRegion : region
                 )
             );
 
-            toast.success("Sucursal actualizada exitosamente.");
+            toast.success("Región actualizada exitosamente.");
             setShowEditModal(false);
-            setSelectedBranch(null);
-            setFormData({ codigo_sucursal: "", nombre_sucursal: "", region_id: "" });
+            setSelectedRegion(null);
+            setFormData({ codigo_region: "", nombre_region: "", descripcion: "" });
         } catch (error) {
             const response = (error as any).response?.data;
             if (response?.errors) {
@@ -217,29 +196,29 @@ export function ManageBranches() {
                     errorArray.forEach((errMsg: string) => toast.error(errMsg));
                 });
             } else {
-                toast.error("Error al actualizar la sucursal. Por favor, intenta nuevamente.");
+                toast.error("Error al actualizar la región. Por favor, intenta nuevamente.");
             }
         } finally {
             setFormSubmitting(false);
         }
     };
 
-    // Handle Delete Branch
-    const handleDeleteBranch = async () => {
-        if (!selectedBranch) return;
+    // Handle Delete Region
+    const handleDeleteRegion = async () => {
+        if (!selectedRegion) return;
 
         setFormSubmitting(true);
 
         try {
-            await deleteBranch(selectedBranch.id);
-            setBranches((prev) => prev.filter((branch) => branch.id !== selectedBranch.id));
-            setTotalBranches((prev) => prev - 1);
-            toast.success("Sucursal eliminada exitosamente.");
+            await deleteRegion(selectedRegion.id);
+            setRegions((prev) => prev.filter((region) => region.id !== selectedRegion.id));
+            setTotalRegions((prev) => prev - 1);
+            toast.success("Región eliminada exitosamente.");
             setShowDeleteModal(false);
-            setSelectedBranch(null);
+            setSelectedRegion(null);
         } catch (error) {
             const response = (error as any).response?.data;
-            toast.error(response?.message || "Error al eliminar la sucursal. Por favor, intenta nuevamente.");
+            toast.error(response?.message || "Error al eliminar la región. Por favor, intenta nuevamente.");
         } finally {
             setFormSubmitting(false);
         }
@@ -247,34 +226,34 @@ export function ManageBranches() {
 
     // Open Create Modal
     const openCreateModal = () => {
-        setFormData({ codigo_sucursal: "", nombre_sucursal: "", region_id: "" });
+        setFormData({ codigo_region: "", nombre_region: "", descripcion: "" });
         setShowCreateModal(true);
     };
 
     // Open Edit Modal
-    const openEditModal = (branch: Branch) => {
-        setSelectedBranch(branch);
+    const openEditModal = (region: Region) => {
+        setSelectedRegion(region);
         setFormData({
-            codigo_sucursal: branch.codigo_sucursal,
-            nombre_sucursal: branch.nombre_sucursal,
-            region_id: branch.region?.id?.toString() || "",
+            codigo_region: region.codigo_region,
+            nombre_region: region.nombre_region,
+            descripcion: region.descripcion || "",
         });
         setShowEditModal(true);
     };
 
     // Open Delete Modal
-    const openDeleteModal = (branch: Branch) => {
-        setSelectedBranch(branch);
+    const openDeleteModal = (region: Region) => {
+        setSelectedRegion(region);
         setShowDeleteModal(true);
     };
 
     return (
         <SidebarLayout sidebarWidthPx={sidebarWidthPx}>
-            <div className="branch-management-container">
+            <div className="region-management-container">
                 <h1 className="page-title">
-                    Administrar Sucursales
+                    Administrar Regiones
                     <span className="badge bg-promipyme ms-2">
-                        <AnimatedNumberCounter value={totalBranches} />
+                        <AnimatedNumberCounter value={totalRegions} />
                     </span>
                 </h1>
 
@@ -284,14 +263,14 @@ export function ManageBranches() {
                         className="filter-btn btn btn-success"
                         onClick={openCreateModal}
                     >
-                        <i className="bi bi-plus-circle"></i> Crear Sucursal
+                        <i className="bi bi-plus-circle"></i> Crear Región
                     </button>
                     <button
                         className="filter-btn btn btn-outline-danger"
                         onClick={() => {
                             setSearchTerm("");
-                            setBranches([]);
-                            fetchBranchesData("", 0, false);
+                            setRegions([]);
+                            fetchRegionsData("", 0, false);
                         }}
                     >
                         <i className="bi bi-x-circle"></i> Limpiar Filtros
@@ -314,38 +293,38 @@ export function ManageBranches() {
                             <thead>
                                 <tr>
                                     <th>
-                                        <i className="bi bi-building"></i> Código
+                                        <i className="bi bi-geo-alt"></i> Código
                                     </th>
                                     <th>
                                         <i className="bi bi-signpost-2"></i> Nombre
                                     </th>
                                     <th>
-                                        <i className="bi bi-geo-alt"></i> Región
+                                        <i className="bi bi-file-text"></i> Descripción
                                     </th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {branches.length > 0 ? (
-                                    branches.map((branch) => (
-                                        <tr key={branch.id}>
-                                            <td className="branch-code">{branch.codigo_sucursal}</td>
-                                            <td className="branch-name">{branch.nombre_sucursal}</td>
-                                            <td className="branch-region">{branch.region?.nombre_region || "—"}</td>
-                                            <td className="branch-actions">
+                                {regions.length > 0 ? (
+                                    regions.map((region) => (
+                                        <tr key={region.id}>
+                                            <td className="region-code">{region.codigo_region}</td>
+                                            <td className="region-name">{region.nombre_region}</td>
+                                            <td className="region-description">{region.descripcion || "—"}</td>
+                                            <td className="region-actions">
                                                 <button
-                                                    className="btn btn-sm btn-primary me-2"
-                                                    onClick={() => openEditModal(branch)}
-                                                    title="Editar sucursal"
+                                                    className="btn btn-primary btn-sm me-2"
+                                                    onClick={() => openEditModal(region)}
+                                                    title="Editar región"
                                                 >
-                                                    <i className="bi bi-pencil"></i>
+                                                    <i className="bi bi-pencil"></i> Editar
                                                 </button>
                                                 <button
-                                                    className="btn btn-sm btn-danger"
-                                                    onClick={() => openDeleteModal(branch)}
-                                                    title="Eliminar sucursal"
+                                                    className="btn btn-danger btn-sm"
+                                                    onClick={() => openDeleteModal(region)}
+                                                    title="Eliminar región"
                                                 >
-                                                    <i className="bi bi-trash"></i>
+                                                    <i className="bi bi-trash"></i> Eliminar
                                                 </button>
                                             </td>
                                         </tr>
@@ -353,7 +332,7 @@ export function ManageBranches() {
                                 ) : (
                                     <tr>
                                         <td colSpan={4} className="text-center">
-                                            No hay sucursales disponibles.
+                                            No hay regiones disponibles.
                                         </td>
                                     </tr>
                                 )}
@@ -364,10 +343,10 @@ export function ManageBranches() {
                 )}
             </div>
 
-            {/* Create Branch Modal */}
+            {/* Create Region Modal */}
             <PopupModal show={showCreateModal} onClose={() => !formSubmitting && setShowCreateModal(false)}>
                 <div className="modal-header">
-                    <h3>Crear Nueva Sucursal</h3>
+                    <h3>Crear Nueva Región</h3>
                     <span
                         className="scale"
                         onClick={() => !formSubmitting && setShowCreateModal(false)}
@@ -376,58 +355,53 @@ export function ManageBranches() {
                         ✕
                     </span>
                 </div>
-                <form onSubmit={handleCreateBranch} className="branch-form">
+                <form onSubmit={handleCreateRegion} className="region-form">
                     <div className="mb-3">
-                        <label htmlFor="codigo_sucursal" className="form-label">
-                            Código de Sucursal <span className="text-danger">*</span>
+                        <label htmlFor="codigo_region" className="form-label">
+                            Código de Región <span className="text-danger">*</span>
                         </label>
                         <input
                             type="text"
                             className="form-control"
-                            id="codigo_sucursal"
-                            name="codigo_sucursal"
-                            value={formData.codigo_sucursal}
+                            id="codigo_region"
+                            name="codigo_region"
+                            value={formData.codigo_region}
                             onChange={handleInputChange}
-                            placeholder="Ej: 12345"
+                            placeholder="Ej: REG001"
                             disabled={formSubmitting}
                             required
                         />
                     </div>
                     <div className="mb-3">
-                        <label htmlFor="nombre_sucursal" className="form-label">
-                            Nombre de Sucursal <span className="text-danger">*</span>
+                        <label htmlFor="nombre_region" className="form-label">
+                            Nombre de Región <span className="text-danger">*</span>
                         </label>
                         <input
                             type="text"
                             className="form-control"
-                            id="nombre_sucursal"
-                            name="nombre_sucursal"
-                            value={formData.nombre_sucursal}
+                            id="nombre_region"
+                            name="nombre_region"
+                            value={formData.nombre_region}
                             onChange={handleInputChange}
-                            placeholder="Ej: Sucursal Centro"
+                            placeholder="Ej: Región Este"
                             disabled={formSubmitting}
                             required
                         />
                     </div>
                     <div className="mb-3">
-                        <label htmlFor="region_id" className="form-label">
-                            Región <span className="text-muted">(opcional)</span>
+                        <label htmlFor="descripcion" className="form-label">
+                            Descripción <span className="text-muted">(opcional)</span>
                         </label>
-                        <select
-                            className="form-select"
-                            id="region_id"
-                            name="region_id"
-                            value={formData.region_id}
+                        <textarea
+                            className="form-control"
+                            id="descripcion"
+                            name="descripcion"
+                            value={formData.descripcion}
                             onChange={handleInputChange}
-                            disabled={formSubmitting || loadingRegions}
-                        >
-                            <option value="">Selecciona una región...</option>
-                            {regions.map((region) => (
-                                <option key={region.id} value={region.id.toString()}>
-                                    {region.nombre_region}
-                                </option>
-                            ))}
-                        </select>
+                            placeholder="Descripción de la región..."
+                            disabled={formSubmitting}
+                            rows={3}
+                        />
                     </div>
                     <div className="modal-footer">
                         <button
@@ -453,17 +427,17 @@ export function ManageBranches() {
                                     Creando...
                                 </>
                             ) : (
-                                "Crear Sucursal"
+                                "Crear Región"
                             )}
                         </button>
                     </div>
                 </form>
             </PopupModal>
 
-            {/* Edit Branch Modal */}
+            {/* Edit Region Modal */}
             <PopupModal show={showEditModal} onClose={() => !formSubmitting && setShowEditModal(false)}>
                 <div className="modal-header">
-                    <h3>Editar Sucursal</h3>
+                    <h3>Editar Región</h3>
                     <span
                         className="scale"
                         onClick={() => !formSubmitting && setShowEditModal(false)}
@@ -472,56 +446,50 @@ export function ManageBranches() {
                         ✕
                     </span>
                 </div>
-                <form onSubmit={handleEditBranch} className="branch-form">
+                <form onSubmit={handleEditRegion} className="region-form">
                     <div className="mb-3">
-                        <label htmlFor="edit_codigo_sucursal" className="form-label">
-                            Código de Sucursal <span className="text-danger">*</span>
+                        <label htmlFor="edit_codigo_region" className="form-label">
+                            Código de Región <span className="text-danger">*</span>
                         </label>
                         <input
                             type="text"
                             className="form-control"
-                            id="edit_codigo_sucursal"
-                            name="codigo_sucursal"
-                            value={formData.codigo_sucursal}
+                            id="edit_codigo_region"
+                            name="codigo_region"
+                            value={formData.codigo_region}
                             onChange={handleInputChange}
                             disabled={formSubmitting}
                             required
                         />
                     </div>
                     <div className="mb-3">
-                        <label htmlFor="edit_nombre_sucursal" className="form-label">
-                            Nombre de Sucursal <span className="text-danger">*</span>
+                        <label htmlFor="edit_nombre_region" className="form-label">
+                            Nombre de Región <span className="text-danger">*</span>
                         </label>
                         <input
                             type="text"
                             className="form-control"
-                            id="edit_nombre_sucursal"
-                            name="nombre_sucursal"
-                            value={formData.nombre_sucursal}
+                            id="edit_nombre_region"
+                            name="nombre_region"
+                            value={formData.nombre_region}
                             onChange={handleInputChange}
                             disabled={formSubmitting}
                             required
                         />
                     </div>
                     <div className="mb-3">
-                        <label htmlFor="edit_region_id" className="form-label">
-                            Región <span className="text-muted">(opcional)</span>
+                        <label htmlFor="edit_descripcion" className="form-label">
+                            Descripción <span className="text-muted">(opcional)</span>
                         </label>
-                        <select
-                            className="form-select"
-                            id="edit_region_id"
-                            name="region_id"
-                            value={formData.region_id}
+                        <textarea
+                            className="form-control"
+                            id="edit_descripcion"
+                            name="descripcion"
+                            value={formData.descripcion}
                             onChange={handleInputChange}
-                            disabled={formSubmitting || loadingRegions}
-                        >
-                            <option value="">Selecciona una región...</option>
-                            {regions.map((region) => (
-                                <option key={region.id} value={region.id.toString()}>
-                                    {region.nombre_region}
-                                </option>
-                            ))}
-                        </select>
+                            disabled={formSubmitting}
+                            rows={3}
+                        />
                     </div>
                     <div className="modal-footer">
                         <button
@@ -568,10 +536,10 @@ export function ManageBranches() {
                 </div>
                 <div className="modal-body">
                     <p className="mb-3">
-                        ¿Estás seguro de que deseas eliminar la sucursal <strong>{selectedBranch?.nombre_sucursal}</strong>?
+                        ¿Estás seguro de que deseas eliminar la región <strong>{selectedRegion?.nombre_region}</strong>?
                     </p>
                     <p className="text-muted small">
-                        Esta acción no se puede deshacer. La sucursal será eliminada permanentemente del sistema.
+                        Esta acción no se puede deshacer. La región será eliminada permanentemente del sistema.
                     </p>
                 </div>
                 <div className="modal-footer">
@@ -586,7 +554,7 @@ export function ManageBranches() {
                     <button
                         type="button"
                         className="btn btn-danger"
-                        onClick={handleDeleteBranch}
+                        onClick={handleDeleteRegion}
                         disabled={formSubmitting}
                     >
                         {formSubmitting ? (
@@ -599,7 +567,7 @@ export function ManageBranches() {
                                 Eliminando...
                             </>
                         ) : (
-                            "Eliminar Sucursal"
+                            "Eliminar Región"
                         )}
                     </button>
                 </div>

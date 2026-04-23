@@ -26,6 +26,10 @@ interface BasePermissions {
     create_roles: boolean;
     update_roles: boolean;
     delete_roles: boolean;
+    create_regions: boolean;
+    update_regions: boolean;
+    delete_regions: boolean;
+    view_regions: boolean;
     create_branches: boolean;
     update_branches: boolean;
     delete_branches: boolean;
@@ -119,6 +123,10 @@ export function RolePermissions({ selectedRole, onClose }: RolePermissionsProps)
                     create_roles: basePermissions.create_roles,
                     update_roles: basePermissions.update_roles,
                     delete_roles: basePermissions.delete_roles,
+                    create_regions: basePermissions.create_regions,
+                    update_regions: basePermissions.update_regions,
+                    delete_regions: basePermissions.delete_regions,
+                    view_regions: basePermissions.view_regions,
                     create_branches: basePermissions.create_branches,
                     update_branches: basePermissions.update_branches,
                     delete_branches: basePermissions.delete_branches,
@@ -420,6 +428,63 @@ export function RolePermissions({ selectedRole, onClose }: RolePermissionsProps)
                                                 }
                                             />{" "}
                                             <span>Eliminar sucursales</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Gestión de regiones */}
+                                <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "18px", minWidth: "220px" }}>
+                                    <div style={{ fontWeight: 500, marginBottom: 8 }}>
+                                        <i className="bi bi-geo-alt" style={{ marginRight: 6 }} /> Gestión de regiones
+                                    </div>
+                                    <div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.view_regions}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, view_regions: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Ver regiones</span>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.create_regions}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, create_regions: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Crear regiones</span>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.update_regions}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, update_regions: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Actualizar regiones</span>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!basePermissions.delete_regions}
+                                                onChange={e =>
+                                                    setBasePermissions(bp =>
+                                                        bp ? { ...bp, delete_regions: e.target.checked } : bp
+                                                    )
+                                                }
+                                            />{" "}
+                                            <span>Eliminar regiones</span>
                                         </div>
                                     </div>
                                 </div>

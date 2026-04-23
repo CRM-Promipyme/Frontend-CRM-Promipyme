@@ -10,7 +10,7 @@ import { fetchRoles } from '../../utils/authUtils';
 import { formatKey } from "../../utils/formatUtils";
 import { Activity } from "../../types/activityTypes";
 import { useAuthStore } from "../../stores/authStore";
-import { Branch } from "../../types/branchTypes";
+import { Branch, Region } from "../../types/branchTypes";
 import { Spinner } from "../../components/ui/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Role, UserProfile, RolePermission } from "../../types/authTypes";
@@ -18,7 +18,7 @@ import { useSidebarStore } from "../../stores/sidebarStore";
 import { showResponseErrors } from "../../utils/formatUtils";
 import { ActivityLog } from "../../components/ui/ActivityLog";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
-import { fetchBranches } from "../../controllers/branchControllers";
+import { fetchBranches, fetchRegions } from "../../controllers/branchControllers";
 import { fetchEntityActivities } from "../../controllers/activityControllers";
 
 export function UserProfileView() {
@@ -39,7 +39,9 @@ export function UserProfileView() {
     const [roles, setRoles] = useState<Role[]>([]);
     const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
     const [branches, setBranches] = useState<Branch[]>([]);
-    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+    const [selectedBranches, setSelectedBranches] = useState<Branch[]>([]);
+    const [regions, setRegions] = useState<Region[]>([]);
+    const [selectedRegions, setSelectedRegions] = useState<Region[]>([]);
     const [userActivities, setUserActivities] = useState<Activity[]>([]);
     const [activeTab, setActiveTab] = useState<string>("cuenta");
     const [userPermissions, setUserPermissions] = useState<RolePermission[]>([]);
@@ -119,15 +121,39 @@ export function UserProfileView() {
         loadBranches();
     }, [accessToken, branches.length]);
 
-    // Set selectedBranch once branches are loaded and userData is available
+    // Fetch regions al cargar el componente
     useEffect(() => {
-        if (userData?.profile_data?.sucursal_id && branches.length > 0) {
-            const branch = branches.find(b => b.id === userData.profile_data.sucursal_id);
-            if (branch) {
-                setSelectedBranch(branch);
+        if (!accessToken || regions.length > 0) return;
+
+        const loadRegions = async () => {
+            try {
+                const regionsData = await fetchRegions(1000, 0);
+                setRegions(regionsData.results);
+            } catch {
+                toast.error("No se pudieron obtener las regiones.");
             }
+        };
+
+        loadRegions();
+    }, [accessToken, regions.length]);
+
+    // Set selectedBranches once branches are loaded and userData is available
+    useEffect(() => {
+        if (userData?.profile_data?.sucursales && Array.isArray(userData.profile_data.sucursales) && branches.length > 0) {
+            const branchIds = userData.profile_data.sucursales.map((s: any) => s.id || s);
+            const matchingBranches = branches.filter(b => branchIds.includes(b.id));
+            setSelectedBranches(matchingBranches);
         }
     }, [branches, userData]);
+
+    // Set selectedRegions once regions are loaded and userData is available
+    useEffect(() => {
+        if (userData?.profile_data?.regiones && Array.isArray(userData.profile_data.regiones) && regions.length > 0) {
+            const regionIds = userData.profile_data.regiones.map((r: any) => r.id || r);
+            const matchingRegions = regions.filter(r => regionIds.includes(r.id));
+            setSelectedRegions(matchingRegions);
+        }
+    }, [regions, userData]);
 
     // Show edit functionality only if the user is the same as the logged in user, or if the user is an admin
     const canEdit = userId && (authStore.userId === parseInt(userId) || authStore.isAdmin());
@@ -214,11 +240,12 @@ export function UserProfileView() {
         try {
             const newRoleIds = selectedRoles.map((role) => role.id_rol);
             
-            // Update profile_data with sucursal if a branch is selected
+            // Update profile_data with sucursales and regiones as arrays of IDs
             const profileDataUpdate = { ...formData.profile_data_update as Record<string, unknown> };
-            if (selectedBranch) {
-                profileDataUpdate.sucursal = selectedBranch.id;
-            }
+            
+            // Send arrays of IDs instead of single values
+            profileDataUpdate.sucursales = selectedBranches.map(b => b.id);
+            profileDataUpdate.regiones = selectedRegions.map(r => r.id);
             
             // Create a separate object to send in the request
             const updatedFormData = {
@@ -446,7 +473,7 @@ export function UserProfileView() {
                                             {/* Información del Perfil */}
                                             <div className="user-profile-info">
                                                 {Object.entries(formData.profile_data_update as Record<string, unknown> || {}).map(([key, value]) =>
-                                                    key !== "foto_perfil" && key !== "sucursal" && key !== "sucursal_id" && key !== "sucursal_nombre" && key !== "codigo_empleado" ? (
+                                                    key !== "foto_perfil" && key !== "sucursal" && key !== "sucursal_id" && key !== "sucursal_nombre" && key !== "codigo_empleado" && key !== "region" && key !== "sucursales" && key !== "regiones" ? (
                                                         <div key={key}>
                                                             <label htmlFor={key}>{formatKey(key)}</label>
                                                             <input
@@ -476,23 +503,112 @@ export function UserProfileView() {
                                                     </div>
                                                 )}
                                                 
-                                                {/* Branch selector */}
-                                                <div style={{ marginTop: "15px" }}>
-                                                    <label htmlFor="sucursal">Sucursal</label>
-                                                    <Select
-                                                        isClearable
-                                                        options={branches}
-                                                        value={selectedBranch}
-                                                        onChange={(selected) => setSelectedBranch(selected as Branch | null)}
-                                                        getOptionLabel={(option: Branch) => option.nombre_sucursal}
-                                                        getOptionValue={(option: Branch) => String(option.id)}
-                                                        placeholder="Selecciona una sucursal"
-                                                        isDisabled={!editMode}
-                                                        className="react-select-container"
-                                                        classNamePrefix="react-select"
-                                                        menuPortalTarget={typeof document !== 'undefined' ? document.body : undefined}
-                                                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-                                                    />
+                                                {/* Regiones Asignadas Section */}
+                                                <div style={{ marginTop: "20px" }}>
+                                                    <div className="d-flex align-items-center mb-2">
+                                                        <i className="bi bi-geo-alt" style={{ marginRight: '8px', fontSize: '18px', color: '#0d6efd' }}></i>
+                                                        <label htmlFor="regiones" style={{ margin: 0, fontWeight: '600', fontSize: '14px' }}>Regiones Asignadas</label>
+                                                        {!editMode && selectedRegions.length > 0 && (
+                                                            <span style={{ marginLeft: '8px', backgroundColor: '#e7f3ff', color: '#0066cc', padding: '2px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: '500' }}>
+                                                                {selectedRegions.length}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {editMode ? (
+                                                        <Select
+                                                            isMulti
+                                                            options={regions}
+                                                            value={selectedRegions}
+                                                            onChange={(selected) => setSelectedRegions(selected as Region[])}
+                                                            getOptionLabel={(option: Region) => option.nombre_region}
+                                                            getOptionValue={(option: Region) => String(option.id)}
+                                                            placeholder="Selecciona una o más regiones"
+                                                            className="react-select-container"
+                                                            classNamePrefix="react-select"
+                                                            menuPortalTarget={typeof document !== 'undefined' ? document.body : undefined}
+                                                            styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                                        />
+                                                    ) : (
+                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '10px 0' }}>
+                                                            {selectedRegions.length > 0 ? (
+                                                                selectedRegions.map((region) => (
+                                                                    <span
+                                                                        key={region.id}
+                                                                        style={{
+                                                                            backgroundColor: '#e7f3ff',
+                                                                            color: '#0066cc',
+                                                                            padding: '6px 12px',
+                                                                            borderRadius: '20px',
+                                                                            fontSize: '13px',
+                                                                            fontWeight: '500',
+                                                                            display: 'inline-flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '6px',
+                                                                            border: '1px solid #b3d9ff'
+                                                                        }}
+                                                                    >
+                                                                        {region.nombre_region}
+                                                                    </span>
+                                                                ))
+                                                            ) : (
+                                                                <span style={{ color: '#999', fontSize: '13px', fontStyle: 'italic' }}>Sin regiones asignadas</span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                
+                                                {/* Sucursales Asignadas Section */}
+                                                <div style={{ marginTop: "20px" }}>
+                                                    <div className="d-flex align-items-center mb-2">
+                                                        <i className="bi bi-building" style={{ marginRight: '8px', fontSize: '18px', color: '#198754' }}></i>
+                                                        <label htmlFor="sucursales" style={{ margin: 0, fontWeight: '600', fontSize: '14px' }}>Sucursales Asignadas</label>
+                                                        {!editMode && selectedBranches.length > 0 && (
+                                                            <span style={{ marginLeft: '8px', backgroundColor: '#f0f8f5', color: '#107a5a', padding: '2px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: '500' }}>
+                                                                {selectedBranches.length}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {editMode ? (
+                                                        <Select
+                                                            isMulti
+                                                            options={branches}
+                                                            value={selectedBranches}
+                                                            onChange={(selected) => setSelectedBranches(selected as Branch[])}
+                                                            getOptionLabel={(option: Branch) => option.nombre_sucursal}
+                                                            getOptionValue={(option: Branch) => String(option.id)}
+                                                            placeholder="Selecciona una o más sucursales"
+                                                            className="react-select-container"
+                                                            classNamePrefix="react-select"
+                                                            menuPortalTarget={typeof document !== 'undefined' ? document.body : undefined}
+                                                            styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                                        />
+                                                    ) : (
+                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '10px 0' }}>
+                                                            {selectedBranches.length > 0 ? (
+                                                                selectedBranches.map((branch) => (
+                                                                    <span
+                                                                        key={branch.id}
+                                                                        style={{
+                                                                            backgroundColor: '#f0f8f5',
+                                                                            color: '#107a5a',
+                                                                            padding: '6px 12px',
+                                                                            borderRadius: '20px',
+                                                                            fontSize: '13px',
+                                                                            fontWeight: '500',
+                                                                            display: 'inline-flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '6px',
+                                                                            border: '1px solid #a8d5c9'
+                                                                        }}
+                                                                    >
+                                                                        {branch.nombre_sucursal}
+                                                                    </span>
+                                                                ))
+                                                            ) : (
+                                                                <span style={{ color: '#999', fontSize: '13px', fontStyle: 'italic' }}>Sin sucursales asignadas</span>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </motion.div>
@@ -525,8 +641,28 @@ export function UserProfileView() {
                                             animate={{ opacity: 1 }}
                                             transition={{ duration: 0.5 }}
                                         >
-                                            <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", marginTop: "16px" }}>
-                                                {/* Reportes */}
+                                            {userPermissions.some(rp => rp.base_permissions.rol === "Administrador") ? (
+                                                <div style={{ 
+                                                    padding: "24px", 
+                                                    backgroundColor: "#f0f9ff", 
+                                                    border: "2px solid #0d6efd", 
+                                                    borderRadius: "12px",
+                                                    textAlign: "center",
+                                                    marginTop: "12px"
+                                                }}>
+                                                    <div style={{ fontSize: "28px", marginBottom: "14px" }}>
+                                                        <i className="bi bi-shield-check" style={{ color: "#0d6efd" }}></i>
+                                                    </div>
+                                                    <div style={{ fontSize: "17px", fontWeight: "600", color: "#0d6efd", marginBottom: "10px" }}>
+                                                        Acceso Administrativo
+                                                    </div>
+                                                    <div style={{ fontSize: "14px", color: "#555" }}>
+                                                        Este usuario tiene acceso a <strong>TODOS los permisos</strong> del sistema
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", marginTop: "16px" }}>
+                                                    {/* Reportes */}
                                                 <div style={{ border: "1px solid #e5e7eb", borderRadius: "12px", padding: "14px", minWidth: "180px" }}>
                                                     <div style={{ fontWeight: 500, marginBottom: 8, fontSize: "13px" }}>
                                                         <i className="bi bi-file-earmark-bar-graph" style={{ marginRight: 6 }} /> Reportes
@@ -675,7 +811,8 @@ export function UserProfileView() {
                                                         )}
                                                     </div>
                                                 </div>
-                                            </div>
+                                                </div>
+                                            )}
                                         </motion.div>
                                     )}
                                 </motion.div>

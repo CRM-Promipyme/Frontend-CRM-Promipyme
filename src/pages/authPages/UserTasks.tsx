@@ -19,14 +19,18 @@ export function UserTasks({ userId }: UserTasksProps) {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [nextUrl, setNextUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [filterStatus, setFilterStatus] = useState<'pending' | 'completed' | 'all'>('pending');
     const containerRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
 
     // Fetch tasks (initial and paginated)
-    const fetchTasks = async (url?: string) => {
+    const fetchTasks = async (url?: string, status?: 'pending' | 'completed' | 'all') => {
         setLoading(true);
         try {
-            const endpoint = url || `/workflows/casos/manage/tasks/user/list/${userId}/`;
+            let endpoint: string = url || `/workflows/casos/manage/tasks/user/list/${userId}/`;
+            if (!url && status && status !== 'all') {
+                endpoint += `?status=${status}`;
+            }
             const res = await api.get<PaginatedTasks>(endpoint);
             setTasks(prev => url ? [...prev, ...res.data.results] : res.data.results);
             setNextUrl(res.data.next);
@@ -41,9 +45,9 @@ export function UserTasks({ userId }: UserTasksProps) {
     useEffect(() => {
         setTasks([]);
         setNextUrl(null);
-        fetchTasks();
+        fetchTasks(undefined, filterStatus);
         // eslint-disable-next-line
-    }, [userId]);
+    }, [userId, filterStatus]);
 
     // Infinite scroll handler
     useEffect(() => {
@@ -68,8 +72,71 @@ export function UserTasks({ userId }: UserTasksProps) {
     const formatDate = (dateStr: string | null) =>
         dateStr ? new Date(dateStr).toLocaleDateString() : '—';
 
+    const getFilteredTasks = () => {
+        // Return all tasks since we're now filtering via API
+        return tasks;
+    };
+
     return (
         <div style={{ width: '100%' }}>
+            {/* Filter Tabs */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                <button
+                    type="button"
+                    onClick={() => setFilterStatus('pending')}
+                    style={{
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        backgroundColor: filterStatus === 'pending' ? '#0d6efd' : '#e5e7eb',
+                        color: filterStatus === 'pending' ? '#fff' : '#333',
+                        transition: 'all 0.2s ease'
+                    }}
+                >
+                    <i className="bi bi-clock-history" style={{ marginRight: '6px' }}></i>
+                    Pendientes
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setFilterStatus('completed')}
+                    style={{
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        backgroundColor: filterStatus === 'completed' ? '#198754' : '#e5e7eb',
+                        color: filterStatus === 'completed' ? '#fff' : '#333',
+                        transition: 'all 0.2s ease'
+                    }}
+                >
+                    <i className="bi bi-check-circle" style={{ marginRight: '6px' }}></i>
+                    Completadas
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setFilterStatus('all')}
+                    style={{
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        backgroundColor: filterStatus === 'all' ? '#6c757d' : '#e5e7eb',
+                        color: filterStatus === 'all' ? '#fff' : '#333',
+                        transition: 'all 0.2s ease'
+                    }}
+                >
+                    <i className="bi bi-funnel" style={{ marginRight: '6px' }}></i>
+                    Todas
+                </button>
+            </div>
+
             <div
                 className="task-list-container"
                 ref={containerRef}
@@ -82,11 +149,15 @@ export function UserTasks({ userId }: UserTasksProps) {
                     width: '100%',
                 }}
             >
-                {tasks.length === 0 && !loading && (
-                    <div className="text-muted text-center py-4">No hay tareas asignadas a este caso.</div>
+                {getFilteredTasks().length === 0 && !loading && (
+                    <div className="text-muted text-center py-4">
+                        {filterStatus === 'pending' && 'No hay tareas pendientes.'}
+                        {filterStatus === 'completed' && 'No hay tareas completadas.'}
+                        {filterStatus === 'all' && 'No hay tareas asignadas.'}
+                    </div>
                 )}
                 <AnimatePresence>
-                    {tasks.map(task => (
+                    {getFilteredTasks().map(task => (
                         <motion.div
                             key={task.id_tarea_caso}
                             layout

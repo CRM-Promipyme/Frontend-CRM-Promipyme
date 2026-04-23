@@ -46,10 +46,22 @@ export function AdminMenu() {
             url: "/auth/manage/system-roles/list"
         },
         {
+            title: "Administrar Regiones",
+            description: "Crear, editar y eliminar regiones geográficas.",
+            icon: "bi bi-geo-alt",
+            url: "/auth/manage/regions/list"
+        },
+        {
             title: "Administrar Sucursales",
             description: "Crear, editar y eliminar sucursales de la empresa.",
             icon: "bi bi-building",
             url: "/auth/manage/branches/list"
+        },
+        {
+            title: "Asignar Regiones en Masa",
+            description: "Asignar múltiples sucursales a una región de una sola vez.",
+            icon: "bi bi-geo-alt",
+            url: "/auth/manage/branches/assign-region/mass"
         },
         {
             title: "Fondos Crediticios",

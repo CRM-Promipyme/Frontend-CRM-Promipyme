@@ -15,6 +15,8 @@ import { AuthenticatedRoutePermissions } from '../components/permissions/Authent
 import { BulkInviteUsers } from '../pages/authPages/BulkInviteUsers';
 import { MassInviteUsers } from '../pages/authPages/MassInviteUsers';
 import { ManageBranches } from '../pages/authPages/ManageBranches';
+import { ManageRegions } from '../pages/authPages/ManageRegions';
+import { MassAssignRegion } from '../pages/authPages/MassAssignRegion';
 import { FondosCrediticios } from '../pages/authPages/FondosCrediticios';
 
 export function AuthRoutes() {
@@ -64,9 +66,19 @@ export function AuthRoutes() {
             requiredBasePermissions: ["create_roles", "update_roles", "delete_roles"]
         },
         {
+            path: "/manage/regions/list",
+            comp: ManageRegions,
+            requiredBasePermissions: ["create_regions", "update_regions", "delete_regions"]
+        },
+        {
             path: "/manage/branches/list",
             comp: ManageBranches,
             requiredBasePermissions: ["create_branches", "update_branches", "delete_branches"]
+        },
+        {
+            path: "/manage/branches/assign-region/mass",
+            comp: MassAssignRegion,
+            requiredBasePermissions: ["update_branches", "create_regions", "update_regions"]
         },
         {
             path: "/fondos-crediticios",
