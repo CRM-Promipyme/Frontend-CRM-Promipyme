@@ -26,6 +26,12 @@ export function ContactsMenu() {
             description: "Configurar los campos personalizados para los contactos.",
             icon: "bi bi-ui-checks",
             url: "/contacts/customize-fields"
+        },
+        {
+            title: "Importar Contactos",
+            description: "Subir un archivo CSV para importar contactos masivamente.",
+            icon: "bi bi-file-earmark-arrow-up",
+            url: "/contacts/import"
         }
     ]
 

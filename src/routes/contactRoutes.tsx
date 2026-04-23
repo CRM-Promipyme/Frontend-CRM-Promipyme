@@ -4,6 +4,7 @@ import { ContactsMenu } from '../pages/contactPages/ContactsMenu'
 import { ContactDetail } from '../pages/contactPages/ContactDetail'
 import { CreateContact } from '../pages/contactPages/CreateContact'
 import { ContactFields } from '../pages/contactPages/ContactFields'
+import { ImportContacts } from '../pages/contactPages/ImportContacts'
 import { With404Fallback } from '../components/permissions/With404Fallback';
 import { AdminRoutePermissions } from '../components/permissions/AdminRoutePermissions';
 import { AuthenticatedRoutePermissions } from '../components/permissions/AuthenticatedRoutePermissions'
@@ -26,6 +27,11 @@ export function ContactRoutes() {
         {
             path: "/create",
             comp: CreateContact,
+            requiredBasePermissions: ["create_contacts"]
+        },
+        {
+            path: "/import",
+            comp: ImportContacts,
             requiredBasePermissions: ["create_contacts"]
         }
     ]
