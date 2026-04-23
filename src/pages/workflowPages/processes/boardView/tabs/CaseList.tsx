@@ -8,6 +8,7 @@ import { useEffect, useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import { Caso, Proceso } from "../../../../../types/workflowTypes";
+import { Branch, Region } from "../../../../../types/branchTypes";
 import { daysLeft } from "../../../../../utils/formatUtils";
 import { SelectedCaseDetails } from "./SelectedCaseDetails";
 import { Activity } from "../../../../../types/activityTypes";
@@ -17,6 +18,7 @@ import { WorkflowKanbanProps } from "../../../../../types/kanbanBoardTypes"
 import { AnimatedSelectMenu } from "../../../../../components/ui/forms/AnimatedSelectMenu";
 import { bulkAssignCases } from "../../../../../controllers/caseControllers";
 import { fetchProcesses } from "../../../../../controllers/workflowControllers";
+import { fetchBranches, fetchRegions } from "../../../../../controllers/branchControllers";
 
 export function CaseList({ process }: WorkflowKanbanProps) {
     // Local states
@@ -36,6 +38,10 @@ export function CaseList({ process }: WorkflowKanbanProps) {
     const [isCompactLayout, setIsCompactLayout] = useState(false);
     const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
     const [archiveFilter, setArchiveFilter] = useState('');
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [regions, setRegions] = useState<Region[]>([]);
+    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+    const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
     const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Bulk assignment states
@@ -51,6 +57,25 @@ export function CaseList({ process }: WorkflowKanbanProps) {
     const [selectedAssignee, setSelectedAssignee] = useState<any>(null);
     const [isSubmittingBulkAssignment, setIsSubmittingBulkAssignment] = useState(false);
     const [isExportingCases, setIsExportingCases] = useState(false);
+
+    // Fetch Branches and Regions on component mount
+    useEffect(() => {
+        const loadBranchesAndRegions = async () => {
+            try {
+                if (branches.length === 0) {
+                    const branchesData = await fetchBranches(100, 0);
+                    setBranches(branchesData.results);
+                }
+                if (regions.length === 0) {
+                    const regionsData = await fetchRegions(100, 0);
+                    setRegions(regionsData.results);
+                }
+            } catch {
+                console.error("No se pudieron obtener las sucursales y regiones.");
+            }
+        };
+        loadBranchesAndRegions();
+    }, [branches, regions]);
 
     // collect active case from URL search params
     useEffect(() => {
@@ -80,6 +105,8 @@ export function CaseList({ process }: WorkflowKanbanProps) {
                 if (stageIdFilter) params.stage_id = stageIdFilter;
                 if (caseNameFilter) params.case_name = caseNameFilter;
                 if (cedulaFilter) params.cedula = cedulaFilter;
+                if (selectedBranch) params.sucursal_id = String(selectedBranch.id);
+                if (selectedRegion) params.region_id = String(selectedRegion.id);
                 if (archiveFilter === 'include-archived') params.include_archived = "true";
                 if (archiveFilter === 'archived-only') params.archived_only = "true";
 
@@ -100,7 +127,7 @@ export function CaseList({ process }: WorkflowKanbanProps) {
         return () => {
             if (debounceTimer.current) clearTimeout(debounceTimer.current);
         };
-    }, [process.id_proceso, caseStatusFilter, stageIdFilter, caseNameFilter, cedulaFilter, archiveFilter]);
+    }, [process.id_proceso, caseStatusFilter, stageIdFilter, caseNameFilter, cedulaFilter, selectedBranch, selectedRegion, archiveFilter]);
 
     // Infinite scroll observer
     useEffect(() => {
@@ -569,6 +596,38 @@ Fin de Exportación
                             menuPortalTarget={document.body}
                             styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                             placeholder="Filtrar por etapa..."
+                        />
+                    </div>
+
+                    {/* Sucursal filter dropdown */}
+                    <div style={{ marginBottom: "15px" }}>
+                        <Select
+                            isClearable
+                            options={branches}
+                            value={selectedBranch}
+                            onChange={(selected) => setSelectedBranch(selected as Branch | null)}
+                            getOptionLabel={(option: Branch) => option.nombre_sucursal}
+                            getOptionValue={(option: Branch) => String(option.id)}
+                            placeholder="Filtrar por sucursal..."
+                            components={{ Menu: AnimatedSelectMenu }}
+                            menuPortalTarget={document.body}
+                            styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                        />
+                    </div>
+
+                    {/* Region filter dropdown */}
+                    <div style={{ marginBottom: "15px" }}>
+                        <Select
+                            isClearable
+                            options={regions}
+                            value={selectedRegion}
+                            onChange={(selected) => setSelectedRegion(selected as Region | null)}
+                            getOptionLabel={(option: Region) => option.nombre_region}
+                            getOptionValue={(option: Region) => String(option.id)}
+                            placeholder="Filtrar por región..."
+                            components={{ Menu: AnimatedSelectMenu }}
+                            menuPortalTarget={document.body}
+                            styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                         />
                     </div>
 

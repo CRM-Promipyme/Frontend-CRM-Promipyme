@@ -238,7 +238,7 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
                     // Fetch all allowed stages in parallel
                     Promise.all(
                         allowedEtapas.map((etapa) =>
-                            fetchStageCases(process.id_proceso, etapa.id_etapa, caseName, selectedBranch?.id, archiveFilter).then((result) => ({
+                            fetchStageCases(process.id_proceso, etapa.id_etapa, caseName, selectedBranch?.id, undefined, archiveFilter).then((result) => ({
                                 etapaId: etapa.id_etapa.toString(),
                                 data: result,
                             }))
@@ -301,8 +301,8 @@ export function WorkflowKanban({ process }: WorkflowKanbanProps) {
         ) {
             // Fetch both the source and target columns
             Promise.all([
-                fetchStageCases(process.id_proceso, data.from_stage_id, caseName, selectedBranch?.id, archiveFilter),
-                fetchStageCases(process.id_proceso, data.to_stage_id, caseName, selectedBranch?.id, archiveFilter)
+                fetchStageCases(process.id_proceso, data.from_stage_id, caseName, selectedBranch?.id, undefined, archiveFilter),
+                fetchStageCases(process.id_proceso, data.to_stage_id, caseName, selectedBranch?.id, undefined, archiveFilter)
             ]).then(([fromResult, toResult]) => {
                 setColumns(prev =>
                     prev.map(col => {

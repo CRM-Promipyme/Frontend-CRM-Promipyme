@@ -13,13 +13,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Spinner } from "../../../components/ui/Spinner";
 import { formatNumber } from "../../../utils/formatUtils";
 import { Caso, Proceso } from "../../../types/workflowTypes";
-import { Branch } from "../../../types/branchTypes";
+import { Branch, Region } from "../../../types/branchTypes";
 import { useSidebarStore } from "../../../stores/sidebarStore";
 import { SidebarLayout } from "../../../components/layouts/SidebarLayout";
 import { SelectedCaseDetails } from "./boardView/tabs/SelectedCaseDetails";
 import { AnimatedSelectMenu } from "../../../components/ui/forms/AnimatedSelectMenu";
 import { AnimatedNumberCounter } from "../../../components/ui/AnimatedNumberCounter";
-import { fetchBranches } from "../../../controllers/branchControllers";
+import { fetchBranches, fetchRegions } from "../../../controllers/branchControllers";
 
 export function BaseCaseList() {
     // Global States
@@ -40,23 +40,31 @@ export function BaseCaseList() {
     const [caseStatusFilter, setCaseStatusFilter] = useState<string>("");
     const [caseNameFilter, setCaseNameFilter] = useState<string>("");
     const [branches, setBranches] = useState<Branch[]>([]);
+    const [regions, setRegions] = useState<Region[]>([]);
     const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+    const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
     
-    // Fetch Branches on component mount
+    // Fetch Branches and Regions on component mount
     useEffect(() => {
-        if (!accessToken || branches.length > 0) return;
+        if (!accessToken) return;
 
-        const loadBranches = async () => {
+        const loadBranchesAndRegions = async () => {
             try {
-                const branchesData = await fetchBranches(100, 0); // Fetch up to 100 branches
-                setBranches(branchesData.results);
+                if (branches.length === 0) {
+                    const branchesData = await fetchBranches(100, 0); // Fetch up to 100 branches
+                    setBranches(branchesData.results);
+                }
+                if (regions.length === 0) {
+                    const regionsData = await fetchRegions(100, 0); // Fetch up to 100 regions
+                    setRegions(regionsData.results);
+                }
             } catch {
-                toast.error("No se pudieron obtener las sucursales.");
+                toast.error("No se pudieron obtener las sucursales y regiones.");
             }
         };
-        loadBranches();
-    }, [accessToken, branches]);
+        loadBranchesAndRegions();
+    }, [accessToken, branches, regions]);
     
     // collect active case from URL search params
     useEffect(() => {
@@ -99,6 +107,7 @@ export function BaseCaseList() {
                 if (caseStatusFilter) params.case_status = caseStatusFilter;
                 if (caseNameFilter) params.case_name = caseNameFilter;
                 if (selectedBranch) params.sucursal_id = String(selectedBranch.id);
+                if (selectedRegion) params.region_id = String(selectedRegion.id);
                 
                 const queryString = new URLSearchParams(params).toString();
                 const response = await api.get(`/workflows/casos/list/?${queryString}`);
@@ -117,7 +126,7 @@ export function BaseCaseList() {
         return () => {
             if (debounceTimer.current) clearTimeout(debounceTimer.current);
         };
-    }, [caseStatusFilter, caseNameFilter, selectedBranch]);
+    }, [caseStatusFilter, caseNameFilter, selectedBranch, selectedRegion]);
     
     // Infinite scroll observer
     useEffect(() => {
@@ -249,6 +258,22 @@ export function BaseCaseList() {
                                 getOptionLabel={(option: Branch) => option.nombre_sucursal}
                                 getOptionValue={(option: Branch) => String(option.id)}
                                 placeholder="Filtrar por sucursal..."
+                                components={{ Menu: AnimatedSelectMenu }}
+                                menuPortalTarget={document.body}
+                                styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                            />
+                        </div>
+
+                        {/* Region filter dropdown */}
+                        <div style={{ marginBottom: "15px" }}>
+                            <Select
+                                isClearable
+                                options={regions}
+                                value={selectedRegion}
+                                onChange={(selected) => setSelectedRegion(selected as Region | null)}
+                                getOptionLabel={(option: Region) => option.nombre_region}
+                                getOptionValue={(option: Region) => String(option.id)}
+                                placeholder="Filtrar por región..."
                                 components={{ Menu: AnimatedSelectMenu }}
                                 menuPortalTarget={document.body}
                                 styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}

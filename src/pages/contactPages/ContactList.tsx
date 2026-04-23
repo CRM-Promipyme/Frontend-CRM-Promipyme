@@ -2,14 +2,18 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { useState, useEffect, useCallback, useRef } from "react";
+import Select from "react-select";
 import { Spinner } from "../../components/ui/Spinner";
 import { formatCedula } from "../../utils/formatUtils";
 import { useSidebarStore } from "../../stores/sidebarStore";
 import { SidebarLayout } from "../../components/layouts/SidebarLayout";
 import { FilterSidebar } from "../../components/ui/forms/FilterSidebar";
 import { Contact, ContactListResponse } from "../../types/contactTypes";
+import { Branch, Region } from "../../types/branchTypes";
 import { AnimatedNumberCounter } from "../../components/ui/AnimatedNumberCounter";
+import { AnimatedSelectMenu } from "../../components/ui/forms/AnimatedSelectMenu";
 import api from "../../controllers/api";
+import { fetchBranches, fetchRegions } from "../../controllers/branchControllers";
 
 export function ContactList() {
     // Global States
@@ -31,7 +35,32 @@ export function ContactList() {
     const [searchPhone, setSearchPhone] = useState("");
     const [searchAddress, setSearchAddress] = useState("");
     const [searchCedula, setSearchCedula] = useState("");
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [regions, setRegions] = useState<Region[]>([]);
+    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+    const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+    // Fetch Branches and Regions on component mount
+    useEffect(() => {
+        if (!accessToken) return;
+
+        const loadBranchesAndRegions = async () => {
+            try {
+                if (branches.length === 0) {
+                    const branchesData = await fetchBranches(100, 0);
+                    setBranches(branchesData.results);
+                }
+                if (regions.length === 0) {
+                    const regionsData = await fetchRegions(100, 0);
+                    setRegions(regionsData.results);
+                }
+            } catch {
+                console.error("No se pudieron obtener las sucursales y regiones.");
+            }
+        };
+        loadBranchesAndRegions();
+    }, [accessToken, branches, regions]);
 
     // Construct API URL with filters
     const buildQueryUrl = useCallback(() => {
@@ -42,9 +71,11 @@ export function ContactList() {
         if (searchPhone) url += `numero_telefonico=${searchPhone}&`;
         if (searchAddress) url += `direccion=${searchAddress}&`;
         if (searchCedula) url += `cedula=${searchCedula}&`;
+        if (selectedBranch) url += `sucursal_id=${selectedBranch.id}&`;
+        if (selectedRegion) url += `region_id=${selectedRegion.id}&`;
 
         return url;
-    }, [searchName, searchEmail, searchPhone, searchAddress, searchCedula]);
+    }, [searchName, searchEmail, searchPhone, searchAddress, searchCedula, selectedBranch, selectedRegion]);
 
     // Fetch Contacts
     const fetchContacts = useCallback(async (url: string) => {
@@ -104,6 +135,8 @@ export function ContactList() {
                         setSearchPhone("");
                         setSearchAddress("");
                         setSearchCedula("");
+                        setSelectedBranch(null);
+                        setSelectedRegion(null);
                     }}>
                         <i className="bi bi-x-circle"></i> Limpiar Filtros
                     </button>
@@ -159,6 +192,44 @@ export function ContactList() {
                         placeholder="Filtrar por dirección..."
                         value={searchAddress}
                         onChange={(e) => setSearchAddress(e.target.value)}
+                    />
+                </div>
+
+                {/* Sucursal filter dropdown */}
+                <div className="mb-3">
+                    <label style={{ fontSize: "0.875rem", fontWeight: "600", marginBottom: "8px", display: "block" }}>
+                        Filtrar por Sucursal
+                    </label>
+                    <Select
+                        isClearable
+                        options={branches}
+                        value={selectedBranch}
+                        onChange={(selected) => setSelectedBranch(selected as Branch | null)}
+                        getOptionLabel={(option: Branch) => option.nombre_sucursal}
+                        getOptionValue={(option: Branch) => String(option.id)}
+                        placeholder="Seleccionar sucursal..."
+                        components={{ Menu: AnimatedSelectMenu }}
+                        menuPortalTarget={document.body}
+                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                    />
+                </div>
+
+                {/* Region filter dropdown */}
+                <div className="mb-3">
+                    <label style={{ fontSize: "0.875rem", fontWeight: "600", marginBottom: "8px", display: "block" }}>
+                        Filtrar por Región
+                    </label>
+                    <Select
+                        isClearable
+                        options={regions}
+                        value={selectedRegion}
+                        onChange={(selected) => setSelectedRegion(selected as Region | null)}
+                        getOptionLabel={(option: Region) => option.nombre_region}
+                        getOptionValue={(option: Region) => String(option.id)}
+                        placeholder="Seleccionar región..."
+                        components={{ Menu: AnimatedSelectMenu }}
+                        menuPortalTarget={document.body}
+                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                     />
                 </div>
             </FilterSidebar>

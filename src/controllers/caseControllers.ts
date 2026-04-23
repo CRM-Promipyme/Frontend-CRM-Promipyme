@@ -45,10 +45,11 @@ export const updateCase = async (caseId: number, caseData: unknown) => {
  * @param stageId The stage ID
  * @param caseName The case name filter (optional)
  * @param sucursalId The branch/sucursal ID filter (optional)
+ * @param regionId The region ID filter (optional)
  * @param archiveFilter Filter for archived cases (optional, default: ''). Options: '' (non-archived only), 'include-archived' (both), 'archived-only' (archived only)
  * @returns a list of cases (paginated, comes in the form of {'count': number, 'next': string, 'previous': string, 'results': Case[]})
  */
-export const fetchStageCases = async (processId: number, stageId: number, caseName: string, sucursalId?: number, archiveFilter: string = '') => {
+export const fetchStageCases = async (processId: number, stageId: number, caseName: string, sucursalId?: number, regionId?: number, archiveFilter: string = '') => {
     try {
         let endpoint = `/workflows/casos/board-view/${processId}/${stageId}/`;
         const params = [];
@@ -58,6 +59,9 @@ export const fetchStageCases = async (processId: number, stageId: number, caseNa
         }
         if (sucursalId !== undefined) {
             params.push(`sucursal_id=${sucursalId}`);
+        }
+        if (regionId !== undefined) {
+            params.push(`region_id=${regionId}`);
         }
         if (archiveFilter === 'include-archived') {
             params.push(`include_archived=true`);
@@ -82,16 +86,26 @@ export const fetchStageCases = async (processId: number, stageId: number, caseNa
  * Fetch all of a process' cases
  * @param processId The process' ID
  * @param archiveFilter Filter for archived cases (optional, default: ''). Options: '' (non-archived only), 'include-archived' (both), 'archived-only' (archived only)
+ * @param sucursalId The branch/sucursal ID filter (optional)
+ * @param regionId The region ID filter (optional)
  * @returns a list of cases (paginasted, sames as format as before)
  */
-export const fetchProcessCases = async (processId: number, archiveFilter: string = '') => {
+export const fetchProcessCases = async (processId: number, archiveFilter: string = '', sucursalId?: number, regionId?: number) => {
     try {
         let endpoint = `/workflows/casos/list/?process_id=${processId}`;
+        
+        if (sucursalId !== undefined) {
+            endpoint += `&sucursal_id=${sucursalId}`;
+        }
+        if (regionId !== undefined) {
+            endpoint += `&region_id=${regionId}`;
+        }
         if (archiveFilter === 'include-archived') {
             endpoint += `&include_archived=true`;
         } else if (archiveFilter === 'archived-only') {
             endpoint += `&archived_only=true`;
         }
+        
         const response = await api.get(endpoint)
         return response.data
     } catch (error) {
@@ -105,16 +119,26 @@ export const fetchProcessCases = async (processId: number, archiveFilter: string
  * Fetch a contact's related cases
  * @param contactId The contact's ID
  * @param archiveFilter Filter for archived cases (optional, default: ''). Options: '' (non-archived only), 'include-archived' (both), 'archived-only' (archived only)
+ * @param sucursalId The branch/sucursal ID filter (optional)
+ * @param regionId The region ID filter (optional)
  * @returns a list of cases (paginated, same format as before)
  */
-export const fetchContactCases = async (contactId: number, archiveFilter: string = '') => {
+export const fetchContactCases = async (contactId: number, archiveFilter: string = '', sucursalId?: number, regionId?: number) => {
     try {
         let endpoint = `/workflows/casos/list/?contact_id=${contactId}`;
+        
+        if (sucursalId !== undefined) {
+            endpoint += `&sucursal_id=${sucursalId}`;
+        }
+        if (regionId !== undefined) {
+            endpoint += `&region_id=${regionId}`;
+        }
         if (archiveFilter === 'include-archived') {
             endpoint += `&include_archived=true`;
         } else if (archiveFilter === 'archived-only') {
             endpoint += `&archived_only=true`;
         }
+        
         const response = await api.get(endpoint);
         return response.data;
     }
@@ -129,16 +153,26 @@ export const fetchContactCases = async (contactId: number, archiveFilter: string
  * Fetch a user's related cases
  * @param userId The user's ID
  * @param archiveFilter Filter for archived cases (optional, default: ''). Options: '' (non-archived only), 'include-archived' (both), 'archived-only' (archived only)
+ * @param sucursalId The branch/sucursal ID filter (optional)
+ * @param regionId The region ID filter (optional)
  * @returns a list of cases (paginated, same format as before)
  */
-export const fetchUserCases = async (userId: number, archiveFilter: string = '') => {
+export const fetchUserCases = async (userId: number, archiveFilter: string = '', sucursalId?: number, regionId?: number) => {
     try {
         let endpoint = `/workflows/casos/list/?user_id=${userId}`;
+        
+        if (sucursalId !== undefined) {
+            endpoint += `&sucursal_id=${sucursalId}`;
+        }
+        if (regionId !== undefined) {
+            endpoint += `&region_id=${regionId}`;
+        }
         if (archiveFilter === 'include-archived') {
             endpoint += `&include_archived=true`;
         } else if (archiveFilter === 'archived-only') {
             endpoint += `&archived_only=true`;
         }
+        
         const response = await api.get(endpoint);
         return response.data;
     }
